@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Compliance Assessments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #0f172a; /* slate-900 */
+        }
+
+        /* Custom scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            max-height: 400px;
+            margin: 0 auto;
+        }
+        
+        /* Animation utilities */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .active-nav {
+            border-bottom: 2px solid #2563eb; /* blue-600 */
+            color: #2563eb;
+            font-weight: 600;
+        }
+    </style>
+    <!-- Chosen Palette: Secure Slate & Corporate Blue. 
+         Background: slate-50 (light, neutral). 
+         Text: slate-900 (readable). 
+         Primary: blue-600 (trust, technology). 
+         Secondary: slate-200 (borders/separators).
+         Accents: emerald-500 (success/tasks), amber-500 (warnings/risk).
+    -->
+
+    <!-- Application Structure Plan: 
+         1. Header/Nav: Global context and switching between 4 main views (Dashboard, Syllabus Explorer, Compliance Map, Project Tracker).
+         2. View - Dashboard: High-level course summary, the "NorthStream" scenario context, and quantitative charts (Assessment, Content Distribution).
+         3. View - Syllabus Explorer: The core interactive timeline. A split-pane layout (List vs Detail) allowing users to click through weeks 1-15.
+         4. View - Compliance Map: A geographic/domain sorting of the laws (CA vs US/EU) to visualize the multi-jurisdictional nature of the course.
+         5. View - Project Tracker: Focuses exclusively on the "Tasks" to show the cumulative nature of the final report.
+         WHY: This structure breaks the linear markdown into "Perspectives": The 'Student' perspective (Syllabus), the 'Analyst' perspective (Compliance Map), and the 'Deliverable' perspective (Project).
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Topic Distribution (Doughnut Chart): Shows the balance between Legal, Frameworks, Technical, and Reporting content. Goal: Inform student of course focus.
+         2. Assessment Structure (Bar/Pie Chart): Visualizes the 1-2-1 ponderation. Goal: Inform grading structure.
+         3. Dynamic Timeline (JS + HTML): Replaces static list. Goal: Explore weekly content progressively.
+         4. Interactive Project Roadmap (Stepper): Visualizes the "building blocks" approach. Goal: Show how single tasks create the final report.
+         5. Region Filter (JS Filter): Toggles laws by jurisdiction. Goal: Clarify complex geographical legalities.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <span class="text-2xl font-bold text-blue-700">🛡️ LEA.D8</span>
+                        <span class="hidden md:block text-slate-600 font-medium">| Compliance Assessments</span>
+                    </div>
+                </div>
+                <div class="flex space-x-4 md:space-x-8 items-center overflow-x-auto">
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn active-nav px-3 py-2 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors whitespace-nowrap">Dashboard</button>
+                    <button onclick="switchView('syllabus')" id="nav-syllabus" class="nav-btn px-3 py-2 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors whitespace-nowrap">Weekly Modules</button>
+                    <button onclick="switchView('map')" id="nav-map" class="nav-btn px-3 py-2 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors whitespace-nowrap">Compliance Map</button>
+                    <button onclick="switchView('project')" id="nav-project" class="nav-btn px-3 py-2 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors whitespace-nowrap">Project Roadmap</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="fade-in space-y-8">
+            <!-- Intro Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 md:p-8">
+                <h1 class="text-3xl font-bold text-slate-900 mb-4">Course Overview</h1>
+                <p class="text-slate-600 text-lg leading-relaxed mb-6">
+                    Welcome to <strong>Competency EZ04: Assessment of Compliance with Policies and Standards</strong>. 
+                    This 45-hour course prepares you to act as a compliance analyst, navigating the complex intersection of Canadian law, international regulations (GDPR/US), and technical security audits.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <div class="text-blue-800 font-semibold mb-1">⏱️ Duration</div>
+                        <div class="text-2xl font-bold text-slate-900">45 Hours</div>
+                        <div class="text-sm text-slate-600">15 Weeks x 3h</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <div class="text-blue-800 font-semibold mb-1">⚖️ Ponderation</div>
+                        <div class="text-2xl font-bold text-slate-900">1 - 2 - 1</div>
+                        <div class="text-sm text-slate-600">Theory - Lab/Project - Homework</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <div class="text-blue-800 font-semibold mb-1">🌍 Context</div>
+                        <div class="text-2xl font-bold text-slate-900">CA / US / EU</div>
+                        <div class="text-sm text-slate-600">Cross-border Legislation</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scenario Card -->
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-lg p-6 md:p-8 text-white">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold flex items-center gap-3">
+                        🏢 The Scenario: NorthStream HealthTech
+                    </h2>
+                    <span class="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mt-2 md:mt-0">Active Mission</span>
+                </div>
+                <p class="text-slate-300 mb-6 max-w-3xl">
+                    You are a <strong>Junior Compliance Analyst</strong> based in Montreal. NorthStream handles sensitive health data and credit card payments. The company is expanding to New York and France. Your semester-long mission is to build a comprehensive <strong>Compliance Audit Report</strong> that satisfies PIPEDA, Law 25, HIPAA, GDPR, and PCI-DSS requirements.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-white/10 p-3 rounded backdrop-blur-sm">
+                        <div class="font-semibold text-emerald-400">Data Type</div>
+                        <div>Health Records & Payments</div>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded backdrop-blur-sm">
+                        <div class="font-semibold text-emerald-400">Jurisdictions</div>
+                        <div>Canada, USA, EU</div>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded backdrop-blur-sm">
+                        <div class="font-semibold text-emerald-400">Goal</div>
+                        <div>Full Compliance Audit</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Content Distribution Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Content Breakdown</h3>
+                    <div class="chart-container">
+                        <canvas id="contentChart"></canvas>
+                    </div>
+                    <p class="text-sm text-slate-500 mt-4 text-center">Visualizing the balance between legal theory, frameworks, and technical auditing.</p>
+                </div>
+                <!-- Assessment Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Evaluation Structure</h3>
+                    <div class="chart-container">
+                        <canvas id="assessmentChart"></canvas>
+                    </div>
+                     <p class="text-sm text-slate-500 mt-4 text-center">Heavy focus on practical application (Labs/Projects).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: SYLLABUS EXPLORER -->
+        <div id="view-syllabus" class="hidden fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Weekly Module Explorer</h2>
+                <p class="text-slate-600">Select a week to view specific learning topics and the associated project task.</p>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-6 h-full min-h-[600px]">
+                <!-- Sidebar List -->
+                <div class="lg:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col max-h-[800px]">
+                    <div class="p-4 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700">
+                        Semester Timeline
+                    </div>
+                    <div class="overflow-y-auto flex-1" id="week-list-container">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+
+                <!-- Main Detail View -->
+                <div class="lg:w-2/3 bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 flex flex-col" id="week-detail-container">
+                    <!-- Default State -->
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                        <div class="text-6xl mb-4">📅</div>
+                        <p class="text-lg">Select a week from the list to view details.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: COMPLIANCE MAP -->
+        <div id="view-map" class="hidden fade-in">
+            <div class="mb-8 text-center max-w-3xl mx-auto">
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Legislative & Framework Landscape</h2>
+                <p class="text-slate-600">Explore the specific laws and frameworks applicable to NorthStream HealthTech across different jurisdictions.</p>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="flex justify-center gap-4 mb-8">
+                <button onclick="filterMap('all')" class="map-filter-btn active-filter px-4 py-2 rounded-full text-sm font-semibold bg-slate-200 text-slate-700 hover:bg-blue-100 transition-colors" data-filter="all">All Regions</button>
+                <button onclick="filterMap('ca')" class="map-filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-200 transition-colors" data-filter="ca">🇨🇦 Canada</button>
+                <button onclick="filterMap('us')" class="map-filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-blue-50 hover:border-blue-200 transition-colors" data-filter="us">🇺🇸 USA</button>
+                <button onclick="filterMap('eu')" class="map-filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-yellow-50 hover:border-yellow-200 transition-colors" data-filter="eu">🇪🇺 Europe</button>
+                <button onclick="filterMap('global')" class="map-filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-purple-50 hover:border-purple-200 transition-colors" data-filter="global">🌐 Global / Industry</button>
+            </div>
+
+            <!-- Grid of Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="legislation-grid">
+                <!-- JS populated -->
+            </div>
+        </div>
+
+        <!-- VIEW: PROJECT ROADMAP -->
+        <div id="view-project" class="hidden fade-in">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-900">Cumulative Project Roadmap</h2>
+                <p class="text-slate-600">See how each weekly task contributes to the Final Compliance Audit Report.</p>
+            </div>
+
+            <div class="relative border-l-4 border-slate-200 ml-4 md:ml-8 space-y-8" id="project-steps-container">
+                <!-- Steps populated by JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p style="display:flex; justify-content:center; align-items:center; gap:8px; margin:0;">
+                <img src="cyber_soho.png" alt="Cyber Soho" style="height:32px;">
+                <span>&copy; 2026 Cybersecurity Course of Compliance Assessments. Built for Educational Use.</span>
+            </p>
+            <p class="mt-2">Focus: Compliance Assessments & Cybersecurity Legislation</p>
+
+            <!-- Disclaimers -->
+            <div class="mt-6 border-t border-slate-700 pt-4 text-xs text-slate-500 space-y-2 max-w-4xl mx-auto">
+                <p><strong>Intellectual Property:</strong> All original course materials provided herein are the intellectual property of the course creator. Unauthorized distribution, reproduction, or commercial use is strictly prohibited.</p>
+                <p><strong>Copyright Disclaimer:</strong> External materials, trademarks, and logos referenced are property of their respective owners and are used here for educational and non-commercial purposes under fair use guidelines. No ownership is claimed over third-party content.</p>
+                <p><strong>Liability & Ethics:</strong> This course provides training in cybersecurity for defensive and compliance purposes only. The course creator and institution accept no liability for any illegal, unethical, or inappropriate application of the knowledge or tools acquired by students.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA STORAGE ---
+        const courseData = [
+            { 
+                id: 1, 
+                title: "Course Intro & Landscape", 
+                category: "Intro", 
+                topics: ["Competency EZ04 & Scenario", "Governance, Risk, Compliance (GRC)", "Laws vs. Standards vs. Policies"], 
+                task: "Review NorthStream topology & goals." 
+            },
+            { 
+                id: 2, 
+                title: "Canadian Framework (Privacy)", 
+                category: "Legal", 
+                topics: [
+                    "<a href='https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/' class='text-blue-600 hover:underline relative z-10' target='_blank'>PIPEDA</a> & 10 Principles", 
+                    "<a href='https://www.cai.gouv.qc.ca/english/law-25-new-provisions-protecting-privacy/' class='text-blue-600 hover:underline relative z-10' target='_blank'>Quebec Law 25</a> (Modernization)", 
+                    "<a href='https://www.parl.ca/legisinfo/en/bill/44-1/c-26' class='text-blue-600 hover:underline relative z-10' target='_blank'>Bill C-26</a> (Critical Infrastructure)"
+                ], 
+                task: "Create Legal Requirements Register (Canada)." 
+            },
+            { 
+                id: 3, 
+                title: "International Legislation", 
+                category: "Legal", 
+                topics: [
+                    "<a href='https://gdpr.eu/' class='text-blue-600 hover:underline relative z-10' target='_blank'>GDPR</a> (EU) & Rights", 
+                    "USA: <a href='https://www.hhs.gov/hipaa/index.html' class='text-blue-600 hover:underline relative z-10' target='_blank'>HIPAA</a>, <a href='https://www.congress.gov/bill/107th-congress/house-bill/3763' class='text-blue-600 hover:underline relative z-10' target='_blank'>SOX</a>, <a href='https://oag.ca.gov/privacy/ccpa' class='text-blue-600 hover:underline relative z-10' target='_blank'>CCPA</a>", 
+                    "Data Sovereignty"
+                ], 
+                task: "Expand Register: International Compliance Matrix." 
+            },
+            { 
+                id: 4, 
+                title: "Industry Standards", 
+                category: "Frameworks", 
+                topics: [
+                    "<a href='https://www.nist.gov/cyberframework' class='text-blue-600 hover:underline relative z-10' target='_blank'>NIST CSF</a> & <a href='https://www.iso.org/standard/27001' class='text-blue-600 hover:underline relative z-10' target='_blank'>ISO 27001</a>", 
+                    "<a href='https://www.pcisecuritystandards.org/' class='text-blue-600 hover:underline relative z-10' target='_blank'>PCI-DSS</a> (Payments)", 
+                    "Mapping Law to Control"
+                ], 
+                task: "Select Framework & Map 5 Legal reqs to <a href='https://www.nist.gov/cyberframework' class='text-blue-600 hover:underline relative z-10' target='_blank'>NIST</a> controls." 
+            },
+            { 
+                id: 5, 
+                title: "Developing Assessment Plan", 
+                category: "Planning", 
+                topics: ["Audit Scope (Cloud/On-Prem)", "Methodologies (Interview/Test)", "Stakeholder ID"], 
+                task: "Draft Compliance Assessment Plan." 
+            },
+            { 
+                id: 6, 
+                title: "Policies & Governance", 
+                category: "Planning", 
+                topics: ["Writing Policies (AUP, BYOD)", "Ethics in Auditing", "Gap Analysis Techniques"], 
+                task: "Policy Gap Analysis (Current vs Desired)." 
+            },
+            { 
+                id: 7, 
+                title: "Technical Compliance", 
+                category: "Technical", 
+                topics: [
+                    "<a href='https://www.cisecurity.org/cis-benchmarks' class='text-blue-600 hover:underline relative z-10' target='_blank'>CIS Benchmarks</a> & <a href='https://public.cyber.mil/stigs/' class='text-blue-600 hover:underline relative z-10' target='_blank'>STIGs</a>", 
+                    "Golden Images", 
+                    "Least Privilege"
+                ], 
+                task: "Define Configuration Baseline (Web Server) using <a href='https://www.cisecurity.org/cis-benchmarks' class='text-blue-600 hover:underline relative z-10' target='_blank'>CIS</a>." 
+            },
+            { 
+                id: 8, 
+                title: "Midterm Exam", 
+                category: "Exam", 
+                topics: ["Covers Weeks 1-7"], 
+                task: "Study & Review." 
+            },
+            { 
+                id: 9, 
+                title: "Auditing Tools", 
+                category: "Technical", 
+                topics: [
+                    "<a href='https://csrc.nist.gov/projects/security-content-automation-protocol' class='text-blue-600 hover:underline relative z-10' target='_blank'>SCAP</a> & <a href='https://www.open-scap.org/' class='text-blue-600 hover:underline relative z-10' target='_blank'>OpenSCAP</a>", 
+                    "Vulnerability Scanners (<a href='https://www.tenable.com/products/nessus' class='text-blue-600 hover:underline relative z-10' target='_blank'>Nessus</a>)", 
+                    "False Positives Interpretation"
+                ], 
+                task: "Simulated Scan Analysis & Export." 
+            },
+            { 
+                id: 10, 
+                title: "Scripting Verification", 
+                category: "Technical", 
+                topics: [
+                    "<a href='https://learn.microsoft.com/en-us/powershell/' class='text-blue-600 hover:underline relative z-10' target='_blank'>PowerShell</a> / <a href='https://www.python.org/' class='text-blue-600 hover:underline relative z-10' target='_blank'>Python</a> for Audit", 
+                    "Patch Level Verification", 
+                    "Log Analysis for Evidence"
+                ], 
+                task: "Write Script to verify Task 6 configs." 
+            },
+            { 
+                id: 11, 
+                title: "Third-Party & Cloud", 
+                category: "Risk", 
+                topics: [
+                    "Supply Chain Risk", 
+                    "<a href='https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2' class='text-blue-600 hover:underline relative z-10' target='_blank'>SOC 2 Type II</a> Reports", 
+                    "Shared Responsibility Models"
+                ], 
+                task: "Vendor Risk Assessment (Cloud Provider)." 
+            },
+            { 
+                id: 12, 
+                title: "Incident Response", 
+                category: "Risk", 
+                topics: ["Breach Reporting Laws", "Auditing IRP", "Chain of Custody"], 
+                task: "Breach Protocol Audit (<a href='https://gdpr.eu/' class='text-blue-600 hover:underline relative z-10' target='_blank'>GDPR</a> 72h Check)." 
+            },
+            { 
+                id: 13, 
+                title: "Risk Analysis", 
+                category: "Risk", 
+                topics: ["Impact x Likelihood = Score", "Prioritization", "Compensating Controls"], 
+                task: "Develop Risk Register from findings." 
+            },
+            { 
+                id: 14, 
+                title: "Reporting & Exec Comm", 
+                category: "Reporting", 
+                topics: ["Final Report Structure", "Neutral Language", "Executive Summaries"], 
+                task: "Final Report Assembly & Executive Summary." 
+            },
+            { 
+                id: 15, 
+                title: "Final Exam", 
+                category: "Exam", 
+                topics: ["Comprehensive Coverage"], 
+                task: "Final Assessment." 
+            }
+        ];
+
+        const legislationData = [
+            { code: "PIPEDA", name: "Personal Information Protection and Electronic Documents Act", region: "ca", desc: "Federal Canadian law governing how private sector organizations collect, use, and disclose personal information." },
+            { code: "Law 25", name: "Quebec Law 25", region: "ca", desc: "Modernizes privacy legislation in Quebec. Introduces strict penalties, DPO requirements, and mandatory breach reporting." },
+            { code: "Bill C-26", name: "Cyber Security of Critical Infrastructure", region: "ca", desc: "Federal bill to protect vital systems (finance, energy, telecom) and improve cyber security baselines." },
+            { code: "GDPR", name: "General Data Protection Regulation", region: "eu", desc: "Strict EU privacy law with extraterritorial scope. Includes Right to be Forgotten and heavy fines." },
+            { code: "HIPAA", name: "Health Insurance Portability and Accountability Act", region: "us", desc: "US law protecting sensitive patient health information from being disclosed without consent." },
+            { code: "SOX", name: "Sarbanes-Oxley Act", region: "us", desc: "US law mandating strict financial reporting and internal controls for public companies." },
+            { code: "PCI-DSS", name: "Payment Card Industry Data Security Standard", region: "global", desc: "Global standard for all entities that store, process, or transmit cardholder data." },
+            { code: "NIST CSF", name: "NIST Cybersecurity Framework", region: "global", desc: "Voluntary guidance based on existing standards/practices to better manage and reduce cybersecurity risk." },
+            { code: "ISO 27001", name: "ISO/IEC 27001", region: "global", desc: "International standard for managing information security (ISMS)." }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let currentView = 'dashboard';
+        let currentWeek = null;
+
+        // --- NAVIGATION ---
+        function switchView(viewName) {
+            // Hide all views
+            ['dashboard', 'syllabus', 'map', 'project'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                document.getElementById(`nav-${v}`).classList.remove('active-nav', 'text-blue-600', 'border-blue-600');
+                document.getElementById(`nav-${v}`).classList.add('text-slate-500', 'border-transparent');
+            });
+
+            // Show selected
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            const navBtn = document.getElementById(`nav-${viewName}`);
+            navBtn.classList.add('active-nav', 'text-blue-600', 'border-blue-600');
+            navBtn.classList.remove('text-slate-500', 'border-transparent');
+            
+            // Special initialization for views
+            if (viewName === 'syllabus' && !currentWeek) {
+                renderWeekList();
+                loadWeekDetail(1); // Default to Week 1
+            }
+            if (viewName === 'project') {
+                renderProjectRoadmap();
+            }
+            if (viewName === 'map') {
+                filterMap('all');
+            }
+            
+            currentView = viewName;
+        }
+
+        // --- DASHBOARD CHARTS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDashboardCharts();
+            // Initialize default view logic (hidden but ready)
+            renderWeekList();
+            renderProjectRoadmap();
+            filterMap('all');
+        });
+
+        function renderDashboardCharts() {
+            // Chart 1: Content Distribution
+            const ctx1 = document.getElementById('contentChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Legal Theory', 'Frameworks & Planning', 'Technical Auditing', 'Risk & Reporting', 'Exams'],
+                    datasets: [{
+                        data: [20, 20, 27, 20, 13], // Approx percentage based on weeks
+                        backgroundColor: ['#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Chart 2: Assessment
+            const ctx2 = document.getElementById('assessmentChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Theory', 'Lab / Project', 'Homework'],
+                    datasets: [{
+                        label: 'Course Weighting',
+                        data: [1, 2, 1],
+                        backgroundColor: ['#94a3b8', '#3b82f6', '#cbd5e1'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, display: false }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- SYLLABUS LOGIC ---
+        function renderWeekList() {
+            const container = document.getElementById('week-list-container');
+            container.innerHTML = courseData.map(week => `
+                <div onclick="loadWeekDetail(${week.id})" 
+                     class="week-item cursor-pointer p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors flex justify-between items-center group"
+                     id="week-item-${week.id}">
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Week ${week.id}</span>
+                        <h4 class="text-sm font-semibold text-slate-700 group-hover:text-blue-600">${week.title}</h4>
+                    </div>
+                    <span class="text-slate-300 group-hover:text-blue-400">→</span>
+                </div>
+            `).join('');
+        }
+
+        function loadWeekDetail(weekId) {
+            currentWeek = weekId;
+            const week = courseData.find(w => w.id === weekId);
+            
+            // Update Active State in List
+            document.querySelectorAll('.week-item').forEach(el => el.classList.remove('bg-blue-50', 'border-l-4', 'border-l-blue-600'));
+            const activeItem = document.getElementById(`week-item-${weekId}`);
+            if (activeItem) {
+                activeItem.classList.add('bg-blue-50', 'border-l-4', 'border-l-blue-600');
+            }
+
+            // Render Detail
+            const container = document.getElementById('week-detail-container');
+            const isExam = week.category === 'Exam';
+            
+            container.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="bg-blue-600 text-white font-bold px-3 py-1 rounded text-sm">Week ${week.id}</span>
+                        <span class="text-slate-500 text-sm font-medium uppercase tracking-wide">${week.category}</span>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6">${week.title}</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                <span>📚</span> Content Topics
+                            </h3>
+                            <ul class="space-y-3">
+                                ${week.topics.map(t => `
+                                    <li class="flex items-start gap-3 text-slate-600">
+                                        <span class="mt-1.5 w-1.5 h-1.5 bg-blue-400 rounded-full flex-shrink-0"></span>
+                                        <span class="leading-relaxed">${t}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                <span>🚀</span> ${isExam ? 'Assessment' : 'Project Task'}
+                            </h3>
+                            <div class="bg-${isExam ? 'red' : 'emerald'}-50 border border-${isExam ? 'red' : 'emerald'}-100 p-5 rounded-lg">
+                                <p class="text-${isExam ? 'red' : 'emerald'}-800 font-medium">
+                                    ${week.task}
+                                </p>
+                                ${!isExam ? `<p class="text-xs text-${isExam ? 'red' : 'emerald'}-600 mt-2">Adds to Final Report</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- MAP LOGIC ---
+        function filterMap(region) {
+            // Update Buttons
+            document.querySelectorAll('.map-filter-btn').forEach(btn => {
+                btn.classList.remove('active-filter', 'bg-slate-200', 'bg-red-100', 'bg-blue-100', 'bg-yellow-100', 'bg-purple-100');
+                btn.classList.add('bg-white');
+                if(btn.dataset.filter === region) {
+                    btn.classList.remove('bg-white');
+                    // Add specific color class based on filter
+                    if(region === 'all') btn.classList.add('bg-slate-200');
+                    if(region === 'ca') btn.classList.add('bg-red-100', 'border-red-200');
+                    if(region === 'us') btn.classList.add('bg-blue-100', 'border-blue-200');
+                    if(region === 'eu') btn.classList.add('bg-yellow-100', 'border-yellow-200');
+                    if(region === 'global') btn.classList.add('bg-purple-100', 'border-purple-200');
+                }
+            });
+
+            // Filter Data
+            const filteredData = region === 'all' 
+                ? legislationData 
+                : legislationData.filter(item => item.region === region);
+            
+            // Render Grid
+            const grid = document.getElementById('legislation-grid');
+            grid.innerHTML = filteredData.map(item => {
+                let badgeClass = '';
+                let badgeText = '';
+                if(item.region === 'ca') { badgeClass = 'bg-red-100 text-red-700'; badgeText = 'Canada'; }
+                else if(item.region === 'us') { badgeClass = 'bg-blue-100 text-blue-700'; badgeText = 'USA'; }
+                else if(item.region === 'eu') { badgeClass = 'bg-yellow-100 text-yellow-700'; badgeText = 'Europe'; }
+                else { badgeClass = 'bg-purple-100 text-purple-700'; badgeText = 'Global'; }
+
+                return `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow fade-in">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-bold text-xl text-slate-800">${item.code}</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <h4 class="text-sm font-semibold text-slate-600 mb-2 min-h-[40px]">${item.name}</h4>
+                    <p class="text-sm text-slate-500 leading-relaxed">${item.desc}</p>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // --- PROJECT ROADMAP LOGIC ---
+        function renderProjectRoadmap() {
+            const container = document.getElementById('project-steps-container');
+            const tasks = courseData.filter(w => w.category !== 'Exam' && w.category !== 'Intro'); // Only tasks contributing to report
+            
+            container.innerHTML = tasks.map((week, index) => `
+                <div class="relative pl-8 fade-in" style="animation-delay: ${index * 50}ms">
+                    <span class="absolute -left-[11px] top-1 bg-white border-2 border-emerald-500 w-5 h-5 rounded-full z-10"></span>
+                    <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm hover:border-emerald-300 transition-colors">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-1">Week ${week.id} • ${week.category}</div>
+                        <h4 class="text-lg font-bold text-slate-800 mb-2">${week.task}</h4>
+                        <div class="text-sm text-slate-500">
+                            Based on: <span class="italic text-slate-600">${week.topics[0]}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('') + `
+                <div class="relative pl-8 fade-in">
+                    <span class="absolute -left-[14px] top-0 text-2xl">🏁</span>
+                    <div class="bg-slate-900 p-5 rounded-lg shadow-lg text-white mt-4">
+                        <h4 class="text-lg font-bold mb-2">Final Deliverable: Compliance Audit Report</h4>
+                        <p class="text-slate-300 text-sm">Compilation of all 11 previous tasks + Executive Summary.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+    </script>
+</body>
+</html>
