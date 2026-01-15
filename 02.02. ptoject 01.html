@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Compliance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fafaf9; color: #1c1917; } /* Stone-50 background, Stone-900 text */
+        
+        /* Custom Chart Container Styling per Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Custom Scrollbar for panels */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f5f5f4; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+
+        .nav-active {
+            border-bottom: 2px solid #0284c7; /* Sky-600 */
+            color: #0284c7;
+            font-weight: 600;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutral Foundation (Stone) with Corporate Blue Accents (Sky/Slate). 
+         Background: Stone-50 (#fafaf9). 
+         Text: Stone-900 (#1c1917). 
+         Accents: Sky-600 (#0284c7) for "NorthStream" branding. 
+         Secondary: Stone-200/300 for borders/dividers. 
+         This creates a calm, professional, "paper-like" reading environment suitable for legal analysis. -->
+
+    <!-- Application Structure Plan: 
+         1. Dashboard Header: Mission context and user role.
+         2. Main Navigation: Tabs to switch between "Mission Brief", "Asset Map", "Legal Toolkit", and "Compliance Simulator".
+         3. Mission Brief (Home): Overview of the lab, objectives, and progress tracking.
+         4. Asset Map (Interactive): A grid representation of NorthStream's operational nodes (Calgary, Montreal, US, Pipelines). Clicking nodes reveals data inventory and jurisdiction. This visualizes the "Case Study" text.
+         5. Legal Toolkit: Interactive accordion/cards for the laws (PIPEDA, Law 25, CASL). Helps students study without reading walls of text.
+         6. Compliance Simulator: A logic-based tool where students select a Data Type + Location, and the app "simulates" the legal result. This bridges the gap between theory and the "Register" task.
+         7. Task Manager: A dynamic checklist for the final report requirements.
+         
+         Why this structure?
+         The lab asks students to build a "Register" based on complex inputs (geography vs. law). The app breaks this into:
+         - Explore the Entity (Asset Map)
+         - Learn the Rules (Legal Toolkit)
+         - Test the Logic (Simulator)
+         This scaffolds the learning process, moving from observation to application. -->
+
+    <!-- Visualization & Content Choices:
+         1. Asset Sensitivity Distribution (Chart.js Doughnut): Shows the ratio of Public/Internal/Confidential/Restricted data. 
+            - Goal: Inform. 
+            - Interaction: Tooltips showing specific data types (e.g., "SIN Numbers").
+            - Justification: Visualizes risk magnitude immediately.
+         2. Asset Map (HTML Grid + JS): 
+            - Goal: Relationships/Organize. 
+            - Interaction: Click to inspect. Updates a "Data Inspector" panel.
+            - Justification: Spatial understanding is key to the "Jurisdiction" learning objective.
+         3. Compliance Simulator (Form + JS Logic):
+            - Goal: Change/Experiment.
+            - Interaction: Dropdowns -> Result Calculation.
+            - Justification: Active learning. Instead of telling the answer, let the student test hypotheses (e.g., "What if I move data to Quebec?").
+         4. Legal Reference Cards (HTML Grid):
+            - Goal: Inform.
+            - Interaction: Hover/Expand.
+            - Justification: Quick reference for the 4 key laws mentioned in the text.
+         
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-sky-600 rounded flex items-center justify-center text-white font-bold shadow-sm">N</div>
+                <div>
+                    <h1 class="text-lg font-bold text-stone-800 tracking-tight">NorthStream <span class="font-normal text-stone-500">Compliance Hub</span></h1>
+                    <p class="text-xs text-stone-500">Module 2: Canadian Legal Framework</p>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-4">
+                <div class="text-right">
+                    <p class="text-xs font-semibold text-stone-600">Session Timer</p>
+                    <p class="text-sm font-mono text-sky-600" id="session-timer">00:00:00</p>
+                </div>
+                <div class="h-8 w-px bg-stone-200"></div>
+                <div class="text-right">
+                    <p class="text-xs font-semibold text-stone-600">Status</p>
+                    <p class="text-sm text-emerald-600 flex items-center">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-1"></span> Active
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-stone-100 border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8 overflow-x-auto" id="nav-container">
+                <button onclick="switchTab('brief')" class="nav-btn nav-active py-4 px-1 text-sm font-medium border-b-2 transition-colors duration-200 whitespace-nowrap" id="btn-brief">Mission Brief</button>
+                <button onclick="switchTab('assets')" class="nav-btn py-4 px-1 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 transition-colors duration-200 whitespace-nowrap" id="btn-assets">Asset Map & Inventory</button>
+                <button onclick="switchTab('laws')" class="nav-btn py-4 px-1 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 transition-colors duration-200 whitespace-nowrap" id="btn-laws">Legal Toolkit</button>
+                <button onclick="switchTab('simulator')" class="nav-btn py-4 px-1 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 transition-colors duration-200 whitespace-nowrap" id="btn-simulator">Compliance Simulator</button>
+                <button onclick="switchTab('tasks')" class="nav-btn py-4 px-1 text-sm font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 transition-colors duration-200 whitespace-nowrap" id="btn-tasks">Report Builder</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- SECTION: MISSION BRIEF -->
+        <div id="brief-section" class="space-y-8 animate-fade-in">
+            <!-- Intro Block -->
+            <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 md:p-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-stone-800 mb-2">Welcome to the NorthStream Assessment</h2>
+                        <p class="text-stone-600 max-w-2xl">
+                            You have been contracted to perform a privacy impact assessment for NorthStream Energy & Logistics. 
+                            Your goal is to untangle the "Jurisdictional Maze" created by their recent expansion and the launch of the "NorthStream Rewards" app.
+                        </p>
+                    </div>
+                    <span class="mt-4 md:mt-0 px-3 py-1 bg-sky-50 text-sky-700 text-xs font-semibold rounded-full border border-sky-100">Ponderation: 1-2-1</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                    <div class="p-4 bg-stone-50 rounded border border-stone-100">
+                        <div class="text-sky-600 font-bold mb-1">Company Profile</div>
+                        <p class="text-sm text-stone-600">Mid-sized energy transportation. HQ in Calgary. Operations in AB, BC, ON, QC.</p>
+                    </div>
+                    <div class="p-4 bg-stone-50 rounded border border-stone-100">
+                        <div class="text-sky-600 font-bold mb-1">Recent Change</div>
+                        <p class="text-sm text-stone-600">Launched "NorthStream Rewards" app. Tracking consumer GPS and purchasing habits.</p>
+                    </div>
+                    <div class="p-4 bg-stone-50 rounded border border-stone-100">
+                        <div class="text-sky-600 font-bold mb-1">Your Deliverable</div>
+                        <p class="text-sm text-stone-600">Create a <strong>Legal Requirements Register</strong> identifying applicable laws for each data asset.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Widgets -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Data Sensitivity Chart -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-4">Data Sensitivity Risk Profile</h3>
+                    <p class="text-sm text-stone-500 mb-6">
+                        An analysis of the data types held by NorthStream categorised by sensitivity. High sensitivity data (Restricted) attracts stricter legal penalties.
+                    </p>
+                    <div class="flex justify-center w-full">
+                        <div class="chart-container">
+                            <canvas id="sensitivityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Instructions -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 flex flex-col">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-4">Instructor Disclaimers</h3>
+                    <div class="flex-grow space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold mr-3">1</div>
+                            <p class="text-sm text-stone-600"><strong>Educational Purpose:</strong> NorthStream is fictional. Any resemblance to real entities is coincidental.</p>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold mr-3">2</div>
+                            <p class="text-sm text-stone-600"><strong>Open Tools:</strong> You are encouraged to research and use any suitable tools or formats. Be creative.</p>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold mr-3">3</div>
+                            <p class="text-sm text-stone-600"><strong>Ethics:</strong> Do not perform active scans on real infrastructure. Use only the provided virtual labs.</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-stone-100">
+                        <button onclick="switchTab('assets')" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-4 rounded transition duration-150">Start Analysis: View Asset Map</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ASSET MAP -->
+        <div id="assets-section" class="hidden space-y-8 animate-fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Operational Asset Map</h2>
+                <p class="text-stone-600 mt-2">Explore NorthStream's infrastructure to discover data silos and jurisdictional triggers. Click an asset to analyze it.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Interactive Asset List -->
+                <div class="lg:col-span-1 space-y-4">
+                    <p class="text-xs font-bold text-stone-400 uppercase tracking-wider">Select an Asset</p>
+                    
+                    <button onclick="selectAsset('hq')" class="asset-btn w-full text-left p-4 rounded-lg border border-stone-200 bg-white hover:border-sky-300 hover:shadow-md transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500 ring-offset-2" id="btn-asset-hq">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-stone-800 group-hover:text-sky-700">Calgary HQ Servers</h4>
+                                <p class="text-xs text-stone-500 mt-1">Location: Alberta</p>
+                            </div>
+                            <span class="text-2xl">🏢</span>
+                        </div>
+                    </button>
+
+                    <button onclick="selectAsset('cloud')" class="asset-btn w-full text-left p-4 rounded-lg border border-stone-200 bg-white hover:border-sky-300 hover:shadow-md transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500 ring-offset-2" id="btn-asset-cloud">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-stone-800 group-hover:text-sky-700">Rewards Cloud Instance</h4>
+                                <p class="text-xs text-stone-500 mt-1">Location: Montreal, QC</p>
+                            </div>
+                            <span class="text-2xl">☁️</span>
+                        </div>
+                    </button>
+
+                    <button onclick="selectAsset('pipeline')" class="asset-btn w-full text-left p-4 rounded-lg border border-stone-200 bg-white hover:border-sky-300 hover:shadow-md transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500 ring-offset-2" id="btn-asset-pipeline">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-stone-800 group-hover:text-sky-700">Pipeline Infrastructure</h4>
+                                <p class="text-xs text-stone-500 mt-1">Location: AB, BC, ON, QC</p>
+                            </div>
+                            <span class="text-2xl">⚙️</span>
+                        </div>
+                    </button>
+
+                    <button onclick="selectAsset('marketing')" class="asset-btn w-full text-left p-4 rounded-lg border border-stone-200 bg-white hover:border-sky-300 hover:shadow-md transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-sky-500 ring-offset-2" id="btn-asset-marketing">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-stone-800 group-hover:text-sky-700">Vendor Marketing List</h4>
+                                <p class="text-xs text-stone-500 mt-1">Location: USA</p>
+                            </div>
+                            <span class="text-2xl">📧</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Inspector Panel -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-stone-200 p-6 md:p-8 flex flex-col justify-between min-h-[500px]" id="inspector-panel">
+                    <!-- Default State -->
+                    <div id="inspector-empty" class="h-full flex flex-col items-center justify-center text-center text-stone-400">
+                        <span class="text-4xl mb-4">🔍</span>
+                        <p>Select an operational asset from the list<br>to inspect its data inventory and legal risks.</p>
+                    </div>
+
+                    <!-- Content State (Hidden by default) -->
+                    <div id="inspector-content" class="hidden h-full flex flex-col">
+                        <div class="flex items-start justify-between border-b border-stone-100 pb-4 mb-6">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span id="insp-icon" class="text-2xl"></span>
+                                    <h3 id="insp-title" class="text-2xl font-bold text-stone-800"></h3>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span id="insp-loc" class="px-2 py-0.5 bg-stone-100 text-stone-600 text-xs rounded font-medium border border-stone-200"></span>
+                                    <span id="insp-risk" class="px-2 py-0.5 text-xs rounded font-medium border"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 flex-grow">
+                            <div>
+                                <h4 class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">Data Inventory</h4>
+                                <ul id="insp-data" class="space-y-2 text-sm text-stone-700"></ul>
+                            </div>
+
+                            <div class="bg-amber-50 border-l-4 border-amber-400 p-4">
+                                <h4 class="text-sm font-bold text-amber-800 uppercase tracking-wider mb-2">Primary Legal Trigger</h4>
+                                <p id="insp-trigger" class="text-sm text-amber-900"></p>
+                            </div>
+
+                            <div>
+                                <h4 class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">NorthStream Context</h4>
+                                <p id="insp-context" class="text-sm text-stone-600 leading-relaxed"></p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 pt-6 border-t border-stone-100 flex justify-end">
+                            <button onclick="switchTab('simulator')" class="text-sky-600 hover:text-sky-800 text-sm font-medium flex items-center">
+                                Analyze in Simulator <span class="ml-1">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: LEGAL TOOLKIT -->
+        <div id="laws-section" class="hidden space-y-8 animate-fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Legal Framework Toolkit</h2>
+                <p class="text-stone-600 mt-2">Reference guide for the "Jurisdictional Maze". Use these summaries to build your Legal Register.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- PIPEDA -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-stone-800">PIPEDA</h3>
+                        <span class="text-xs bg-sky-100 text-sky-800 px-2 py-1 rounded">Federal</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">Personal Information Protection and Electronic Documents Act.</p>
+                    <ul class="text-sm space-y-2 mb-4 text-stone-700">
+                        <li class="flex items-start"><span class="text-sky-500 mr-2">•</span> <strong>Scope:</strong> Private sector organizations in Canada (unless provincial law is substantially similar) and all Federal Works (FWUBs).</li>
+                        <li class="flex items-start"><span class="text-sky-500 mr-2">•</span> <strong>Principle 4.3:</strong> Knowledge and consent required for collection.</li>
+                        <li class="flex items-start"><span class="text-sky-500 mr-2">•</span> <strong>Cross-Border:</strong> Organizations are responsible for data sent abroad for processing.</li>
+                    </ul>
+                    <a href="https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/" target="_blank" class="text-xs text-sky-600 hover:underline flex items-center">
+                        Official OPC Resource <span class="ml-1">↗</span>
+                    </a>
+                </div>
+
+                <!-- Quebec Law 25 -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-stone-800">Quebec Law 25</h3>
+                        <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Provincial (Strict)</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">Formerly Bill 64. Modernizes privacy protection in Quebec.</p>
+                    <ul class="text-sm space-y-2 mb-4 text-stone-700">
+                        <li class="flex items-start"><span class="text-purple-500 mr-2">•</span> <strong>Scope:</strong> Any enterprise collecting data on Quebec residents or storing data in Quebec.</li>
+                        <li class="flex items-start"><span class="text-purple-500 mr-2">•</span> <strong>Key Req:</strong> Must appoint a Privacy Officer (default is CEO).</li>
+                        <li class="flex items-start"><span class="text-purple-500 mr-2">•</span> <strong>PIA:</strong> Privacy Impact Assessment mandatory for moving data outside Quebec.</li>
+                    </ul>
+                    <a href="https://www.cai.gouv.qc.ca/english/" target="_blank" class="text-xs text-sky-600 hover:underline flex items-center">
+                        Commission d'accès à l'information <span class="ml-1">↗</span>
+                    </a>
+                </div>
+
+                <!-- CASL -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-stone-800">CASL</h3>
+                        <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Anti-Spam</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">Canada's Anti-Spam Legislation.</p>
+                    <ul class="text-sm space-y-2 mb-4 text-stone-700">
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2">•</span> <strong>Scope:</strong> Commercial Electronic Messages (CEMs) sent to/from Canada.</li>
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2">•</span> <strong>Consent:</strong> Requires Express or Implied consent. Unsubscribe mechanism mandatory.</li>
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2">•</span> <strong>Penalties:</strong> Severe financial penalties for violation.</li>
+                    </ul>
+                    <a href="https://ised-isde.canada.ca/site/canada-anti-spam-legislation/en" target="_blank" class="text-xs text-sky-600 hover:underline flex items-center">
+                        Gov of Canada CASL <span class="ml-1">↗</span>
+                    </a>
+                </div>
+
+                <!-- PIPA (AB/BC) -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-stone-800">PIPA (AB/BC)</h3>
+                        <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Provincial</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">Personal Information Protection Act.</p>
+                    <ul class="text-sm space-y-2 mb-4 text-stone-700">
+                        <li class="flex items-start"><span class="text-orange-500 mr-2">•</span> <strong>Status:</strong> "Substantially Similar" to PIPEDA.</li>
+                        <li class="flex items-start"><span class="text-orange-500 mr-2">•</span> <strong>Application:</strong> Applies to private sector organizations in Alberta and BC for intra-provincial matters.</li>
+                        <li class="flex items-start"><span class="text-orange-500 mr-2">•</span> <strong>Employee Data:</strong> specifically covers employee information (unlike PIPEDA in some non-federal contexts).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: COMPLIANCE SIMULATOR -->
+        <div id="simulator-section" class="hidden space-y-8 animate-fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Compliance Logic Simulator</h2>
+                <p class="text-stone-600 mt-2">Test your understanding. Input a data scenario to see which law likely takes precedence. Use these results to fill your Register.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Inputs -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 h-fit">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">Scenario Configuration</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Data Subject / Type</label>
+                            <select id="sim-subject" class="w-full border-stone-300 rounded-md shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm p-2 border">
+                                <option value="" disabled selected>Select Subject...</option>
+                                <option value="employee">Employee Records (HR)</option>
+                                <option value="consumer">App User / Customer</option>
+                                <option value="marketing">Email Marketing List</option>
+                                <option value="operations">Operational Sensor Data</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Primary Jurisdiction / Location</label>
+                            <select id="sim-loc" class="w-full border-stone-300 rounded-md shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm p-2 border">
+                                <option value="" disabled selected>Select Location...</option>
+                                <option value="federal">Canada (Inter-provincial / Federal Work)</option>
+                                <option value="qc">Quebec (Montreal Server)</option>
+                                <option value="ab">Alberta (Calgary HQ)</option>
+                                <option value="us">USA (Third Party)</option>
+                            </select>
+                        </div>
+
+                        <button onclick="runSimulation()" class="w-full bg-stone-800 hover:bg-black text-white font-medium py-2 px-4 rounded transition duration-150 mt-4 flex justify-center items-center">
+                            <span>Analyze Framework</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Output -->
+                <div class="lg:col-span-2 bg-stone-50 rounded-lg border border-stone-200 p-6 relative overflow-hidden">
+                    <div id="sim-placeholder" class="absolute inset-0 flex items-center justify-center text-stone-400 bg-stone-50 z-10">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">⚙️</span>
+                            <p>Configure scenario to see analysis</p>
+                        </div>
+                    </div>
+                    
+                    <div id="sim-result" class="relative z-0 opacity-20 transition-opacity duration-300">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-sky-100 rounded text-sky-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-stone-800">Analysis Result</h3>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <span class="text-xs font-bold text-stone-500 uppercase">Applicable Law</span>
+                                <div id="res-law" class="text-lg font-bold text-sky-700 mt-1">PIPEDA</div>
+                            </div>
+                            
+                            <div>
+                                <span class="text-xs font-bold text-stone-500 uppercase">Reasoning</span>
+                                <p id="res-reason" class="text-sm text-stone-700 mt-1 leading-relaxed">Explanation goes here...</p>
+                            </div>
+
+                            <div class="bg-white p-4 rounded border border-stone-200">
+                                <span class="text-xs font-bold text-amber-600 uppercase">Compliance Action Item</span>
+                                <p id="res-action" class="text-sm text-stone-800 mt-1 font-medium">Action goes here...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: TASKS & REPORT -->
+        <div id="tasks-section" class="hidden space-y-8 animate-fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Project Task 1: Report Builder</h2>
+                <p class="text-stone-600 mt-2">Use this checklist to ensure your PDF submission is complete. All data gathered in the previous tabs should be synthesized here.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+                <div class="p-6 border-b border-stone-100 bg-stone-50">
+                    <h3 class="font-bold text-stone-800">Deliverable Checklist</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <label class="flex items-start space-x-3 p-3 hover:bg-stone-50 rounded cursor-pointer transition">
+                        <input type="checkbox" class="mt-1 h-4 w-4 text-sky-600 border-stone-300 rounded focus:ring-sky-500">
+                        <div>
+                            <span class="font-medium text-stone-800">A. Executive Summary (Draft)</span>
+                            <p class="text-xs text-stone-500 mt-1">150-word paragraph explaining the "Conflict of Laws" and risk of Quebec Cloud server to the CEO.</p>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start space-x-3 p-3 hover:bg-stone-50 rounded cursor-pointer transition">
+                        <input type="checkbox" class="mt-1 h-4 w-4 text-sky-600 border-stone-300 rounded focus:ring-sky-500">
+                        <div>
+                            <span class="font-medium text-stone-800">B. Legal Requirements Register</span>
+                            <p class="text-xs text-stone-500 mt-1">Table with at least 5 rows (ID, Data Subject, Jurisdiction, Law, Requirement, Context).</p>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start space-x-3 p-3 hover:bg-stone-50 rounded cursor-pointer transition">
+                        <input type="checkbox" class="mt-1 h-4 w-4 text-sky-600 border-stone-300 rounded focus:ring-sky-500">
+                        <div>
+                            <span class="font-medium text-stone-800">C. Compliance Strategy Note</span>
+                            <p class="text-xs text-stone-500 mt-1">Bullet points recommending how to handle conflicting laws (e.g., Apply strictest standard globally).</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-start space-x-3 p-3 hover:bg-stone-50 rounded cursor-pointer transition">
+                        <input type="checkbox" class="mt-1 h-4 w-4 text-sky-600 border-stone-300 rounded focus:ring-sky-500">
+                        <div>
+                            <span class="font-medium text-stone-800">Formatting & References</span>
+                            <p class="text-xs text-stone-500 mt-1">PDF format. Naming: Module2_Task1_Name.pdf. Include URLs for laws.</p>
+                        </div>
+                    </label>
+                </div>
+                <div class="p-6 bg-stone-50 border-t border-stone-100 text-center">
+                    <p class="text-sm text-stone-500 italic">This app helps you research. You must write the final report in your word processor.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-stone-900 text-stone-400 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-sm">
+            <p>&copy; 2026 NorthStream Simulation Lab. Educational Use Only.</p>
+            <div class="mt-2 md:mt-0 flex space-x-4">
+                <a href="#" class="hover:text-white transition">Privacy Policy (Simulated)</a>
+                <a href="#" class="hover:text-white transition">Terms of Use</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA & STATE ---
+        const state = {
+            currentTab: 'brief',
+            timer: 0,
+            timerInterval: null
+        };
+
+        // Data for the "Asset Inspector"
+        const assets = {
+            hq: {
+                title: "Calgary HQ Servers",
+                location: "Alberta (Calgary)",
+                icon: "🏢",
+                risk: "High (Confidential)",
+                riskColor: "text-orange-600 border-orange-200 bg-orange-50",
+                inventory: [
+                    "Employee Records (1,200 staff)",
+                    "SIN Numbers (Restricted)",
+                    "Banking Information",
+                    "Health Benefits Claims"
+                ],
+                trigger: "PIPEDA (Federal Work) vs. PIPA Alberta",
+                context: "While NorthStream is likely a 'Federal Work' (FWUB) due to inter-provincial pipelines, Alberta's PIPA applies to employee data for provincially regulated aspects. However, for a FWUB, PIPEDA usually preempts regarding employee data. This is a complex jurisdictional overlap."
+            },
+            cloud: {
+                title: "Rewards Cloud Instance",
+                location: "Quebec (Montreal)",
+                icon: "☁️",
+                risk: "Critical (Restricted/Law 25)",
+                riskColor: "text-red-600 border-red-200 bg-red-50",
+                inventory: [
+                    "Customer Names & Emails",
+                    "GPS Location History (Sensitive)",
+                    "Partial Credit Card Data",
+                    "Purchasing Habits"
+                ],
+                trigger: "Quebec Law 25 (Bill 64)",
+                context: "Storing data in Quebec triggers Law 25 immediately. Requires a Privacy Officer, mandatory breach reporting, and strict rules on cross-border transfer if this data leaves Quebec. GPS data is highly sensitive PII."
+            },
+            pipeline: {
+                title: "Pipeline Infrastructure",
+                location: "AB, BC, ON, QC",
+                icon: "⚙️",
+                risk: "Medium (Operational)",
+                riskColor: "text-yellow-600 border-yellow-200 bg-yellow-50",
+                inventory: [
+                    "Pressure & Flow Data",
+                    "Sensor Logs",
+                    "Maintenance Schedules"
+                ],
+                trigger: "Critical Infrastructure / PIPEDA",
+                context: "While mostly operational data (not PII), any technician logs attached to individuals become PII. The primary concern here is integrity/availability, but privacy laws apply if specific employee actions are tracked."
+            },
+            marketing: {
+                title: "Vendor Marketing List",
+                location: "USA (Third Party)",
+                icon: "📧",
+                risk: "Medium (Cross-Border)",
+                riskColor: "text-blue-600 border-blue-200 bg-blue-50",
+                inventory: [
+                    "50,000 Email Addresses",
+                    "Newsletter Subscription Status"
+                ],
+                trigger: "CASL & PIPEDA Cross-Border",
+                context: "US storage means data is subject to the US PATRIOT Act. Under PIPEDA, NorthStream remains responsible for this data. CASL strict consent rules apply to sending emails to these Canadians."
+            }
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            startTimer();
+            renderChart();
+        }
+
+        function startTimer() {
+            state.timerInterval = setInterval(() => {
+                state.timer++;
+                const hours = Math.floor(state.timer / 3600);
+                const minutes = Math.floor((state.timer % 3600) / 60);
+                const seconds = state.timer % 60;
+                document.getElementById('session-timer').innerText = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // Navigation Handling
+        function switchTab(tabId) {
+            // Update State
+            state.currentTab = tabId;
+
+            // Hide all sections
+            ['brief', 'assets', 'laws', 'simulator', 'tasks'].forEach(id => {
+                document.getElementById(`${id}-section`).classList.add('hidden');
+                document.getElementById(`btn-${id}`).classList.remove('nav-active', 'border-b-2', 'border-sky-600', 'text-sky-600');
+                document.getElementById(`btn-${id}`).classList.add('text-stone-500', 'border-transparent');
+            });
+
+            // Show selected section
+            document.getElementById(`${tabId}-section`).classList.remove('hidden');
+            
+            // Style Active Button
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('nav-active');
+            activeBtn.classList.remove('text-stone-500', 'border-transparent');
+            
+            // Re-render chart if brief is shown (fix chart.js resizing bugs in hidden tabs)
+            if (tabId === 'brief') {
+                // Optional: chart.update() if needed
+            }
+        }
+
+        // Asset Inspector Logic
+        function selectAsset(assetKey) {
+            const data = assets[assetKey];
+            const panelEmpty = document.getElementById('inspector-empty');
+            const panelContent = document.getElementById('inspector-content');
+
+            // Reset UI
+            document.querySelectorAll('.asset-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-sky-500', 'bg-sky-50');
+            });
+            document.getElementById(`btn-asset-${assetKey}`).classList.add('ring-2', 'ring-sky-500', 'bg-sky-50');
+
+            // Hide Empty, Show Content
+            panelEmpty.classList.add('hidden');
+            panelContent.classList.remove('hidden');
+
+            // Populate Content
+            document.getElementById('insp-title').innerText = data.title;
+            document.getElementById('insp-loc').innerText = data.location;
+            document.getElementById('insp-icon').innerText = data.icon;
+            
+            const riskBadge = document.getElementById('insp-risk');
+            riskBadge.innerText = data.risk;
+            riskBadge.className = `px-2 py-0.5 text-xs rounded font-medium border ${data.riskColor}`;
+
+            const list = document.getElementById('insp-data');
+            list.innerHTML = '';
+            data.inventory.forEach(item => {
+                const li = document.createElement('li');
+                li.className = "flex items-center";
+                li.innerHTML = `<span class="w-1.5 h-1.5 bg-stone-400 rounded-full mr-2"></span>${item}`;
+                list.appendChild(li);
+            });
+
+            document.getElementById('insp-trigger').innerText = data.trigger;
+            document.getElementById('insp-context').innerText = data.context;
+        }
+
+        // Compliance Simulator Logic
+        function runSimulation() {
+            const subject = document.getElementById('sim-subject').value;
+            const location = document.getElementById('sim-loc').value;
+            
+            const resultDiv = document.getElementById('sim-result');
+            const placeholderDiv = document.getElementById('sim-placeholder');
+            const lawTxt = document.getElementById('res-law');
+            const reasonTxt = document.getElementById('res-reason');
+            const actionTxt = document.getElementById('res-action');
+
+            if (!subject || !location) {
+                alert("Please select both a Data Subject and a Location.");
+                return;
+            }
+
+            // SIMULATION RULES ENGINE (Based on Lab Manual Logic)
+            let result = { law: "", reason: "", action: "" };
+
+            if (location === 'qc') {
+                result.law = "Quebec Law 25 (Act 25)";
+                result.reason = "Data stored in Quebec or regarding Quebec residents falls under the strict provincial Act 25. This applies regardless of where the company HQ is.";
+                result.action = "Appoint Privacy Officer, conduct PIA for any data transfer outside Quebec, and ensure 'Clear and Free' consent.";
+            } else if (subject === 'marketing') {
+                result.law = "CASL (Anti-Spam)";
+                result.reason = "Commercial Electronic Messages are governed by CASL. Location of storage matters less than the act of sending the message to Canadians.";
+                result.action = "Verify Express vs. Implied Consent status for all 50k emails. Ensure unsubscribe mechanism is functional.";
+            } else if (subject === 'employee' && location === 'ab') {
+                // The "Trick" Question
+                result.law = "Likely PIPEDA (Federal Work)";
+                result.reason = "NorthStream is an inter-provincial transportation company (Federal Work/Undertaking). Usually, PIPEDA applies to employee data in FWUBs, preempting provincial PIPA.";
+                result.action = "Confirm FWUB status. If confirmed, follow PIPEDA for HR files. If not, Alberta PIPA applies.";
+            } else if (subject === 'consumer' && location === 'us') {
+                result.law = "PIPEDA (Principle 4.1.3)";
+                result.reason = "When transferring data to a third party (US vendor), the Canadian organization remains responsible for compliance under PIPEDA.";
+                result.action = "Use contractual or other means to ensure the US vendor provides a comparable level of protection.";
+            } else {
+                // Default Catch-all
+                result.law = "PIPEDA";
+                result.reason = "As a commercial activity crossing provincial borders, the federal PIPEDA applies as the baseline privacy law.";
+                result.action = "Obtain meaningful consent (Principle 4.3) and limit collection to what is necessary (Principle 4.4).";
+            }
+
+            // Render Results with Animation
+            placeholderDiv.classList.add('hidden');
+            resultDiv.classList.remove('opacity-20');
+            resultDiv.classList.add('opacity-100');
+            
+            lawTxt.innerText = result.law;
+            reasonTxt.innerText = result.reason;
+            actionTxt.innerText = result.action;
+        }
+
+        // --- CHART IMPLEMENTATION ---
+        function renderChart() {
+            const ctx = document.getElementById('sensitivityChart').getContext('2d');
+            
+            // Data derived from text: 
+            // 1200 employees (Restricted: SIN/Health)
+            // 50k Marketing (Confidential: Email)
+            // Operations (Internal)
+            // Rewards (Restricted: GPS/Financial)
+            // Just using simplified ratios for visual
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Restricted (Health, SIN, GPS)', 'Confidential (Email, Name)', 'Internal (Ops Data)', 'Public'],
+                    datasets: [{
+                        data: [35, 40, 20, 5], // Estimated percentages for visual impact
+                        backgroundColor: [
+                            '#dc2626', // Red-600
+                            '#f59e0b', // Amber-500
+                            '#64748b', // Slate-500
+                            '#d6d3d1'  // Stone-300
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Critical for container responsiveness
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 11
+                                }
+                            }
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
+
+
+
+
+
+

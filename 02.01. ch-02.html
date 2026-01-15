@@ -1,0 +1,777 @@
+<!-- Chosen Palette: Warm Neutrals & Professional Calm -->
+<!-- Palette Hex Codes: Background #faf9f6 (Alabaster), Text #374151 (Gray-700), Accent #577590 (Slate Blue), Secondary #c8ae95 (Warm Sand), Highlight #e9c46a (Muted Gold) -->
+
+<!-- Application Structure Plan: 
+    The application is designed as a "Cybersecurity Compliance Learning Hub", a single-page interactive dashboard. 
+    It focuses on the "Student/Learner" persona, breaking the dense lecture notes into 5 digestible, interactive modules.
+    
+    Structure:
+    1.  **Hero/Header**: Sets the context (Educational Purpose) and provides global navigation.
+    2.  **Module 1: The Legal Framework Comparator**: Uses a split-view interactive card layout to contrast PIPEDA (Private) and Privacy Act (Federal). This directly addresses the "Context" section of the notes.
+    3.  **Module 2: The 10 Principles Explorer**: A 2x5 interactive grid. Users click a principle to reveal its detailed "Cybersecurity Tie-in" and "Practical Task" in a dedicated display panel. This handles the bulk of Part A.
+    4.  **Module 3: Regional & Critical Updates (Law 25 & Bill C-26)**: A tabbed interface separating the Quebec modernization rules from the Critical Infrastructure rules. Includes a "Risk Register" simulator (interactive form) to demonstrate the "Risk/Penalty" concepts of Law 25.
+    5.  **Module 4: Assessment Workflow Wizard**: A step-by-step linear flow (Scope -> Map -> Collect -> Test -> Report). Users click through the phases to see example evidence types.
+    6.  **Module 5: Lab Workbench**: A code repository section presenting the Python/Bash snippets from the notes in a clean, copy-paste friendly format with syntax highlighting style.
+    
+    Why this structure?
+    The source text is linear and dense. A dashboard/tabbed approach allows non-linear exploration. The "Principles Explorer" prevents cognitive overload by hiding details until requested. The "Risk Register" adds active learning.
+-->
+
+<!-- Visualization & Content Choices:
+    1.  **Compliance Status Mockup (Chart.js - Doughnut)**: 
+        * *Goal*: Inform/Visualize "Data Sensitivity" classification mentioned in the Inventory section.
+        * *Context*: Located in the "Assessment Workflow" section to show what a "Data Inventory" output might look like.
+        * *Interaction*: Hover for details.
+    
+    2.  **Incident Trend Mockup (Chart.js - Bar)**:
+        * *Goal*: Visualize "Incident Reporting" frequency.
+        * *Context*: Located in the Bill C-26 section to illustrate the need for monitoring and reporting.
+        * *Interaction*: Dynamic filtering (simulated) by "Severity".
+
+    3.  **Principles Grid (HTML/Tailwind/JS)**:
+        * *Goal*: Organize the 10 Fair Information Principles.
+        * *Method*: Grid of clickable cards.
+        * *Justification*: Better than a list; encourages exploration.
+
+    4.  **Interactive Code Blocks (HTML/JS)**:
+        * *Goal*: Present the "Mini-labs".
+        * *Method*: Pre-formatted text areas with a "Copy" button.
+        * *Justification*: Makes the technical lab portion accessible without leaving the page.
+-->
+
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Compliance Learning Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf9f6; color: #374151; }
+        .nav-active { border-bottom: 3px solid #577590; color: #1f2937; font-weight: 600; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 600px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 300px; 
+            max-height: 400px; 
+        } 
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        /* Custom scrollbar for code blocks */
+        .code-block::-webkit-scrollbar { height: 8px; }
+        .code-block::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="h-8 w-8 bg-[#577590] rounded flex items-center justify-center text-white font-bold mr-3">C</div>
+                    <span class="text-xl font-bold text-gray-800">CyberCompliance<span class="text-[#577590]">Hub</span></span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <button onclick="navigate('frameworks')" id="nav-frameworks" class="nav-item nav-active px-3 py-2 text-sm font-medium transition-colors hover:text-[#577590]">Legal Frameworks</button>
+                    <button onclick="navigate('principles')" id="nav-principles" class="nav-item px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-[#577590]">10 Principles</button>
+                    <button onclick="navigate('quebec-infra')" id="nav-quebec-infra" class="nav-item px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-[#577590]">Regional & Critical</button>
+                    <button onclick="navigate('workflow')" id="nav-workflow" class="nav-item px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-[#577590]">Assessment Workflow</button>
+                    <button onclick="navigate('labs')" id="nav-labs" class="nav-item px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-[#577590]">Lab Workbench</button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Nav Placeholder -->
+        <div class="md:hidden border-t border-gray-100 flex justify-around p-2">
+            <button onclick="navigate('frameworks')" class="text-xs p-1">Frameworks</button>
+            <button onclick="navigate('principles')" class="text-xs p-1">Principles</button>
+            <button onclick="navigate('workflow')" class="text-xs p-1">Workflow</button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- Safety Disclaimer -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <span class="text-yellow-400 text-xl font-bold">!</span>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        <strong class="font-medium text-yellow-800">Educational Warning:</strong> 
+                        These tools are for authorized lab environments only. Never use techniques on systems without explicit permission. Use synthetic data.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Legal Frameworks -->
+        <div id="view-frameworks" class="view-section animate-fade-in">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-900">Canadian Legal Frameworks</h2>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+                    Understanding the distinction between Private Sector (PIPEDA) and Public Sector (Privacy Act) obligations is the first step in scoping any compliance assessment.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <!-- PIPEDA Card -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden hover:shadow-lg transition-shadow duration-300 border-t-4 border-[#577590]">
+                    <div class="p-8">
+                        <div class="uppercase tracking-wide text-sm text-[#577590] font-semibold">Private Sector</div>
+                        <h3 class="mt-1 text-2xl font-bold text-gray-900">PIPEDA</h3>
+                        <p class="text-gray-500 text-sm mb-4">Personal Information Protection and Electronic Documents Act</p>
+                        <p class="mt-2 text-gray-600">Applies to organizations collecting, using, or disclosing PI in the course of <strong>commercial activities</strong>.</p>
+                        
+                        <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2">Key Questions:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                <li>What PI do we have?</li>
+                                <li>Why do we have it?</li>
+                                <li>Who can access it?</li>
+                            </ul>
+                        </div>
+                        <div class="mt-6">
+                            <button onclick="showScenario('pipeda')" class="w-full bg-[#577590] text-white py-2 px-4 rounded hover:bg-[#435c70] transition-colors">View Retail Scenario</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Act Card -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden hover:shadow-lg transition-shadow duration-300 border-t-4 border-[#c8ae95]">
+                    <div class="p-8">
+                        <div class="uppercase tracking-wide text-sm text-[#c8ae95] font-semibold">Federal Public Sector</div>
+                        <h3 class="mt-1 text-2xl font-bold text-gray-900">Privacy Act</h3>
+                        <p class="text-gray-500 text-sm mb-4">Governs Federal Government Institutions</p>
+                        <p class="mt-2 text-gray-600">Applies to <strong>federal government institutions</strong> and their handling of citizen Personal Information.</p>
+                        
+                        <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2">Key Focus:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                <li>Strict collection limits.</li>
+                                <li>Transparency with citizens.</li>
+                                <li>Integration with contractor requirements.</li>
+                            </ul>
+                        </div>
+                        <div class="mt-6">
+                            <button onclick="showScenario('privacy-act')" class="w-full bg-[#c8ae95] text-white py-2 px-4 rounded hover:bg-[#a68e76] transition-colors">View Agency Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Scenario Output -->
+            <div id="framework-scenario-output" class="hidden bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <h4 id="scenario-title" class="text-lg font-bold text-gray-900 mb-2"></h4>
+                <p id="scenario-desc" class="text-gray-600"></p>
+                <div class="mt-4 p-4 bg-blue-50 text-blue-800 rounded text-sm">
+                    <strong>Assessment Tip:</strong> <span id="scenario-tip"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: 10 Principles -->
+        <div id="view-principles" class="view-section hidden">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900">The 10 Fair Information Principles</h2>
+                <p class="mt-2 text-gray-600">Click on any principle to explore its cybersecurity controls, evidence requirements, and practical application.</p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Grid Menu -->
+                <div class="lg:w-1/3 grid grid-cols-2 gap-4 h-fit">
+                    <button onclick="loadPrinciple(0)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="0">1. Accountability</button>
+                    <button onclick="loadPrinciple(1)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="1">2. Purpose</button>
+                    <button onclick="loadPrinciple(2)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="2">3. Consent</button>
+                    <button onclick="loadPrinciple(3)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="3">4. Limit Collection</button>
+                    <button onclick="loadPrinciple(4)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="4">5. Limit Use/Retain</button>
+                    <button onclick="loadPrinciple(5)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="5">6. Accuracy</button>
+                    <button onclick="loadPrinciple(6)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="6">7. Safeguards</button>
+                    <button onclick="loadPrinciple(7)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="7">8. Openness</button>
+                    <button onclick="loadPrinciple(8)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="8">9. Individual Access</button>
+                    <button onclick="loadPrinciple(9)" class="p-4 bg-white border hover:border-[#577590] rounded shadow-sm text-left hover:bg-gray-50 transition-all principle-btn" data-index="9">10. Challenging</button>
+                </div>
+
+                <!-- Detail Panel -->
+                <div class="lg:w-2/3 bg-white rounded-xl card-shadow p-8 border-t-8 border-[#577590] transition-all" id="principle-detail-panel">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-bold text-[#577590] uppercase tracking-wider">Selected Principle</span>
+                            <h3 id="p-title" class="text-3xl font-bold text-gray-900 mt-1">Select a Principle</h3>
+                        </div>
+                        <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold" id="p-number">#</div>
+                    </div>
+                    
+                    <p id="p-concept" class="mt-4 text-lg text-gray-600 italic">Select a principle from the left to see details.</p>
+
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-5 rounded-lg border border-blue-100">
+                            <h4 class="font-bold text-blue-900 mb-2">Cybersecurity Tie-in</h4>
+                            <p id="p-tiein" class="text-sm text-blue-800">How does this relate to security controls?</p>
+                        </div>
+                        <div class="bg-orange-50 p-5 rounded-lg border border-orange-100">
+                            <h4 class="font-bold text-orange-900 mb-2">Compliance Task</h4>
+                            <p id="p-task" class="text-sm text-orange-800">What evidence do you need?</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t pt-4">
+                        <h4 class="font-bold text-gray-800 text-sm mb-2">Real World Evidence Example:</h4>
+                        <p id="p-evidence" class="text-sm text-gray-500 font-mono bg-gray-50 p-3 rounded">...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Quebec Law 25 & C-26 -->
+        <div id="view-quebec-infra" class="view-section hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900">Regional & Critical Updates</h2>
+                    <p class="mt-2 text-gray-600">Modernization of privacy (Quebec) and Critical Infrastructure protection (Federal).</p>
+                </div>
+                <div class="flex space-x-2 mt-4 md:mt-0">
+                    <button onclick="toggleSubRegion('quebec')" id="btn-quebec" class="px-4 py-2 bg-[#577590] text-white rounded shadow-sm text-sm font-medium">Quebec Law 25</button>
+                    <button onclick="toggleSubRegion('infra')" id="btn-infra" class="px-4 py-2 bg-white text-gray-600 border rounded shadow-sm text-sm font-medium hover:bg-gray-50">Bill C-26</button>
+                </div>
+            </div>
+
+            <!-- Quebec Content -->
+            <div id="sub-quebec" class="sub-view">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="col-span-2 bg-white p-6 rounded-xl card-shadow">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Law 25: The Modernization</h3>
+                        <p class="mb-4">Quebec Law 25 drastically raises the bar for governance. It moves from "reactive" to "proactive" privacy management.</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span><strong>Governance:</strong> Designated Privacy Officer & clear roles required.</span></li>
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span><strong>Privacy by Default:</strong> Strictest settings must be the default.</span></li>
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span><strong>PIA:</strong> Privacy Impact Assessments mandatory for data transfers/new systems.</span></li>
+                        </ul>
+                    </div>
+                    <div class="bg-red-50 p-6 rounded-xl border border-red-100">
+                        <h3 class="text-xl font-bold text-red-900 mb-2">High Penalties</h3>
+                        <p class="text-sm text-red-800 mb-4">Privacy is now a board-level risk.</p>
+                        <div class="text-center">
+                            <span class="text-4xl font-bold text-red-600">$$$</span>
+                            <p class="text-xs text-red-700 mt-2">Administrative & Penal Fines Increased</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Register Simulator -->
+                <div class="bg-white p-6 rounded-xl card-shadow">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Interactive Tool: Risk Register Builder</h3>
+                    <p class="text-sm text-gray-500 mb-4">Law 25 requires tracking risks. Select a vulnerability to see how it translates to a Risk Register entry.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Vulnerability Scenario</label>
+                            <select id="risk-selector" class="w-full p-2 border border-gray-300 rounded-md focus:ring-[#577590] focus:border-[#577590]" onchange="updateRiskRegister()">
+                                <option value="">-- Select a Scenario --</option>
+                                <option value="unencrypted">Unencrypted Shared Drive with PI</option>
+                                <option value="vendor">Vendor Access without Contract</option>
+                                <option value="old_data">7-year old data kept "just in case"</option>
+                            </select>
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-md font-mono text-sm border-l-4 border-[#577590]">
+                            <p class="text-xs text-gray-500 uppercase">Risk Register Output:</p>
+                            <div id="risk-output" class="mt-2 whitespace-pre-wrap">Select a scenario...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infra Content -->
+            <div id="sub-infra" class="sub-view hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Bill C-26: Critical Infrastructure</h3>
+                        <p class="mb-4 text-gray-600">Focuses on sectors where disruption affects safety, economy, and national security (Telecom, Energy, Finance, Transport).</p>
+                        
+                        <div class="bg-white p-6 rounded-xl card-shadow mb-6">
+                            <h4 class="font-bold text-gray-800 mb-2">Core Obligations</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center p-3 bg-gray-50 rounded">
+                                    <div class="h-8 w-8 bg-[#577590] rounded-full text-white flex items-center justify-center font-bold mr-3">1</div>
+                                    <span class="text-sm">Establish a Cybersecurity Program</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded">
+                                    <div class="h-8 w-8 bg-[#577590] rounded-full text-white flex items-center justify-center font-bold mr-3">2</div>
+                                    <span class="text-sm">Manage Supply Chain & Vendor Risks</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded">
+                                    <div class="h-8 w-8 bg-red-500 rounded-full text-white flex items-center justify-center font-bold mr-3">3</div>
+                                    <span class="text-sm">Mandatory Incident Reporting</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="bg-white p-6 rounded-xl card-shadow">
+                        <h4 class="font-bold text-gray-800 mb-4">Incident Reporting Readiness</h4>
+                        <p class="text-xs text-gray-500 mb-4">Regulators expect timely reporting. Visualization of mock incident triage data.</p>
+                        <div class="chart-container">
+                            <canvas id="incidentChart"></canvas>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <button onclick="updateChartData()" class="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">Simulate New Incident Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Workflow -->
+        <div id="view-workflow" class="view-section hidden">
+            <div class="mb-8 text-center">
+                <h2 class="text-3xl font-bold text-gray-900">Compliance Assessment Workflow</h2>
+                <p class="mt-2 text-gray-600">The 5-step process to turning legal requirements into secure reality.</p>
+            </div>
+
+            <!-- Stepper -->
+            <div class="flex justify-between items-center mb-10 overflow-x-auto py-4">
+                <button onclick="setStep(1)" class="step-btn active-step flex flex-col items-center min-w-[100px]" id="step-btn-1">
+                    <div class="h-10 w-10 rounded-full bg-[#577590] text-white flex items-center justify-center font-bold mb-2 transition-all">1</div>
+                    <span class="text-sm font-medium">Scope</span>
+                </button>
+                <div class="h-1 bg-gray-200 flex-grow mx-2"></div>
+                <button onclick="setStep(2)" class="step-btn flex flex-col items-center min-w-[100px]" id="step-btn-2">
+                    <div class="h-10 w-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold mb-2 transition-all">2</div>
+                    <span class="text-sm font-medium">Map</span>
+                </button>
+                <div class="h-1 bg-gray-200 flex-grow mx-2"></div>
+                <button onclick="setStep(3)" class="step-btn flex flex-col items-center min-w-[100px]" id="step-btn-3">
+                    <div class="h-10 w-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold mb-2 transition-all">3</div>
+                    <span class="text-sm font-medium">Collect</span>
+                </button>
+                <div class="h-1 bg-gray-200 flex-grow mx-2"></div>
+                <button onclick="setStep(4)" class="step-btn flex flex-col items-center min-w-[100px]" id="step-btn-4">
+                    <div class="h-10 w-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold mb-2 transition-all">4</div>
+                    <span class="text-sm font-medium">Test</span>
+                </button>
+                <div class="h-1 bg-gray-200 flex-grow mx-2"></div>
+                <button onclick="setStep(5)" class="step-btn flex flex-col items-center min-w-[100px]" id="step-btn-5">
+                    <div class="h-10 w-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold mb-2 transition-all">5</div>
+                    <span class="text-sm font-medium">Report</span>
+                </button>
+            </div>
+
+            <!-- Step Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl card-shadow">
+                    <h3 id="step-title" class="text-2xl font-bold text-[#577590] mb-4">Step 1: Define Scope</h3>
+                    <p id="step-desc" class="text-gray-700 text-lg mb-6">Identify which law/regime applies (PIPEDA vs Privacy Act) and inventory the systems, business units, and vendors involved.</p>
+                    
+                    <div class="bg-gray-50 p-4 rounded border-l-4 border-[#c8ae95]">
+                        <h4 class="font-bold text-gray-800 text-sm mb-2">Key Question:</h4>
+                        <p id="step-question" class="text-gray-600 text-sm">Which systems process Personal Information (PI)?</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Element varies by step. For step 1-4, it's text list. For step 5, it's a chart. -->
+                <div class="bg-white p-8 rounded-xl card-shadow flex flex-col justify-center">
+                    <div id="step-dynamic-content">
+                        <!-- Default List Content -->
+                        <h4 class="font-bold text-gray-800 mb-3">Action Checklist</h4>
+                        <ul id="step-list" class="space-y-2 text-gray-600">
+                            <li>• Identify legislation (Private vs Public)</li>
+                            <li>• List all PI-handling systems</li>
+                            <li>• Identify 3rd party vendors</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Hidden Chart for Step 5 -->
+                    <div id="report-chart-wrapper" class="hidden w-full">
+                        <h4 class="font-bold text-gray-800 mb-2 text-center">Sample Data Inventory Visualization</h4>
+                        <div class="chart-container">
+                            <canvas id="inventoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Labs -->
+        <div id="view-labs" class="view-section hidden">
+             <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900">Lab Workbench</h2>
+                <p class="mt-2 text-gray-600">Practical scripts for compliance tasks (Inventory, Retention, Masking). Copy these for your lab environment.</p>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Lab 1 -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden">
+                    <div class="bg-[#2d3748] px-6 py-3 flex justify-between items-center">
+                        <span class="text-gray-100 font-mono text-sm font-bold">Python: Masking Emails (Privacy Impact)</span>
+                        <button onclick="copyCode('code-1')" class="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-500">Copy</button>
+                    </div>
+                    <div class="p-6 bg-[#1a202c]">
+                        <pre id="code-1" class="code-block overflow-x-auto text-green-400 font-mono text-sm">
+import csv
+
+def mask_email(email):
+    parts = email.split('@')
+    if len(parts) != 2: return email
+    name = parts[0]
+    # Keep first char, mask rest
+    masked_name = (name[0] + '*' * max(len(name) - 1, 0)) if name else ''
+    return masked_name + '@' + parts[1]
+
+# Usage context: Reading a CSV and masking the email column
+# with open('demo_contacts.csv') as f_in...
+                        </pre>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 border-t">
+                        <p class="text-sm text-gray-600"><strong>Use Case:</strong> Preparing a dataset for testing without exposing real user data (Data Minimization).</p>
+                    </div>
+                </div>
+
+                <!-- Lab 2 -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden">
+                    <div class="bg-[#2d3748] px-6 py-3 flex justify-between items-center">
+                        <span class="text-gray-100 font-mono text-sm font-bold">Bash: Retention Check</span>
+                        <button onclick="copyCode('code-2')" class="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-500">Copy</button>
+                    </div>
+                    <div class="p-6 bg-[#1a202c]">
+                        <pre id="code-2" class="code-block overflow-x-auto text-blue-300 font-mono text-sm">
+# Find files older than 365 days in a retention folder
+echo "Retention review: checking for old files..."
+
+find ./retention_demo -type f -mtime +365 -print
+
+# Useful for auditing "Limiting Retention" principle
+                        </pre>
+                    </div>
+                     <div class="px-6 py-4 bg-gray-50 border-t">
+                        <p class="text-sm text-gray-600"><strong>Use Case:</strong> Identifying files that violate the retention policy (e.g., > 1 year old).</p>
+                    </div>
+                </div>
+
+                <!-- Lab 3 -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden">
+                    <div class="bg-[#2d3748] px-6 py-3 flex justify-between items-center">
+                        <span class="text-gray-100 font-mono text-sm font-bold">PowerShell: Incident Evidence</span>
+                        <button onclick="copyCode('code-3')" class="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-500">Copy</button>
+                    </div>
+                    <div class="p-6 bg-[#1a202c]">
+                        <pre id="code-3" class="code-block overflow-x-auto text-yellow-300 font-mono text-sm">
+# Export security events from last 2 hours
+$StartTime = (Get-Date).AddHours(-2)
+
+$Events = Get-WinEvent -FilterHashtable @{LogName='Security'; StartTime=$StartTime}
+
+$Events | Select-Object TimeCreated, Id, Message | Export-Csv "incident_log.csv"
+                        </pre>
+                    </div>
+                     <div class="px-6 py-4 bg-gray-50 border-t">
+                        <p class="text-sm text-gray-600"><strong>Use Case:</strong> Rapidly collecting evidence for a "First 60 Minutes" incident report.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">"Cybersecurity Legislation & Compliance Assessments - Module 2". Educational Use Only.</p>
+            <div class="mt-4 flex justify-center space-x-4 text-sm text-[#577590]">
+                <a href="#" class="hover:underline">OPC Official Site</a>
+                <span>|</span>
+                <a href="#" class="hover:underline">LegisQuébec</a>
+                <span>|</span>
+                <a href="#" class="hover:underline">Cyber Centre</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            currentView: 'frameworks',
+            currentPrinciple: null,
+            currentStep: 1,
+            subRegion: 'quebec'
+        };
+
+        // --- Data: 10 Principles ---
+        const principlesData = [
+            { title: "Accountability", concept: "Organization is responsible for PI under its control.", tiein: "Identify owners (RACI). Maintain policies. Manage vendors.", task: "Build a 'who owns what' responsibility map.", evidence: "Org chart, role descriptions, vendor contracts." },
+            { title: "Identifying Purposes", concept: "State why PI is collected at/before collection.", tiein: "Unclear purpose = scope creep & data leaks.", task: "Write a clear purpose statement for a specific data field.", evidence: "Data collection forms, Privacy Notice excerpts." },
+            { title: "Consent", concept: "Meaningful consent required for collection/use.", tiein: "Consent design affects phishing resistance & transparency.", task: "Review a consent screen for clarity (no hidden toggles).", evidence: "Screenshots of opt-in flows, consent logs." },
+            { title: "Limiting Collection", concept: "Collect only what is necessary.", tiein: "Less data = smaller attack surface.", task: "Remove unnecessary PI fields from a form.", evidence: "Form validation rules, data dictionary." },
+            { title: "Limiting Use/Retention", concept: "Keep only as long as necessary.", tiein: "Old data is fuel for attackers. Secure disposal is key.", task: "Create a retention rule (e.g., delete after 12 months).", evidence: "Retention schedule, deletion logs, bash script output." },
+            { title: "Accuracy", concept: "PI must be accurate and complete.", tiein: "Bad data = wrong privileges (security risk).", task: "Validate employee status before granting access.", evidence: "Joiner-Mover-Leaver process documentation." },
+            { title: "Safeguards", concept: "Protect PI relative to its sensitivity.", tiein: "Encryption, MFA, Access Control, Logging.", task: "Select safeguards (Encryption, RBAC) for a dataset.", evidence: "BitLocker status, firewall configs, MFA settings." },
+            { title: "Openness", concept: "Be open about practices (policies/notices).", tiein: "Transparency supports incident response credibility.", task: "Draft a privacy notice section on security measures.", evidence: "Public privacy policy URL, internal policy docs." },
+            { title: "Individual Access", concept: "Individuals can request their own data.", tiein: "Need identity verification to prevent leaks.", task: "Design a secure access request verification process.", evidence: "SAR (Subject Access Request) procedure logs." },
+            { title: "Challenging Compliance", concept: "Individuals can complain/challenge.", tiein: "Complaint handling intersects with Incident Response.", task: "Prepare a complaint-handling runbook entry.", evidence: "Ticket logs, investigation notes." }
+        ];
+
+        // --- Data: Workflow Steps ---
+        const workflowSteps = [
+            { id: 1, title: "Step 1: Define Scope", desc: "Identify law (PIPEDA/Privacy Act), systems, and vendors.", question: "Where does the data live?", list: ["Identify legislation", "Map Systems", "Identify Vendors"] },
+            { id: 2, title: "Step 2: Map Controls", desc: "Convert legal requirements into checkable items.", question: "What counts as 'Safe'?", list: ["Safeguards -> Encryption", "Retention -> Deletion Scripts", "Access -> MFA"] },
+            { id: 3, title: "Step 3: Collect Evidence", desc: "Gather proof (Logs, Policies, Configs).", question: "Can you prove it?", list: ["Policy Documents", "System Logs", "Vendor Agreements"] },
+            { id: 4, title: "Step 4: Test Effectiveness", desc: "Spot checks, access reviews, tabletop exercises.", question: "Does it actually work?", list: ["Access Reviews", "Configuration Checks", "IR Drills"] },
+            { id: 5, title: "Step 5: Report & Remediate", desc: "Findings, risk ratings, and fix plans.", question: "What are the gaps?", list: ["Risk Ratings", "Remediation Plan", "Final Report"] }
+        ];
+
+        // --- Navigation Logic ---
+        function navigate(viewId) {
+            // Update active state in Nav
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active', 'text-[#577590]'));
+            document.getElementById(`nav-${viewId}`).classList.add('nav-active', 'text-[#577590]');
+            
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            
+            // Show selected view
+            const selectedView = document.getElementById(`view-${viewId}`);
+            selectedView.classList.remove('hidden');
+
+            // Special init for specific views
+            if (viewId === 'quebec-infra') {
+                initIncidentChart();
+            }
+            if (viewId === 'workflow' && state.currentStep === 5) {
+                initInventoryChart();
+            }
+        }
+
+        // --- Module 1: Framework Scenarios ---
+        function showScenario(type) {
+            const container = document.getElementById('framework-scenario-output');
+            const title = document.getElementById('scenario-title');
+            const desc = document.getElementById('scenario-desc');
+            const tip = document.getElementById('scenario-tip');
+
+            container.classList.remove('hidden');
+            
+            if (type === 'pipeda') {
+                title.innerText = "Scenario: E-Commerce Retailer";
+                desc.innerText = "A Montreal-based shop sells electronics across Canada. They keep emails, addresses, and payment tokens. This is a commercial activity.";
+                tip.innerText = "Focus on PIPEDA. Check for Consent clauses and PCI-DSS compliance as a safeguard.";
+            } else {
+                title.innerText = "Scenario: Federal Dept Contractor";
+                desc.innerText = "Your team manages a database for a federal agency containing citizen tax records.";
+                tip.innerText = "The Privacy Act applies to the data owner. Your contract likely imposes strict 'Protected B' safeguards.";
+            }
+        }
+
+        // --- Module 2: Principles Logic ---
+        function loadPrinciple(index) {
+            const p = principlesData[index];
+            document.getElementById('p-title').innerText = p.title;
+            document.getElementById('p-number').innerText = index + 1;
+            document.getElementById('p-concept').innerText = p.concept;
+            document.getElementById('p-tiein').innerText = p.tiein;
+            document.getElementById('p-task').innerText = p.task;
+            document.getElementById('p-evidence').innerText = p.evidence;
+
+            // Highlight active button
+            document.querySelectorAll('.principle-btn').forEach(btn => {
+                btn.classList.remove('border-[#577590]', 'bg-blue-50', 'text-[#577590]', 'font-bold');
+                if (parseInt(btn.dataset.index) === index) {
+                    btn.classList.add('border-[#577590]', 'bg-blue-50', 'text-[#577590]', 'font-bold');
+                }
+            });
+        }
+
+        // --- Module 3: Region/Infra Logic ---
+        function toggleSubRegion(sub) {
+            document.getElementById('sub-quebec').classList.add('hidden');
+            document.getElementById('sub-infra').classList.add('hidden');
+            
+            document.getElementById(`sub-${sub}`).classList.remove('hidden');
+            
+            // Button Styles
+            const btnQuebec = document.getElementById('btn-quebec');
+            const btnInfra = document.getElementById('btn-infra');
+            
+            if (sub === 'quebec') {
+                btnQuebec.classList.replace('bg-white', 'bg-[#577590]');
+                btnQuebec.classList.replace('text-gray-600', 'text-white');
+                btnInfra.classList.replace('bg-[#577590]', 'bg-white');
+                btnInfra.classList.replace('text-white', 'text-gray-600');
+            } else {
+                btnInfra.classList.replace('bg-white', 'bg-[#577590]');
+                btnInfra.classList.replace('text-gray-600', 'text-white');
+                btnQuebec.classList.replace('bg-[#577590]', 'bg-white');
+                btnQuebec.classList.replace('text-white', 'text-gray-600');
+                
+                // Re-render chart to ensure size is correct after unhiding
+                setTimeout(initIncidentChart, 100);
+            }
+        }
+
+        function updateRiskRegister() {
+            const val = document.getElementById('risk-selector').value;
+            const out = document.getElementById('risk-output');
+            
+            if (val === 'unencrypted') {
+                out.innerHTML = "<strong>Risk:</strong> High\n<strong>Impact:</strong> Data Leak + Penalties\n<strong>Control:</strong> Enable BitLocker/FileVault\n<strong>Law 25:</strong> Failed 'Privacy by Default'";
+            } else if (val === 'vendor') {
+                out.innerHTML = "<strong>Risk:</strong> Medium\n<strong>Impact:</strong> Unmanaged 3rd Party Access\n<strong>Control:</strong> Vendor Security Addendum\n<strong>Principle:</strong> Accountability";
+            } else if (val === 'old_data') {
+                out.innerHTML = "<strong>Risk:</strong> High\n<strong>Impact:</strong> Increased Breach Surface\n<strong>Control:</strong> Automated Deletion Script\n<strong>Principle:</strong> Limiting Retention";
+            } else {
+                out.innerText = "Select a scenario...";
+            }
+        }
+
+        // --- Module 4: Workflow Logic ---
+        function setStep(stepNum) {
+            state.currentStep = stepNum;
+            const stepData = workflowSteps.find(s => s.id === stepNum);
+            
+            document.getElementById('step-title').innerText = stepData.title;
+            document.getElementById('step-desc').innerText = stepData.desc;
+            document.getElementById('step-question').innerText = stepData.question;
+            
+            // Update Buttons
+            document.querySelectorAll('.step-btn div').forEach((el, idx) => {
+                if ((idx + 1) === stepNum) {
+                    el.classList.remove('bg-gray-200', 'text-gray-500');
+                    el.classList.add('bg-[#577590]', 'text-white');
+                } else {
+                    el.classList.add('bg-gray-200', 'text-gray-500');
+                    el.classList.remove('bg-[#577590]', 'text-white');
+                }
+            });
+
+            // Dynamic Right Content
+            const dynDiv = document.getElementById('step-dynamic-content');
+            const listUl = document.getElementById('step-list');
+            const chartWrapper = document.getElementById('report-chart-wrapper');
+
+            if (stepNum === 5) {
+                // Show Chart
+                dynDiv.querySelector('h4').classList.add('hidden'); // Hide default h4
+                listUl.classList.add('hidden');
+                chartWrapper.classList.remove('hidden');
+                setTimeout(initInventoryChart, 100);
+            } else {
+                // Show List
+                dynDiv.querySelector('h4').classList.remove('hidden');
+                listUl.classList.remove('hidden');
+                chartWrapper.classList.add('hidden');
+                
+                // Populate List
+                listUl.innerHTML = stepData.list.map(item => `<li class="p-2 bg-gray-50 rounded border-l-2 border-[#577590]">${item}</li>`).join('');
+            }
+        }
+
+        // --- Module 5: Code Copy ---
+        function copyCode(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Code copied to clipboard!");
+            });
+        }
+
+        // --- Charts Implementation ---
+        
+        let incidentChartInstance = null;
+        let inventoryChartInstance = null;
+
+        function initIncidentChart() {
+            const ctx = document.getElementById('incidentChart').getContext('2d');
+            
+            if (incidentChartInstance) return; // Prevent recreation
+
+            incidentChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Incidents Reported',
+                        data: [2, 1, 3, 0, 4, 1, 0],
+                        backgroundColor: '#577590',
+                        borderRadius: 4
+                    }, {
+                        label: 'Blocked Attempts',
+                        data: [12, 19, 15, 8, 22, 10, 5],
+                        backgroundColor: '#c8ae95',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function updateChartData() {
+            if(!incidentChartInstance) return;
+            // Simulate random data
+            const newData1 = Array.from({length: 7}, () => Math.floor(Math.random() * 5));
+            const newData2 = Array.from({length: 7}, () => Math.floor(Math.random() * 25));
+            
+            incidentChartInstance.data.datasets[0].data = newData1;
+            incidentChartInstance.data.datasets[1].data = newData2;
+            incidentChartInstance.update();
+        }
+
+        function initInventoryChart() {
+            const ctx = document.getElementById('inventoryChart').getContext('2d');
+            
+            if (inventoryChartInstance) {
+                inventoryChartInstance.destroy();
+            }
+
+            inventoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Public (Low Risk)', 'Internal (Med)', 'Confidential (High)', 'Restricted (Crit)'],
+                    datasets: [{
+                        data: [30, 40, 20, 10],
+                        backgroundColor: [
+                            '#e5e7eb', // gray-200
+                            '#9ca3af', // gray-400
+                            '#577590', // accent
+                            '#c8ae95'  // secondary
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: { display: true, text: 'Data Inventory by Sensitivity' }
+                    }
+                }
+            });
+        }
+
+        // --- Initialization ---
+        window.onload = function() {
+            loadPrinciple(0); // Load first principle by default
+        };
+
+    </script>
+</body>
+</html>
+
+
+

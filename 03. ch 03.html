@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en" class="solarized-light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2: International Legislation - Cybersecurity Compliance</title>
+    <meta name="description" content="Interactive lecture on GDPR, HIPAA, SOX, CCPA, and Data Sovereignty.">
+    <!-- Tailwind CSS (Utility classes) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* --- SOLARIZED THEME VARIABLES --- */
+        :root {
+            /* Solarized Palette */
+            --base03: #002b36;
+            --base02: #073642;
+            --base01: #586e75;
+            --base00: #657b83;
+            --base0: #839496;
+            --base1: #93a1a1;
+            --base2: #eee8d5;
+            --base3: #fdf6e3;
+            --yellow: #b58900;
+            --orange: #cb4b16;
+            --red: #dc322f;
+            --magenta: #d33682;
+            --violet: #6c71c4;
+            --blue: #268bd2;
+            --cyan: #2aa198;
+            --green: #859900;
+        }
+
+        /* Light Theme Defaults */
+        html.solarized-light {
+            --bg-body: var(--base3);
+            --bg-sidebar: var(--base2);
+            --text-primary: var(--base00);
+            --text-secondary: var(--base01);
+            --border-color: var(--base1);
+            --code-bg: var(--base2);
+            --accent: var(--yellow);
+            --link: var(--blue);
+            --nav-active: var(--base3); /* White-ish */
+            --nav-active-text: var(--orange);
+        }
+
+        /* Dark Theme Defaults */
+        html.solarized-dark {
+            --bg-body: var(--base03);
+            --bg-sidebar: var(--base02);
+            --text-primary: var(--base0);
+            --text-secondary: var(--base1);
+            --border-color: var(--base01);
+            --code-bg: var(--base02);
+            --accent: var(--yellow);
+            --link: var(--blue);
+            --nav-active: var(--base03); /* Darkest */
+            --nav-active-text: var(--orange);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- LAYOUT UTILS --- */
+        .sidebar-link {
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar-link:hover {
+            background-color: var(--bg-body);
+            color: var(--accent);
+        }
+        .sidebar-link.active {
+            background-color: var(--nav-active);
+            color: var(--nav-active-text);
+            border-left: 4px solid var(--orange);
+            font-weight: bold;
+        }
+
+        a.content-link {
+            color: var(--link);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+        a.content-link:hover {
+            color: var(--orange);
+        }
+
+        /* --- CODE SANDBOX --- */
+        .code-window {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .console-output {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #002b36; /* Always dark for console */
+            color: #839496;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .console-line { margin: 2px 0; }
+        .console-success { color: var(--green); }
+        .console-warn { color: var(--yellow); }
+        .console-error { color: var(--red); }
+        .console-info { color: var(--blue); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-red {
+            0% { fill: var(--base01); }
+            50% { fill: var(--red); }
+            100% { fill: var(--base01); }
+        }
+        @keyframes move-packet {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(200px); opacity: 0; }
+        }
+        
+        .anim-blur { filter: blur(4px); transition: filter 1s; }
+        .anim-highlight { stroke: var(--red); stroke-width: 3; transition: stroke 0.3s; }
+        .anim-hidden { opacity: 0.2; transition: opacity 0.5s; }
+
+        /* --- FLASHCARDS --- */
+        .flashcard {
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        .flashcard-front {
+            background-color: var(--code-bg);
+            color: var(--accent);
+            font-weight: bold;
+        }
+        .flashcard-back {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            transform: rotateY(180deg);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- TOP HEADER -->
+    <header class="flex-none h-16 border-b border-[var(--border-color)] flex items-center justify-between px-6 bg-[var(--bg-sidebar)] z-50">
+        <div class="flex items-center gap-3">
+            <i class="ph ph-shield-check text-3xl text-[var(--orange)]"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">MODULE 2: INTERNATIONAL LEGISLATION</h1>
+                <p class="text-xs text-[var(--text-secondary)]">Compliance Assessments in Cybersecurity</p>
+            </div>
+        </div>
+        
+        <!-- Theme Toggle -->
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Theme</span>
+            <button id="theme-toggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-[var(--base01)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:ring-offset-2">
+                <span class="sr-only">Toggle theme</span>
+                <span id="theme-knob" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- SIDEBAR MENU -->
+        <nav class="w-64 flex-none overflow-y-auto bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] py-6 flex flex-col gap-1">
+            <div class="px-6 mb-4 text-xs font-bold uppercase text-[var(--text-secondary)] tracking-widest">Course Menu</div>
+            
+            <button onclick="showSection('intro')" class="sidebar-link active text-left px-6 py-3 text-sm font-medium" id="btn-intro">
+                Introduction
+            </button>
+            <button onclick="showSection('lesson1')" class="sidebar-link text-left px-6 py-3 text-sm font-medium" id="btn-lesson1">
+                Lesson 1: GDPR
+            </button>
+            <button onclick="showSection('lesson2')" class="sidebar-link text-left px-6 py-3 text-sm font-medium" id="btn-lesson2">
+                Lesson 2: US Regulations
+            </button>
+            <button onclick="showSection('lesson3')" class="sidebar-link text-left px-6 py-3 text-sm font-medium" id="btn-lesson3">
+                Lesson 3: Data Sovereignty
+            </button>
+            <button onclick="showSection('summary')" class="sidebar-link text-left px-6 py-3 text-sm font-medium" id="btn-summary">
+                Summary & Footer
+            </button>
+        </nav>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto p-8 relative scroll-smooth" id="main-content">
+            
+            <!-- SECTION: INTRODUCTION -->
+            <section id="intro" class="lesson-section max-w-4xl mx-auto mb-20 animate-fade-in">
+                <h2 class="text-3xl font-bold text-[var(--accent)] mb-6">Introduction to Compliance</h2>
+                <div class="prose prose-lg text-[var(--text-primary)] mb-8">
+                    <p class="mb-4">
+                        Welcome to Module 2, where we explore the international legal frameworks that shape how organizations handle, protect, and govern data across borders. Today's interconnected digital economy demands that cybersecurity professionals understand not just technical controls, but the legal obligations that drive those controls.
+                    </p>
+                    <p class="mb-4 bg-[var(--code-bg)] p-4 border-l-4 border-[var(--red)] text-sm italic">
+                        "These regulations carry significant financial penalties—ranging from millions to billions of dollars—and can determine whether an organization survives a data breach or regulatory audit." 
+                        <a href="https://gdpr.eu/fines/" target="_blank" rel="noopener noreferrer" class="content-link">[gdpr]</a>
+                    </p>
+                    <p>
+                        Over the next hour, we will examine three critical lessons: the European Union's General Data Protection Regulation (GDPR), major United States regulations including HIPAA, SOX, and CCPA, and finally the emerging concept of data sovereignty.
+                    </p>
+                </div>
+                
+                <!-- Intro Visual -->
+                <div class="flex justify-center my-8">
+                    <svg width="400" height="200" viewBox="0 0 400 200" class="w-full max-w-md">
+                        <g fill="none" stroke="currentColor" stroke-width="2">
+                            <!-- Globe -->
+                            <circle cx="200" cy="100" r="60" stroke="var(--base01)" fill="var(--bg-sidebar)" />
+                            <path d="M200 40 C 230 40, 230 160, 200 160 M 200 40 C 170 40, 170 160, 200 160" stroke="var(--base01)" opacity="0.5"/>
+                            <path d="M140 100 L 260 100" stroke="var(--base01)" opacity="0.5"/>
+                            
+                            <!-- Nodes -->
+                            <circle cx="100" cy="50" r="15" fill="var(--blue)" stroke="none" />
+                            <text x="100" y="55" text-anchor="middle" fill="white" font-size="10" font-weight="bold">EU</text>
+                            
+                            <circle cx="300" cy="50" r="15" fill="var(--red)" stroke="none" />
+                            <text x="300" y="55" text-anchor="middle" fill="white" font-size="10" font-weight="bold">US</text>
+                            
+                            <circle cx="200" cy="180" r="15" fill="var(--green)" stroke="none" />
+                            <text x="200" y="185" text-anchor="middle" fill="white" font-size="10" font-weight="bold">INT</text>
+
+                            <!-- Connections -->
+                            <path d="M115 50 L 185 85" stroke="var(--base00)" stroke-dasharray="4" />
+                            <path d="M285 50 L 215 85" stroke="var(--base00)" stroke-dasharray="4" />
+                        </g>
+                    </svg>
+                </div>
+            </section>
+
+            <!-- SECTION: LESSON 1 - GDPR -->
+            <section id="lesson1" class="lesson-section hidden max-w-4xl mx-auto mb-20">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-[var(--blue)] text-white px-3 py-1 rounded text-sm font-bold">LESSON 1</span>
+                    <h2 class="text-3xl font-bold text-[var(--accent)]">GDPR & Rights</h2>
+                </div>
+
+                <div class="prose prose-lg text-[var(--text-primary)] mb-8">
+                    <h3 class="text-xl font-bold mb-3 text-[var(--orange)]">Understanding GDPR</h3>
+                    <p class="mb-4">
+                        The GDPR (Regulation EU 2016/679) applies to any organization—regardless of location—that processes personal data of individuals within the European Union.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-[var(--code-bg)] p-4 rounded border border-[var(--border-color)]">
+                            <strong class="block text-[var(--blue)] mb-2">Key Principles</strong>
+                            <ul class="list-disc pl-5 space-y-1 text-sm">
+                                <li>Lawfulness, Fairness, Transparency</li>
+                                <li>Purpose Limitation</li>
+                                <li>Data Minimization</li>
+                                <li>Accuracy</li>
+                                <li>Storage Limitation</li>
+                                <li>Integrity & Confidentiality</li>
+                            </ul>
+                        </div>
+                        <div class="bg-[var(--code-bg)] p-4 rounded border border-[var(--border-color)]">
+                            <strong class="block text-[var(--magenta)] mb-2">Data Subject Rights</strong>
+                            <ul class="list-disc pl-5 space-y-1 text-sm">
+                                <li>Right of Access</li>
+                                <li>Right to Rectification</li>
+                                <li>Right to Erasure ("To be Forgotten")</li>
+                                <li>Right to Restriction</li>
+                                <li>Right to Data Portability</li>
+                                <li>Right to Object</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CODE SIMULATION: GDPR -->
+                <div class="my-10">
+                    <div class="bg-[var(--base02)] text-[var(--base1)] p-3 rounded-t-lg flex justify-between items-center border border-[var(--border-color)] border-b-0">
+                        <span class="font-mono text-sm font-bold flex items-center gap-2">
+                            <i class="ph ph-file-code"></i> Python Example: Data Anonymization
+                        </span>
+                        <span class="text-xs italic opacity-75">Task: Scrub PII for "Right to be Forgotten"</span>
+                    </div>
+                    
+                    <div class="code-window grid grid-cols-1 lg:grid-cols-2">
+                        <!-- Code Column -->
+                        <div class="p-4 border-r border-[var(--border-color)] bg-[var(--code-bg)] overflow-x-auto text-sm font-mono leading-relaxed">
+<pre class="text-[var(--text-primary)]">
+<span class="text-[var(--base01)] italic"># Task: Process a "Right to be Forgotten" request
+# This script identifies a user by ID and anonymizes
+# their Personally Identifiable Information (PII)
+# to comply with GDPR Article 17.</span>
+
+<span class="text-[var(--blue)]">def</span> <span class="text-[var(--yellow)]">anonymize_user_data</span>(user_id, db):
+    <span class="text-[var(--base01)]"># 1. Search for the user record</span>
+    <span class="text-[var(--orange)]">print</span>(f<span class="text-[var(--cyan)]">"Searching for UserID: {user_id}..."</span>)
+    user = db.find(user_id)
+
+    <span class="text-[var(--green)]">if</span> user:
+        <span class="text-[var(--base01)]"># 2. Replace PII with generic placeholders</span>
+        user[<span class="text-[var(--cyan)]">'name'</span>] = <span class="text-[var(--cyan)]">"REDACTED"</span>
+        user[<span class="text-[var(--cyan)]">'email'</span>] = <span class="text-[var(--cyan)]">"deleted@user.local"</span>
+        user[<span class="text-[var(--cyan)]">'address'</span>] = <span class="text-[var(--cyan)]">"REMOVED"</span>
+        
+        <span class="text-[var(--base01)]"># 3. Save changes to database</span>
+        db.save(user)
+        <span class="text-[var(--orange)]">print</span>(<span class="text-[var(--cyan)]">"SUCCESS: User data anonymized."</span>)
+    <span class="text-[var(--green)]">else</span>:
+        <span class="text-[var(--orange)]">print</span>(<span class="text-[var(--red)]">"ERROR: User not found."</span>)
+
+<span class="text-[var(--base01)]"># Simulate the request</span>
+anonymize_user_data(1042, database)
+</pre>
+                        </div>
+                        
+                        <!-- Visual/Console Column -->
+                        <div class="flex flex-col bg-[var(--base03)]">
+                            <!-- Visualizer -->
+                            <div class="h-48 bg-[var(--bg-body)] p-4 flex items-center justify-center relative border-b border-[var(--border-color)]">
+                                <svg id="gdpr-vis" width="300" height="150" viewBox="0 0 300 150">
+                                    <rect x="10" y="10" width="280" height="130" rx="5" fill="none" stroke="var(--base01)" />
+                                    <text x="20" y="30" font-size="12" fill="var(--text-secondary)">DATABASE TABLE: USERS</text>
+                                    
+                                    <!-- Header -->
+                                    <rect x="20" y="40" width="260" height="20" fill="var(--base02)" />
+                                    <text x="30" y="55" font-size="10" fill="white">ID</text>
+                                    <text x="80" y="55" font-size="10" fill="white">NAME</text>
+                                    <text x="180" y="55" font-size="10" fill="white">EMAIL</text>
+
+                                    <!-- Row 1 -->
+                                    <g id="gdpr-row-1" transform="translate(20, 70)">
+                                        <rect width="260" height="20" fill="none" stroke="var(--border-color)" />
+                                        <text x="10" y="14" font-size="10" fill="var(--text-primary)">1041</text>
+                                        <text x="60" y="14" font-size="10" fill="var(--text-primary)">Alice Smith</text>
+                                        <text x="160" y="14" font-size="10" fill="var(--text-primary)">alice@ex.com</text>
+                                    </g>
+
+                                    <!-- Row 2 (Target) -->
+                                    <g id="gdpr-row-2" transform="translate(20, 95)">
+                                        <rect width="260" height="20" fill="var(--base2)" stroke="var(--border-color)" />
+                                        <text x="10" y="14" font-size="10" fill="var(--text-primary)">1042</text>
+                                        <text id="gdpr-name" x="60" y="14" font-size="10" fill="var(--text-primary)">John Doe</text>
+                                        <text id="gdpr-email" x="160" y="14" font-size="10" fill="var(--text-primary)">john@ex.com</text>
+                                    </g>
+                                </svg>
+                            </div>
+                            
+                            <!-- Console -->
+                            <div class="flex-1 p-2 font-mono text-xs relative">
+                                <div class="absolute top-0 right-0 p-2 flex gap-2">
+                                    <button onclick="runGDPRSim()" class="bg-[var(--green)] hover:bg-opacity-80 text-white px-3 py-1 rounded shadow text-xs font-bold transition">RUN ▶</button>
+                                    <button onclick="clearGDPRSim()" class="bg-[var(--red)] hover:bg-opacity-80 text-white px-3 py-1 rounded shadow text-xs font-bold transition">CLEAR ⟲</button>
+                                </div>
+                                <div id="gdpr-console" class="console-output p-2 mt-8"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUIZ: GDPR -->
+                <div class="mt-8 p-6 bg-[var(--code-bg)] rounded-lg border border-[var(--border-color)]">
+                    <h4 class="text-lg font-bold text-[var(--accent)] mb-4">📢 Quick Check: GDPR</h4>
+                    
+                    <!-- Flashcards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="flashcard h-32" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">Right to Erasure</div>
+                                <div class="flashcard-back text-sm">Also known as "Right to be Forgotten". Request data deletion.</div>
+                            </div>
+                        </div>
+                        <div class="flashcard h-32" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">Max Penalty</div>
+                                <div class="flashcard-back text-sm">€20 Million or 4% of global turnover (whichever is higher).</div>
+                            </div>
+                        </div>
+                        <div class="flashcard h-32" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">DPO</div>
+                                <div class="flashcard-back text-sm">Data Protection Officer. Mandatory for large scale processing.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multiple Choice -->
+                    <div class="space-y-4">
+                        <p class="font-semibold text-sm">Which principle requires collecting ONLY the data absolutely necessary?</p>
+                        <div class="flex flex-col gap-2 text-sm">
+                            <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-[var(--bg-body)] rounded">
+                                <input type="radio" name="q1" value="wrong"> Integrity & Confidentiality
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-[var(--bg-body)] rounded">
+                                <input type="radio" name="q1" value="correct" onchange="showFeedback(this, 'Correct! Minimization limits data collection.')"> Data Minimization
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-[var(--bg-body)] rounded">
+                                <input type="radio" name="q1" value="wrong"> Accuracy
+                            </label>
+                        </div>
+                        <p id="q1-feedback" class="text-[var(--green)] font-bold text-sm hidden"></p>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h5 class="font-bold text-[var(--text-secondary)] uppercase text-xs">Key Terms Learned</h5>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="bg-[var(--base2)] px-2 py-1 rounded text-xs border border-[var(--border-color)]">GDPR</span>
+                        <span class="bg-[var(--base2)] px-2 py-1 rounded text-xs border border-[var(--border-color)]">Data Subject</span>
+                        <span class="bg-[var(--base2)] px-2 py-1 rounded text-xs border border-[var(--border-color)]">Anonymization</span>
+                        <span class="bg-[var(--base2)] px-2 py-1 rounded text-xs border border-[var(--border-color)]">Right to Erasure</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: LESSON 2 - US REGULATIONS -->
+            <section id="lesson2" class="lesson-section hidden max-w-4xl mx-auto mb-20">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-[var(--blue)] text-white px-3 py-1 rounded text-sm font-bold">LESSON 2</span>
+                    <h2 class="text-3xl font-bold text-[var(--accent)]">US Regulations (HIPAA, SOX, CCPA)</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- HIPAA -->
+                    <div class="p-4 border border-[var(--border-color)] rounded bg-[var(--code-bg)]">
+                        <div class="flex items-center gap-2 mb-2 text-[var(--red)]">
+                            <i class="ph ph-first-aid text-2xl"></i>
+                            <h3 class="font-bold">HIPAA</h3>
+                        </div>
+                        <p class="text-sm"><strong>Health Insurance Portability and Accountability Act.</strong> Protects PHI (Protected Health Information). Requires Administrative, Physical, and Technical safeguards.</p>
+                    </div>
+                    <!-- SOX -->
+                    <div class="p-4 border border-[var(--border-color)] rounded bg-[var(--code-bg)]">
+                        <div class="flex items-center gap-2 mb-2 text-[var(--green)]">
+                            <i class="ph ph-bank text-2xl"></i>
+                            <h3 class="font-bold">SOX</h3>
+                        </div>
+                        <p class="text-sm"><strong>Sarbanes-Oxley Act.</strong> Focuses on corporate financial records to prevent fraud. Heavy emphasis on IT controls for financial reporting integrity.</p>
+                    </div>
+                    <!-- CCPA -->
+                    <div class="p-4 border border-[var(--border-color)] rounded bg-[var(--code-bg)]">
+                        <div class="flex items-center gap-2 mb-2 text-[var(--orange)]">
+                            <i class="ph ph-sun text-2xl"></i>
+                            <h3 class="font-bold">CCPA</h3>
+                        </div>
+                        <p class="text-sm"><strong>California Consumer Privacy Act.</strong> Similar to GDPR but for California residents. Grants rights to know, delete, and opt-out of data sales.</p>
+                    </div>
+                </div>
+
+                 <!-- CODE SIMULATION: HIPAA LOGS -->
+                 <div class="my-10">
+                    <div class="bg-[var(--base02)] text-[var(--base1)] p-3 rounded-t-lg flex justify-between items-center border border-[var(--border-color)] border-b-0">
+                        <span class="font-mono text-sm font-bold flex items-center gap-2">
+                            <i class="ph ph-terminal-window"></i> Python Example: HIPAA Log Auditing
+                        </span>
+                        <span class="text-xs italic opacity-75">Task: Detect unauthorized access to PHI</span>
+                    </div>
+                    
+                    <div class="code-window grid grid-cols-1 lg:grid-cols-2">
+                        <!-- Code Column -->
+                        <div class="p-4 border-r border-[var(--border-color)] bg-[var(--code-bg)] overflow-x-auto text-sm font-mono leading-relaxed">
+<pre class="text-[var(--text-primary)]">
+<span class="text-[var(--base01)] italic"># Task: Audit server logs for HIPAA compliance.
+# Identify access attempts by users not in the 
+# authorized medical staff group.</span>
+
+log_entries = [
+    {<span class="text-[var(--cyan)]">"user"</span>: <span class="text-[var(--cyan)]">"dr_house"</span>, <span class="text-[var(--cyan)]">"action"</span>: <span class="text-[var(--cyan)]">"VIEW_RECORD"</span>, <span class="text-[var(--cyan)]">"role"</span>: <span class="text-[var(--cyan)]">"MD"</span>},
+    {<span class="text-[var(--cyan)]">"user"</span>: <span class="text-[var(--cyan)]">"admin_bob"</span>, <span class="text-[var(--cyan)]">"action"</span>: <span class="text-[var(--cyan)]">"SYS_UPDATE"</span>, <span class="text-[var(--cyan)]">"role"</span>: <span class="text-[var(--cyan)]">"IT"</span>},
+    {<span class="text-[var(--cyan)]">"user"</span>: <span class="text-[var(--cyan)]">"intern_joe"</span>, <span class="text-[var(--cyan)]">"action"</span>: <span class="text-[var(--cyan)]">"VIEW_PHI"</span>, <span class="text-[var(--cyan)]">"role"</span>: <span class="text-[var(--cyan)]">"INTERN"</span>}
+]
+
+<span class="text-[var(--blue)]">def</span> <span class="text-[var(--yellow)]">audit_access_logs</span>(logs):
+    <span class="text-[var(--orange)]">print</span>(<span class="text-[var(--cyan)]">"--- STARTING HIPAA AUDIT ---"</span>)
+    authorized_roles = [<span class="text-[var(--cyan)]">"MD"</span>, <span class="text-[var(--cyan)]">"NURSE"</span>]
+    
+    <span class="text-[var(--green)]">for</span> entry <span class="text-[var(--green)]">in</span> logs:
+        <span class="text-[var(--green)]">if</span> <span class="text-[var(--cyan)]">"PHI"</span> <span class="text-[var(--green)]">in</span> entry[<span class="text-[var(--cyan)]">"action"</span>] <span class="text-[var(--green)]">and</span> entry[<span class="text-[var(--cyan)]">"role"</span>] <span class="text-[var(--green)]">not in</span> authorized_roles:
+            <span class="text-[var(--orange)]">print</span>(f<span class="text-[var(--red)]">"VIOLATION: User {entry['user']} accessed PHI illegally!"</span>)
+            trigger_alert(entry)
+        <span class="text-[var(--green)]">else</span>:
+            <span class="text-[var(--orange)]">print</span>(f<span class="text-[var(--cyan)]">"OK: {entry['user']} action permitted."</span>)
+
+audit_access_logs(log_entries)
+</pre>
+                        </div>
+                        
+                        <!-- Visual/Console Column -->
+                        <div class="flex flex-col bg-[var(--base03)]">
+                            <!-- Visualizer -->
+                            <div class="h-48 bg-[var(--bg-body)] p-4 flex items-center justify-center relative border-b border-[var(--border-color)]">
+                                <svg id="hipaa-vis" width="300" height="150" viewBox="0 0 300 150">
+                                    <text x="10" y="20" font-size="12" fill="var(--text-secondary)">SERVER ACCESS LOGS</text>
+                                    
+                                    <g id="log-0" transform="translate(10, 40)">
+                                        <rect width="280" height="25" rx="3" fill="var(--base2)" stroke="var(--border-color)" />
+                                        <text x="10" y="17" font-size="10" fill="var(--text-primary)">dr_house | VIEW_RECORD | MD</text>
+                                        <circle cx="265" cy="12.5" r="5" fill="var(--base1)" class="status-dot"/>
+                                    </g>
+                                    
+                                    <g id="log-1" transform="translate(10, 75)">
+                                        <rect width="280" height="25" rx="3" fill="var(--base2)" stroke="var(--border-color)" />
+                                        <text x="10" y="17" font-size="10" fill="var(--text-primary)">admin_bob | SYS_UPDATE | IT</text>
+                                        <circle cx="265" cy="12.5" r="5" fill="var(--base1)" class="status-dot"/>
+                                    </g>
+
+                                    <g id="log-2" transform="translate(10, 110)">
+                                        <rect width="280" height="25" rx="3" fill="var(--base2)" stroke="var(--border-color)" />
+                                        <text x="10" y="17" font-size="10" fill="var(--text-primary)">intern_joe | VIEW_PHI | INTERN</text>
+                                        <circle cx="265" cy="12.5" r="5" fill="var(--base1)" class="status-dot"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            
+                            <!-- Console -->
+                            <div class="flex-1 p-2 font-mono text-xs relative">
+                                <div class="absolute top-0 right-0 p-2 flex gap-2">
+                                    <button onclick="runHIPAASim()" class="bg-[var(--green)] hover:bg-opacity-80 text-white px-3 py-1 rounded shadow text-xs font-bold transition">RUN ▶</button>
+                                    <button onclick="clearHIPAASim()" class="bg-[var(--red)] hover:bg-opacity-80 text-white px-3 py-1 rounded shadow text-xs font-bold transition">CLEAR ⟲</button>
+                                </div>
+                                <div id="hipaa-console" class="console-output p-2 mt-8"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUIZ: US REGS -->
+                <div class="mt-8 p-6 bg-[var(--code-bg)] rounded-lg border border-[var(--border-color)]">
+                    <h4 class="text-lg font-bold text-[var(--accent)] mb-4">📢 Quick Check: US Regulations</h4>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <p class="font-semibold text-sm mb-2">1. Which regulation primarily aims to prevent corporate accounting fraud?</p>
+                            <div class="flex gap-4">
+                                <button onclick="checkQuiz(this, false)" class="flex-1 py-2 px-4 rounded border border-[var(--border-color)] hover:bg-[var(--base2)] text-sm">HIPAA</button>
+                                <button onclick="checkQuiz(this, true)" class="flex-1 py-2 px-4 rounded border border-[var(--border-color)] hover:bg-[var(--base2)] text-sm">SOX</button>
+                                <button onclick="checkQuiz(this, false)" class="flex-1 py-2 px-4 rounded border border-[var(--border-color)] hover:bg-[var(--base2)] text-sm">GDPR</button>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm mb-2">2. What constitutes PHI under HIPAA?</p>
+                            <div class="flex gap-4">
+                                <button onclick="checkQuiz(this, true)" class="flex-1 py-2 px-4 rounded border border-[var(--border-color)] hover:bg-[var(--base2)] text-sm">Medical Records + ID</button>
+                                <button onclick="checkQuiz(this, false)" class="flex-1 py-2 px-4 rounded border border-[var(--border-color)] hover:bg-[var(--base2)] text-sm">Public Tax Records</button>
+                                <button onclick="checkQuiz(this, false)" class="flex-1 py-2 px-4 rounded border border-[var(--border-color)] hover:bg-[var(--base2)] text-sm">Employee Salaries</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: LESSON 3 - DATA SOVEREIGNTY -->
+            <section id="lesson3" class="lesson-section hidden max-w-4xl mx-auto mb-20">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-[var(--blue)] text-white px-3 py-1 rounded text-sm font-bold">LESSON 3</span>
+                    <h2 class="text-3xl font-bold text-[var(--accent)]">Data Sovereignty</h2>
+                </div>
+
+                <div class="prose prose-lg text-[var(--text-primary)] mb-8">
+                    <p>
+                        <strong>Data Sovereignty</strong> is the concept that data is subject to the laws and governance structures within the nation it is collected or stored.
+                    </p>
+                    <div class="p-4 bg-[var(--code-bg)] border-l-4 border-[var(--orange)] my-4">
+                        <h4 class="font-bold text-sm">The Cloud Problem</h4>
+                        <p class="text-sm mt-1">
+                            Cloud providers often replicate data across global servers for redundancy. If German user data is replicated to a US server, it may become subject to US surveillance laws (like the CLOUD Act), potentially violating EU privacy laws.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- CODE SIMULATION: SOVEREIGNTY CHECK -->
+                <div class="my-10">
+                    <div class="bg-[var(--base02)] text-[var(--base1)] p-3 rounded-t-lg flex justify-between items-center border border-[var(--border-color)] border-b-0">
+                        <span class="font-mono text-sm font-bold flex items-center gap-2">
+                            <i class="ph ph-globe-hemisphere-west"></i> Python Example: Compliance Audit
+                        </span>
+                        <span class="text-xs italic opacity-75">Task: Check if storage location matches user jurisdiction</span>
+                    </div>
+                    
+                    <div class="code-window grid grid-cols-1 lg:grid-cols-2">
+                        <!-- Code Column -->
+                        <div class="p-4 border-r border-[var(--border-color)] bg-[var(--code-bg)] overflow-x-auto text-sm font-mono leading-relaxed">
+<pre class="text-[var(--text-primary)]">
+<span class="text-[var(--base01)] italic"># Task: Ensure German user data stays in EU servers.
+# Flag violations where jurisdiction != storage.</span>
+
+users = [
+    {<span class="text-[var(--cyan)]">"id"</span>: <span class="text-[var(--cyan)]">"u1"</span>, <span class="text-[var(--cyan)]">"jurisdiction"</span>: <span class="text-[var(--cyan)]">"DE"</span>, <span class="text-[var(--cyan)]">"storage"</span>: <span class="text-[var(--cyan)]">"EU-West"</span>},
+    {<span class="text-[var(--cyan)]">"id"</span>: <span class="text-[var(--cyan)]">"u2"</span>, <span class="text-[var(--cyan)]">"jurisdiction"</span>: <span class="text-[var(--cyan)]">"US"</span>, <span class="text-[var(--cyan)]">"storage"</span>: <span class="text-[var(--cyan)]">"US-East"</span>},
+    {<span class="text-[var(--cyan)]">"id"</span>: <span class="text-[var(--cyan)]">"u3"</span>, <span class="text-[var(--cyan)]">"jurisdiction"</span>: <span class="text-[var(--cyan)]">"DE"</span>, <span class="text-[var(--cyan)]">"storage"</span>: <span class="text-[var(--cyan)]">"US-West"</span>}
+]
+
+<span class="text-[var(--blue)]">class</span> <span class="text-[var(--yellow)]">Audit</span>:
+    <span class="text-[var(--blue)]">def</span> <span class="text-[var(--yellow)]">check_sovereignty</span>(self, user_list):
+        violations = []
+        <span class="text-[var(--green)]">for</span> u <span class="text-[var(--green)]">in</span> user_list:
+            <span class="text-[var(--orange)]">print</span>(f<span class="text-[var(--cyan)]">"Checking User {u['id']}..."</span>)
+            
+            <span class="text-[var(--base01)]"># Rule: DE users must use EU storage</span>
+            <span class="text-[var(--green)]">if</span> u[<span class="text-[var(--cyan)]">"jurisdiction"</span>] == <span class="text-[var(--cyan)]">"DE"</span> <span class="text-[var(--green)]">and</span> <span class="text-[var(--cyan)]">"EU"</span> <span class="text-[var(--green)]">not in</span> u[<span class="text-[var(--cyan)]">"storage"</span>]:
+                violations.append(u)
+                <span class="text-[var(--orange)]">print</span>(f<span class="text-[var(--red)]">"  CRITICAL: Sovereignty Breach!"</span>)
+            <span class="text-[var(--green)]">else</span>:
+                <span class="text-[var(--orange)]">print</span>(f<span class="text-[var(--green)]">"  Pass."</span>)
+        
+        <span class="text-[var(--green)]">return</span> violations
+
+<span class="text-[var(--base01)]"># Run Report</span>
+audit = Audit()
+audit.check_sovereignty(users)
+</pre>
+                        </div>
+                        
+                        <!-- Visual/Console Column -->
+                        <div class="flex flex-col bg-[var(--base03)]">
+                            <!-- Visualizer -->
+                            <div class="h-48 bg-[var(--bg-body)] p-4 flex items-center justify-center relative border-b border-[var(--border-color)]">
+                                <svg id="sov-vis" width="300" height="150" viewBox="0 0 300 150">
+                                    <!-- EU Region -->
+                                    <rect x="10" y="20" width="130" height="110" rx="5" fill="none" stroke="var(--blue)" stroke-dasharray="4"/>
+                                    <text x="20" y="40" font-size="10" fill="var(--blue)">JURISDICTION: EU/DE</text>
+                                    
+                                    <!-- US Region -->
+                                    <rect x="160" y="20" width="130" height="110" rx="5" fill="none" stroke="var(--red)" stroke-dasharray="4"/>
+                                    <text x="170" y="40" font-size="10" fill="var(--red)">JURISDICTION: US</text>
+
+                                    <!-- Data Packets -->
+                                    <g id="data-u1" transform="translate(30, 60)">
+                                        <circle r="10" fill="var(--text-primary)" />
+                                        <text x="-5" y="4" fill="var(--bg-body)" font-size="8">U1</text>
+                                    </g>
+                                    <g id="data-u2" transform="translate(180, 60)">
+                                        <circle r="10" fill="var(--text-primary)" />
+                                        <text x="-5" y="4" fill="var(--bg-body)" font-size="8">U2</text>
+                                    </g>
+                                    <!-- The Violation Data (U3: DE user in US storage) -->
+                                    <g id="data-u3" transform="translate(180, 90)">
+                                        <circle r="10" fill="var(--text-primary)" />
+                                        <text x="-5" y="4" fill="var(--bg-body)" font-size="8">U3</text>
+                                        <line x1="-15" y1="0" x2="-140" y2="-30" stroke="var(--red)" stroke-width="2" opacity="0" class="breach-line" />
+                                    </g>
+                                </svg>
+                            </div>
+                            
+                            <!-- Console -->
+                            <div class="flex-1 p-2 font-mono text-xs relative">
+                                <div class="absolute top-0 right-0 p-2 flex gap-2">
+                                    <button onclick="runSovSim()" class="bg-[var(--green)] hover:bg-opacity-80 text-white px-3 py-1 rounded shadow text-xs font-bold transition">RUN ▶</button>
+                                    <button onclick="clearSovSim()" class="bg-[var(--red)] hover:bg-opacity-80 text-white px-3 py-1 rounded shadow text-xs font-bold transition">CLEAR ⟲</button>
+                                </div>
+                                <div id="sov-console" class="console-output p-2 mt-8"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- SECTION: SUMMARY -->
+             <section id="summary" class="lesson-section hidden max-w-4xl mx-auto mb-20">
+                <h2 class="text-3xl font-bold text-[var(--accent)] mb-6">Module Summary</h2>
+                <div class="bg-[var(--code-bg)] p-6 rounded-lg border border-[var(--border-color)]">
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <i class="ph ph-check-circle text-[var(--green)] text-xl mt-1"></i>
+                            <div>
+                                <strong class="text-[var(--text-primary)]">GDPR is Global:</strong> It protects EU citizens regardless of where the company processing data is located.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="ph ph-check-circle text-[var(--green)] text-xl mt-1"></i>
+                            <div>
+                                <strong class="text-[var(--text-primary)]">US Approach is Sectoral:</strong> Unlike the EU's blanket approach, the US uses specific laws for specific industries (HIPAA for health, SOX for finance).
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="ph ph-check-circle text-[var(--green)] text-xl mt-1"></i>
+                            <div>
+                                <strong class="text-[var(--text-primary)]">Location Matters:</strong> Data sovereignty dictates that data is subject to the laws of the country in which it is physically stored.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Footer Integration -->
+                <div class="mt-12">
+                     <footer class="bg-[var(--base02)] text-[var(--base1)] py-6 mt-8 rounded-lg">
+                        <div class="container mx-auto text-center text-sm">
+                            <p style="display:flex; justify-content:center; align-items:center; gap:8px; margin:0;">
+                                <img src="cyber_soho.png"
+                                     alt="Cyber Soho"
+                                     onerror="this.style.display='none'; this.nextElementSibling.innerHTML = '<i class=\'ph ph-shield-check text-2xl\'></i> ' + this.nextElementSibling.innerHTML"
+                                     style="height:32px;">
+                                <span>&copy; 2025 Cybersecurity Compliance Assessments Program. Educational Use Only.</span>
+                            </p>
+                            <p class="text-xs mt-2 opacity-50">Content protected. Malware scan verified clean for external links.</p>
+                        </div>
+                    </footer>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- NAVIGATION ---
+        function showSection(id) {
+            // Hide all sections
+            document.querySelectorAll('.lesson-section').forEach(el => el.classList.add('hidden'));
+            // Remove active state from nav
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+            
+            // Show target
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById('btn-' + id).classList.add('active');
+            
+            // Scroll to top
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        // --- THEME TOGGLE ---
+        const toggleBtn = document.getElementById('theme-toggle');
+        const themeKnob = document.getElementById('theme-knob');
+        const html = document.documentElement;
+        let isDark = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isDark = !isDark;
+            if (isDark) {
+                html.classList.remove('solarized-light');
+                html.classList.add('solarized-dark');
+                themeKnob.classList.add('translate-x-6');
+                themeKnob.classList.remove('translate-x-1');
+                toggleBtn.classList.remove('bg-[var(--base01)]');
+                toggleBtn.classList.add('bg-[var(--blue)]');
+            } else {
+                html.classList.add('solarized-light');
+                html.classList.remove('solarized-dark');
+                themeKnob.classList.remove('translate-x-6');
+                themeKnob.classList.add('translate-x-1');
+                toggleBtn.classList.add('bg-[var(--base01)]');
+                toggleBtn.classList.remove('bg-[var(--blue)]');
+            }
+        });
+
+        // --- CONSOLE UTILS ---
+        function appendConsole(id, text, type = 'text') {
+            const consoleEl = document.getElementById(id);
+            const line = document.createElement('div');
+            line.classList.add('console-line');
+            if(type === 'success') line.classList.add('console-success');
+            if(type === 'error') line.classList.add('console-error');
+            if(type === 'warn') line.classList.add('console-warn');
+            if(type === 'info') line.classList.add('console-info');
+            line.textContent = "> " + text;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // --- SIMULATION 1: GDPR ---
+        function runGDPRSim() {
+            const output = document.getElementById('gdpr-console');
+            output.innerHTML = ""; 
+            
+            const steps = [
+                { t: 500, msg: "Connecting to database...", type: 'info' },
+                { t: 1000, msg: "Searching for UserID: 1042...", type: 'text' },
+                { t: 1500, msg: "Record Found: John Doe (john@ex.com)", type: 'success' },
+                { t: 2500, msg: "Applying anonymization filter (GDPR Art. 17)...", type: 'warn' },
+                { t: 3500, msg: "Update: Name -> REDACTED", type: 'text' },
+                { t: 3600, msg: "Update: Email -> deleted@user.local", type: 'text' },
+                { t: 4000, msg: "SUCCESS: User data anonymized.", type: 'success' },
+                { t: 4100, action: () => {
+                    document.getElementById('gdpr-name').textContent = "REDACTED";
+                    document.getElementById('gdpr-name').classList.add('anim-blur');
+                    document.getElementById('gdpr-email').textContent = "deleted@user.local";
+                    document.getElementById('gdpr-email').classList.add('anim-blur');
+                    document.getElementById('gdpr-row-2').querySelector('rect').setAttribute('fill', '#eee8d5'); 
+                }}
+            ];
+
+            steps.forEach(step => {
+                setTimeout(() => {
+                    if(step.msg) appendConsole('gdpr-console', step.msg, step.type);
+                    if(step.action) step.action();
+                }, step.t);
+            });
+        }
+
+        function clearGDPRSim() {
+            document.getElementById('gdpr-console').innerHTML = "";
+            const name = document.getElementById('gdpr-name');
+            const email = document.getElementById('gdpr-email');
+            
+            name.textContent = "John Doe";
+            name.classList.remove('anim-blur');
+            email.textContent = "john@ex.com";
+            email.classList.remove('anim-blur');
+            document.getElementById('gdpr-row-2').querySelector('rect').setAttribute('fill', 'var(--base2)'); 
+        }
+
+        // --- SIMULATION 2: HIPAA ---
+        function runHIPAASim() {
+            const output = document.getElementById('hipaa-console');
+            output.innerHTML = "";
+            
+            const steps = [
+                { t: 500, msg: "--- STARTING HIPAA AUDIT ---", type: 'info' },
+                { t: 1000, msg: "Scanning log entry: 10243...", type: 'text' },
+                { t: 1200, msg: "OK: dr_house (MD) authorized for VIEW_RECORD", type: 'success', 
+                  action: () => document.querySelector('#log-0 circle').setAttribute('fill', 'var(--green)') },
+                { t: 2000, msg: "Scanning log entry: 10244...", type: 'text' },
+                { t: 2200, msg: "OK: admin_bob (IT) authorized for SYS_UPDATE", type: 'success',
+                  action: () => document.querySelector('#log-1 circle').setAttribute('fill', 'var(--green)') },
+                { t: 3000, msg: "Scanning log entry: 10245...", type: 'text' },
+                { t: 3200, msg: "ANALYZING ROLE: INTERN vs ACTION: VIEW_PHI", type: 'warn' },
+                { t: 4000, msg: "VIOLATION DETECTED: User intern_joe accessed PHI illegally!", type: 'error',
+                  action: () => {
+                      document.querySelector('#log-2 circle').setAttribute('fill', 'var(--red)');
+                      document.querySelector('#log-2 rect').classList.add('anim-highlight');
+                  }}
+            ];
+
+            steps.forEach(step => {
+                setTimeout(() => {
+                    if(step.msg) appendConsole('hipaa-console', step.msg, step.type);
+                    if(step.action) step.action();
+                }, step.t);
+            });
+        }
+
+        function clearHIPAASim() {
+            document.getElementById('hipaa-console').innerHTML = "";
+            document.querySelectorAll('.status-dot').forEach(d => d.setAttribute('fill', 'var(--base1)'));
+            document.querySelector('#log-2 rect').classList.remove('anim-highlight');
+        }
+
+        // --- SIMULATION 3: SOVEREIGNTY ---
+        function runSovSim() {
+            const output = document.getElementById('sov-console');
+            output.innerHTML = "";
+            
+            const steps = [
+                { t: 500, msg: "Loading User Table...", type: 'info' },
+                { t: 1000, msg: "Checking U1 (DE) -> Storage EU-West", type: 'text' },
+                { t: 1500, msg: "  Pass.", type: 'success', 
+                  action: () => document.querySelector('#data-u1 circle').setAttribute('fill', 'var(--green)')},
+                { t: 2000, msg: "Checking U2 (US) -> Storage US-East", type: 'text' },
+                { t: 2500, msg: "  Pass.", type: 'success',
+                  action: () => document.querySelector('#data-u2 circle').setAttribute('fill', 'var(--green)')},
+                { t: 3500, msg: "Checking U3 (DE) -> Storage US-West", type: 'text' },
+                { t: 4000, msg: "  CRITICAL: Sovereignty Breach! Data crossed borders.", type: 'error',
+                  action: () => {
+                      document.querySelector('#data-u3 circle').setAttribute('fill', 'var(--red)');
+                      const line = document.querySelector('.breach-line');
+                      line.style.opacity = '1';
+                  }}
+            ];
+
+            steps.forEach(step => {
+                setTimeout(() => {
+                    if(step.msg) appendConsole('sov-console', step.msg, step.type);
+                    if(step.action) step.action();
+                }, step.t);
+            });
+        }
+
+        function clearSovSim() {
+            document.getElementById('sov-console').innerHTML = "";
+            document.querySelectorAll('#sov-vis circle').forEach(c => c.setAttribute('fill', 'var(--text-primary)'));
+            document.querySelector('.breach-line').style.opacity = '0';
+        }
+
+        // --- QUIZ CHECKER ---
+        function checkQuiz(btn, isCorrect) {
+            const parent = btn.parentElement;
+            // Reset buttons
+            parent.querySelectorAll('button').forEach(b => {
+                b.classList.remove('bg-[var(--green)]', 'bg-[var(--red)]', 'text-white');
+                b.disabled = true;
+            });
+
+            if(isCorrect) {
+                btn.classList.add('bg-[var(--green)]', 'text-white');
+                btn.textContent += " ✅";
+            } else {
+                btn.classList.add('bg-[var(--red)]', 'text-white');
+                btn.textContent += " ❌";
+            }
+        }
+
+        function showFeedback(radio, msg) {
+            const fb = document.getElementById(radio.name + '-feedback');
+            if(radio.value === 'correct') {
+                fb.textContent = msg;
+                fb.classList.remove('hidden', 'text-[var(--red)]');
+                fb.classList.add('text-[var(--green)]');
+            } else {
+                fb.textContent = "Incorrect. Try again.";
+                fb.classList.remove('hidden', 'text-[var(--green)]');
+                fb.classList.add('text-[var(--red)]');
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
