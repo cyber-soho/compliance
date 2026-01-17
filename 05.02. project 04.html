@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Compliance Assessment Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Professional - Stone/Neutral base with Slate and Burnt Orange accents for a calm, authoritative feel. -->
+    <!-- Application Structure Plan: The app is structured as a "Compliance Lead's Digital Workspace". It moves from Context (Project Charter) -> Scope (What we are auditing) -> Timeline (When we do it) -> Methodology (How we do it) -> Reporting (What we deliver). This linear yet accessible flow mimics the logical progression of building an audit plan. -->
+    <!-- Visualization & Content Choices: 
+         1. Project Context: Summary cards to ground the user in the scenario.
+         2. Scope & Assets: Bar Chart to visualize the volume of assets (simulated counts based on company size) to make the scope concrete.
+         3. Timeline: Doughnut chart to show time allocation per phase + Interactive Phase Explorer to drill down into activities.
+         4. Methodology: Interactive Tool Comparison Table (allows filtering/selection) and a NIST Function visualizer using HTML grid to simplify complex frameworks. 
+         5. Reporting: Simple checklist style for clarity.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 2px solid #ea580c; color: #ea580c; font-weight: 600; }
+        .tab-inactive { color: #57534e; }
+        .tab-inactive:hover { color: #ea580c; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin: 0 auto; height: 300px; max-height: 400px; }
+        .timeline-node { transition: all 0.3s ease; }
+        .timeline-node:hover { transform: scale(1.05); }
+        .tool-row:hover { background-color: #f5f5f4; cursor: pointer; }
+        .selected-tool { background-color: #ffedd5; border-left: 4px solid #ea580c; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 min-h-screen flex flex-col">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-stone-700 tracking-tight">NorthStream <span class="text-orange-600">Audit</span>Hub</span>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:space-x-8" id="nav-container">
+                    <button onclick="switchTab('overview')" id="nav-overview" class="tab-active inline-flex items-center px-1 pt-1 text-sm font-medium">Overview & Scope</button>
+                    <button onclick="switchTab('timeline')" id="nav-timeline" class="tab-inactive inline-flex items-center px-1 pt-1 text-sm font-medium">Timeline & Phases</button>
+                    <button onclick="switchTab('methodology')" id="nav-methodology" class="tab-inactive inline-flex items-center px-1 pt-1 text-sm font-medium">Methodology & Tools</button>
+                    <button onclick="switchTab('resources')" id="nav-resources" class="tab-inactive inline-flex items-center px-1 pt-1 text-sm font-medium">Resources & Reporting</button>
+                </div>
+                <!-- Mobile menu button placeholder -->
+                <div class="-mr-2 flex items-center sm:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-stone-500 hover:text-stone-700 p-2">Menu</button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden sm:hidden bg-white border-t border-stone-200">
+            <div class="pt-2 pb-3 space-y-1">
+                <button onclick="switchTab('overview')" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-50 hover:border-orange-600 hover:text-orange-700 w-full text-left">Overview</button>
+                <button onclick="switchTab('timeline')" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-50 hover:border-orange-600 hover:text-orange-700 w-full text-left">Timeline</button>
+                <button onclick="switchTab('methodology')" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-50 hover:border-orange-600 hover:text-orange-700 w-full text-left">Methodology</button>
+                <button onclick="switchTab('resources')" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-50 hover:border-orange-600 hover:text-orange-700 w-full text-left">Resources</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- SECTION 1: OVERVIEW & SCOPE -->
+        <div id="view-overview" class="space-y-8 animate-fade-in">
+            <!-- Intro Block -->
+            <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 md:p-8">
+                <h1 class="text-3xl font-bold text-stone-800 mb-4">Assessment Charter: NorthStream Technologies</h1>
+                <p class="text-stone-600 leading-relaxed mb-6">
+                    Welcome to the Compliance Assessment Digital Plan. This dashboard outlines the strategy for auditing NorthStream Technologies, a mid-sized SaaS provider based in Toronto. 
+                    Given NorthStream's profile—250 employees, cloud-native infrastructure, and international client base—this assessment prioritizes <strong>PIPEDA</strong> (Canada) and <strong>GDPR</strong> (EU) alignment, 
+                    utilizing the <strong>NIST Cybersecurity Framework</strong> and <strong>CIS Benchmarks</strong> for technical validation.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-stone-50 p-4 rounded-md border-l-4 border-orange-500">
+                        <h3 class="font-semibold text-stone-900">Entity Profile</h3>
+                        <p class="text-sm text-stone-600 mt-1">SaaS Provider, Toronto, ON</p>
+                        <p class="text-sm text-stone-600">250 Employees</p>
+                    </div>
+                    <div class="bg-stone-50 p-4 rounded-md border-l-4 border-blue-500">
+                        <h3 class="font-semibold text-stone-900">Key Data Types</h3>
+                        <p class="text-sm text-stone-600 mt-1">PII (Users & Employees)</p>
+                        <p class="text-sm text-stone-600">Corporate Business Data</p>
+                    </div>
+                    <div class="bg-stone-50 p-4 rounded-md border-l-4 border-emerald-500">
+                        <h3 class="font-semibold text-stone-900">Compliance Targets</h3>
+                        <p class="text-sm text-stone-600 mt-1">PIPEDA (Principle 7)</p>
+                        <p class="text-sm text-stone-600">GDPR (Art. 32), SOC 2 Mapping</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scope Visualization -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Assets In Scope -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+                    <h2 class="text-xl font-bold text-stone-800 mb-2">1.1 Assets In Scope</h2>
+                    <p class="text-sm text-stone-500 mb-6">Estimated volume of systems requiring technical assessment based on organization size.</p>
+                    
+                    <div class="chart-container">
+                        <canvas id="scopeChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-xs text-stone-400 text-center">
+                        *Estimates for planning purposes
+                    </div>
+                </div>
+
+                <!-- Exclusions & Boundaries -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 flex flex-col">
+                    <h2 class="text-xl font-bold text-stone-800 mb-4">1.3 Exclusions & Boundaries</h2>
+                    <p class="text-stone-600 mb-4 text-sm">To ensure a focused audit within the 1-2 week timeframe, the following are explicitly <strong>excluded</strong> from direct technical testing:</p>
+                    
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="text-red-500 mr-2 font-bold">&#10005;</span>
+                            <div>
+                                <strong class="text-stone-800">Legacy CRM System</strong>
+                                <p class="text-xs text-stone-500">Scheduled for decommissioning in Q3. Risk accepted by CTO.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-red-500 mr-2 font-bold">&#10005;</span>
+                            <div>
+                                <strong class="text-stone-800">Third-Party Cloud Physical Security</strong>
+                                <p class="text-xs text-stone-500">Evaluated via AWS/Azure SOC 2 Type II Report review only. No site visits.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-red-500 mr-2 font-bold">&#10005;</span>
+                            <div>
+                                <strong class="text-stone-800">Guest Wi-Fi Network</strong>
+                                <p class="text-xs text-stone-500">Logically air-gapped from corporate production data.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-red-500 mr-2 font-bold">&#10005;</span>
+                            <div>
+                                <strong class="text-stone-800">Employee Personal Devices (BYOD)</strong>
+                                <p class="text-xs text-stone-500">Only MDM profiles are in scope; physical inspection of personal devices is excluded.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: TIMELINE & PHASES -->
+        <div id="view-timeline" class="hidden space-y-8">
+            <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 md:p-8">
+                <h1 class="text-3xl font-bold text-stone-800 mb-4">Project Timeline & Phasing</h1>
+                <p class="text-stone-600 leading-relaxed mb-6">
+                    The assessment is structured over a <strong>1-2 week period</strong>. This ensures sufficient time for preparation, deep-dive technical scanning, and validation of findings before the final report.
+                    Use the interactive phase explorer below to view specific objectives and deliverables for each stage.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <!-- Chart Column -->
+                    <div class="lg:col-span-1">
+                        <div class="chart-container h-64">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                        <p class="text-center text-sm text-stone-500 mt-2">Time Allocation by Phase</p>
+                    </div>
+
+                    <!-- Interactive Phase Details -->
+                    <div class="lg:col-span-2">
+                        <div class="flex space-x-2 mb-4 overflow-x-auto pb-2">
+                            <button onclick="updatePhase(1)" class="phase-btn px-4 py-2 rounded-full text-sm font-medium bg-orange-100 text-orange-800 border border-orange-200 whitespace-nowrap" id="btn-phase-1">Phase 1: Prep</button>
+                            <button onclick="updatePhase(2)" class="phase-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 whitespace-nowrap" id="btn-phase-2">Phase 2: Review</button>
+                            <button onclick="updatePhase(3)" class="phase-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 whitespace-nowrap" id="btn-phase-3">Phase 3: Tech Assessment</button>
+                            <button onclick="updatePhase(4)" class="phase-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 whitespace-nowrap" id="btn-phase-4">Phase 4: Analysis</button>
+                            <button onclick="updatePhase(5)" class="phase-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 whitespace-nowrap" id="btn-phase-5">Phase 5: Reporting</button>
+                        </div>
+
+                        <div id="phase-detail-card" class="bg-stone-50 rounded-lg p-6 border border-stone-200 transition-all duration-300">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 id="phase-title" class="text-xl font-bold text-stone-800">Phase 1: Preparation & Planning</h3>
+                                <span id="phase-duration" class="bg-stone-200 text-stone-700 px-3 py-1 rounded-full text-xs font-bold uppercase">Day 1</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="text-sm font-bold text-orange-600 uppercase tracking-wide mb-2">Key Activities</h4>
+                                    <ul id="phase-activities" class="list-disc list-inside text-stone-700 text-sm space-y-2">
+                                        <!-- JS Populated -->
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-blue-600 uppercase tracking-wide mb-2">Deliverables & Milestones</h4>
+                                    <ul id="phase-deliverables" class="list-none text-stone-700 text-sm space-y-2">
+                                        <!-- JS Populated -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: METHODOLOGY & TOOLS -->
+        <div id="view-methodology" class="hidden space-y-8">
+            <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6 md:p-8">
+                <h1 class="text-3xl font-bold text-stone-800 mb-4">Assessment Methodology</h1>
+                <p class="text-stone-600 leading-relaxed mb-6">
+                    Our approach combines <strong>NIST CSF</strong> framework analysis with rigorous technical testing. We separate the assessment into 
+                    Administrative Review (Policy/Process) and Technical Review (Configuration/Scanning).
+                </p>
+
+                <!-- Framework Visualizer -->
+                <div class="mb-10">
+                    <h2 class="text-lg font-bold text-stone-800 mb-4 border-b pb-2">3.1 Framework Alignment (NIST CSF 2.0)</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                        <div class="p-4 bg-blue-50 border border-blue-100 rounded text-center">
+                            <div class="text-blue-800 font-bold mb-1">GOVERN</div>
+                            <div class="text-xs text-blue-600">Strategy & Policy</div>
+                        </div>
+                        <div class="p-4 bg-purple-50 border border-purple-100 rounded text-center">
+                            <div class="text-purple-800 font-bold mb-1">IDENTIFY</div>
+                            <div class="text-xs text-purple-600">Asset Mgmt</div>
+                        </div>
+                        <div class="p-4 bg-orange-50 border border-orange-100 rounded text-center">
+                            <div class="text-orange-800 font-bold mb-1">PROTECT</div>
+                            <div class="text-xs text-orange-600">Access Control</div>
+                        </div>
+                        <div class="p-4 bg-teal-50 border border-teal-100 rounded text-center">
+                            <div class="text-teal-800 font-bold mb-1">DETECT</div>
+                            <div class="text-xs text-teal-600">Monitoring</div>
+                        </div>
+                        <div class="p-4 bg-red-50 border border-red-100 rounded text-center">
+                            <div class="text-red-800 font-bold mb-1">RESPOND</div>
+                            <div class="text-xs text-red-600">Incident Mgmt</div>
+                        </div>
+                        <div class="p-4 bg-green-50 border border-green-100 rounded text-center">
+                            <div class="text-green-800 font-bold mb-1">RECOVER</div>
+                            <div class="text-xs text-green-600">Backups</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tool Selection Interactive Table -->
+                <div>
+                    <h2 class="text-lg font-bold text-stone-800 mb-4 flex justify-between items-center">
+                        <span>3.2 Technical Tool Selection</span>
+                        <span class="text-xs font-normal text-stone-500 bg-stone-100 px-2 py-1 rounded">Click a tool to select for audit</span>
+                    </h2>
+                    
+                    <div class="overflow-x-auto border border-stone-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-stone-200">
+                            <thead class="bg-stone-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Tool</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Cost/Model</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Suitability</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-stone-200" id="tool-table-body">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Selection Feedback -->
+                    <div id="tool-rationale" class="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg hidden">
+                        <h4 class="font-bold text-orange-800 text-sm mb-1">Selection Rationale:</h4>
+                        <p id="rationale-text" class="text-sm text-stone-700"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: RESOURCES & REPORTING -->
+        <div id="view-resources" class="hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Team Composition -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+                    <h2 class="text-xl font-bold text-stone-800 mb-4">4.1 Resource Requirements</h2>
+                    <p class="text-sm text-stone-600 mb-4">The audit requires collaboration between the external assessment team and NorthStream internal staff.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="p-3 bg-stone-50 border-l-4 border-stone-800 rounded">
+                            <h3 class="font-bold text-stone-800 text-sm">Assessment Team (External)</h3>
+                            <div class="mt-2 text-sm text-stone-600 grid grid-cols-2 gap-2">
+                                <span>&#8226; Lead Auditor</span>
+                                <span>&#8226; Compliance Analyst</span>
+                                <span>&#8226; Technical Assessor</span>
+                                <span>&#8226; Pen Tester</span>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-orange-50 border-l-4 border-orange-500 rounded">
+                            <h3 class="font-bold text-stone-800 text-sm">NorthStream Team (Internal)</h3>
+                            <div class="mt-2 text-sm text-stone-600 grid grid-cols-2 gap-2">
+                                <span>&#8226; Executive Sponsor (CISO)</span>
+                                <span>&#8226; Technical Liaison</span>
+                                <span>&#8226; HR Representative</span>
+                                <span>&#8226; Cloud Architect</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reporting Plan -->
+                <div class="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+                    <h2 class="text-xl font-bold text-stone-800 mb-4">5.0 Reporting Strategy</h2>
+                    <p class="text-sm text-stone-600 mb-4">Communication will be continuous to avoid surprises, culminating in a formal audit report.</p>
+
+                    <div class="relative pl-6 border-l-2 border-stone-200 space-y-6">
+                        <div class="relative">
+                            <div class="absolute -left-[31px] bg-blue-500 h-4 w-4 rounded-full border-2 border-white"></div>
+                            <h4 class="font-bold text-stone-800 text-sm">Daily Status Updates</h4>
+                            <p class="text-xs text-stone-500">Email summary of progress, blockers, and preliminary findings.</p>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute -left-[31px] bg-orange-500 h-4 w-4 rounded-full border-2 border-white"></div>
+                            <h4 class="font-bold text-stone-800 text-sm">Mid-Assessment Checkpoint</h4>
+                            <p class="text-xs text-stone-500">Presentation of critical gaps found during documentation review (End of Day 5).</p>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute -left-[31px] bg-stone-800 h-4 w-4 rounded-full border-2 border-white"></div>
+                            <h4 class="font-bold text-stone-800 text-sm">Final Audit Report</h4>
+                            <p class="text-xs text-stone-500">Executive Summary, Detailed Technical Findings, Risk Ratings, and Remediation Roadmap.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-stone-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm text-stone-400">
+                Course: Cybersecurity Compliance and Risk Management &copy; 2026. Module 5 Project Task.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- DATA STORAGE ---
+        
+        // Scope Data for Chart
+        const scopeData = {
+            labels: ['Production Servers', 'End User Devices', 'Cloud Buckets', 'DB Instances', 'Network Devices'],
+            data: [45, 250, 120, 12, 15] // Estimated counts for a 250-person SaaS
+        };
+
+        // Timeline Data for Chart and Interaction
+        const timelinePhases = [
+            {
+                id: 1,
+                title: "Preparation & Planning",
+                day: "Day 1",
+                activities: [
+                    "Define detailed audit scope and Rules of Engagement",
+                    "Conduct Kick-off meeting with NorthStream Execs",
+                    "Gather initial asset lists and network diagrams"
+                ],
+                deliverables: [
+                    "Signed Audit Charter",
+                    "Finalized Project Schedule",
+                    "Access Request Form"
+                ]
+            },
+            {
+                id: 2,
+                title: "Doc Review & Interviews",
+                day: "Day 2",
+                activities: [
+                    "Review PIPEDA/GDPR Policies",
+                    "Interview CISO, HR, and Ops Leads",
+                    "Review SOC 2 Reports for Cloud Providers"
+                ],
+                deliverables: [
+                    "Document Gap Analysis Matrix",
+                    "Interview Summaries",
+                    "Initial Policy Compliance Score"
+                ]
+            },
+            {
+                id: 3,
+                title: "Technical Assessment",
+                day: "Day 3",
+                activities: [
+                    "Run CIS Benchmark Scans (OpenSCAP/Nessus)",
+                    "Audit Cloud Config (AWS/Azure)",
+                    "Sample Check Endpoint Security (MDM)"
+                ],
+                deliverables: [
+                    "Raw Scan Data Logs",
+                    "Configuration Compliance Report",
+                    "False Positive Validation Log"
+                ]
+            },
+            {
+                id: 4,
+                title: "Analysis & Validation",
+                day: "Day 4",
+                activities: [
+                    "Correlate findings against Risk Framework",
+                    "Assign Risk Ratings (Critical/High/Med/Low)",
+                    "Validate findings with Technical Liaison"
+                ],
+                deliverables: [
+                    "Draft Findings Register",
+                    "Risk Rating Matrix",
+                    "Technical Validation Sign-off"
+                ]
+            },
+            {
+                id: 5,
+                title: "Reporting & Presentation",
+                day: "Day 5",
+                activities: [
+                    "Draft Executive Summary & Roadmap",
+                    "Finalize Full Technical Report",
+                    "Present to Board/Leadership"
+                ],
+                deliverables: [
+                    "Final Compliance Assessment Report",
+                    "Remediation Action Plan",
+                    "Presentation Slide Deck"
+                ]
+            }
+        ];
+
+        // Tools Data
+        const toolsList = [
+            {
+                name: "OpenSCAP",
+                type: "Config Scanner",
+                model: "Open Source / Free",
+                rating: "High",
+                rationale: "Excellent for Linux server CIS benchmarks. Cost-effective for a mid-sized firm, though requires some CLI expertise."
+            },
+            {
+                name: "Tenable Nessus",
+                type: "Vuln & Compliance",
+                model: "Commercial License",
+                rating: "Medium",
+                rationale: "Industry standard but expensive. Good if NorthStream already owns it, otherwise OpenSCAP is preferred for budget."
+            },
+            {
+                name: "CIS-CAT Pro",
+                type: "Config Assessor",
+                model: "Membership Required",
+                rating: "High",
+                rationale: "The 'Gold Standard' for CIS benchmark assessment. Highly accurate, provides HTML reports, but requires CIS membership."
+            },
+            {
+                name: "Splunk (or ELK)",
+                type: "Log Analysis",
+                model: "Commercial / Open",
+                rating: "Medium",
+                rationale: "Required for reviewing incident detection timelines (GDPR 72hr rule). We will use existing NorthStream logging tools."
+            }
+        ];
+
+        // --- CHART INITIALIZATION ---
+
+        function initCharts() {
+            // 1. Scope Chart (Bar)
+            const scopeCtx = document.getElementById('scopeChart').getContext('2d');
+            new Chart(scopeCtx, {
+                type: 'bar',
+                data: {
+                    labels: scopeData.labels,
+                    datasets: [{
+                        label: 'Estimated Quantity',
+                        data: scopeData.data,
+                        backgroundColor: [
+                            '#ea580c', // Orange
+                            '#f97316', 
+                            '#fdba74',
+                            '#3b82f6', // Blue accent for DB
+                            '#94a3b8'  // Slate for net
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw} Assets`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f5f5f4' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // 2. Timeline Chart (Doughnut)
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            new Chart(timelineCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: timelinePhases.map(p => p.title),
+                    datasets: [{
+                        data: [2, 2, 3, 2, 3], // Duration in days
+                        backgroundColor: [
+                            '#fed7aa', // Light Orange
+                            '#fdba74',
+                            '#ea580c', // Main Orange (Tech Assess is biggest)
+                            '#9a3412',
+                            '#431407'  // Darkest for Reporting
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 12, font: {size: 10} } }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // --- UI INTERACTION FUNCTIONS ---
+
+        // 1. Navigation
+        function switchTab(tabId) {
+            // Hide all views
+            ['overview', 'timeline', 'methodology', 'resources'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                document.getElementById(`nav-${v}`).classList.remove('tab-active');
+                document.getElementById(`nav-${v}`).classList.add('tab-inactive');
+                // Mobile menu styling reset
+                // (Simplified for brevity, mostly desktop focus)
+            });
+
+            // Show selected view
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            
+            // Activate Tab style
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            activeBtn.classList.remove('tab-inactive');
+            activeBtn.classList.add('tab-active');
+
+            // Close mobile menu if open
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // 2. Timeline Interaction
+        function updatePhase(phaseId) {
+            const phase = timelinePhases.find(p => p.id === phaseId);
+            if(!phase) return;
+
+            // Update Text
+            document.getElementById('phase-title').textContent = `${phase.title}`;
+            document.getElementById('phase-duration').textContent = phase.day;
+            
+            // Update Lists
+            const actList = document.getElementById('phase-activities');
+            actList.innerHTML = phase.activities.map(a => `<li>${a}</li>`).join('');
+
+            const delList = document.getElementById('phase-deliverables');
+            delList.innerHTML = phase.deliverables.map(d => `<li class="flex items-center"><span class="text-blue-500 mr-2">&#10003;</span>${d}</li>`).join('');
+
+            // Update Buttons State
+            timelinePhases.forEach(p => {
+                const btn = document.getElementById(`btn-phase-${p.id}`);
+                if (p.id === phaseId) {
+                    btn.classList.remove('bg-white', 'text-stone-600');
+                    btn.classList.add('bg-orange-100', 'text-orange-800', 'border-orange-200');
+                } else {
+                    btn.classList.add('bg-white', 'text-stone-600');
+                    btn.classList.remove('bg-orange-100', 'text-orange-800', 'border-orange-200');
+                }
+            });
+        }
+
+        // 3. Tool Table Generator & Interaction
+        function renderToolTable() {
+            const tbody = document.getElementById('tool-table-body');
+            tbody.innerHTML = '';
+
+            toolsList.forEach((tool, index) => {
+                const row = document.createElement('tr');
+                row.className = 'tool-row transition-colors duration-150';
+                row.onclick = () => selectTool(index, row);
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">${tool.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">${tool.type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">${tool.model}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tool.rating === 'High' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${tool.rating}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function selectTool(index, rowElement) {
+            // Reset styles
+            document.querySelectorAll('.tool-row').forEach(r => {
+                r.classList.remove('selected-tool');
+            });
+            // Set style
+            rowElement.classList.add('selected-tool');
+            
+            // Show rationale
+            const rationaleBox = document.getElementById('tool-rationale');
+            rationaleBox.classList.remove('hidden');
+            document.getElementById('rationale-text').textContent = toolsList[index].rationale;
+        }
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updatePhase(1); // Default to Phase 1
+            renderToolTable();
+        });
+
+    </script>
+</body>
+</html>

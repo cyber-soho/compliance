@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 5: Developing Assessment Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        solar: {
+                            base03: '#002b36',
+                            base02: '#073642',
+                            base01: '#586e75',
+                            base00: '#657b83',
+                            base0: '#839496',
+                            base1: '#93a1a1',
+                            base2: '#eee8d5',
+                            base3: '#fdf6e3',
+                            yellow: '#b58900',
+                            orange: '#cb4b16',
+                            red: '#dc322f',
+                            magenta: '#d33682',
+                            violet: '#6c71c4',
+                            blue: '#268bd2',
+                            cyan: '#2aa198',
+                            green: '#859900',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Solarized Theme Setup */
+        :root {
+            --bg-primary: #fdf6e3; /* base3 */
+            --bg-secondary: #eee8d5; /* base2 */
+            --text-primary: #657b83; /* base00 */
+            --text-secondary: #586e75; /* base01 */
+            --accent: #268bd2; /* blue */
+            --border: #93a1a1; /* base1 */
+        }
+        
+        html.dark {
+            --bg-primary: #002b36; /* base03 */
+            --bg-secondary: #073642; /* base02 */
+            --text-primary: #839496; /* base0 */
+            --text-secondary: #93a1a1; /* base1 */
+            --accent: #268bd2; /* blue */
+            --border: #586e75; /* base01 */
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+        .nav-item.active {
+            background-color: var(--accent);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Flashcard Styles */
+        .flashcard {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: help;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .flashcard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flashcard .definition {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        .flashcard:hover .definition {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        /* Console Styles */
+        .console {
+            background-color: #002b36; /* Always dark for code */
+            color: #839496;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #586e75;
+        }
+        .console-line { margin: 2px 0; }
+        .console-success { color: #859900; }
+        .console-error { color: #dc322f; }
+        .console-info { color: #268bd2; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Animation Classes */
+        .packet {
+            transition: all 1s ease-in-out;
+        }
+        .risk-file {
+            transition: all 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Main Menu -->
+    <header class="bg-solar-base02 text-solar-base1 shadow-lg z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-solar-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Module 5: Developing Assessment Plan
+            </h1>
+            
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-semibold">Theme:</span>
+                <button id="themeToggle" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none bg-solar-base01" onclick="toggleTheme()">
+                    <span class="sr-only">Toggle Theme</span>
+                    <span id="toggleKnob" class="translate-x-1 inline-block w-4 h-4 transform bg-white rounded-full transition-transform"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Side Menu (Tabs) -->
+        <nav class="w-64 flex-shrink-0 overflow-y-auto bg-solar-base02/10 border-r border-solar-base1/20 p-4 space-y-2 hidden md:block">
+            <div onclick="showTab('intro')" class="nav-item active" id="nav-intro">Introduction</div>
+            <div onclick="showTab('lesson1')" class="nav-item" id="nav-lesson1">Lesson 1: Scope</div>
+            <div onclick="showTab('lesson2')" class="nav-item" id="nav-lesson2">Lesson 2: Methodologies</div>
+            <div onclick="showTab('lesson3')" class="nav-item" id="nav-lesson3">Lesson 3: Stakeholders</div>
+            <div onclick="showTab('conclusion')" class="nav-item" id="nav-conclusion">Conclusion & References</div>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 scroll-smooth" id="mainContent">
+            
+            <!-- Intro Tab -->
+            <div id="intro" class="tab-content">
+                <h2 class="text-3xl font-bold mb-4 text-solar-blue">Introduction</h2>
+                <div class="panel">
+                    <h3 class="text-xl font-semibold mb-2">Welcome to Module 5</h3>
+                    <p class="mb-4 text-lg">In previous sessions, we talked about <strong>why</strong> we assess systems. Today, we talk about <strong>how</strong> we plan that assessment.</p>
+                    <p class="mb-4">You cannot just walk into a company and say, "I'm here to check everything." That is a recipe for disaster. Today we cover three critical pillars:</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                        <div class="bg-solar-base2 dark:bg-solar-base02 p-4 rounded text-center border-t-4 border-solar-red">
+                            <h4 class="font-bold text-lg">1. Scope</h4>
+                            <p class="text-sm mt-2">Drawing the line between what you check and what you ignore.</p>
+                        </div>
+                        <div class="bg-solar-base2 dark:bg-solar-base02 p-4 rounded text-center border-t-4 border-solar-blue">
+                            <h4 class="font-bold text-lg">2. Methodologies</h4>
+                            <p class="text-sm mt-2">How you actually get the truth (Interview, Observation, Testing).</p>
+                        </div>
+                        <div class="bg-solar-base2 dark:bg-solar-base02 p-4 rounded text-center border-t-4 border-solar-green">
+                            <h4 class="font-bold text-lg">3. Stakeholders</h4>
+                            <p class="text-sm mt-2">Who is responsible? Mapping risks to owners.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson 1 Tab -->
+            <div id="lesson1" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-blue">Lesson 1: Defining the Audit Scope</h2>
+                
+                <div class="panel">
+                    <p class="mb-4">The scope defines the boundaries. In modern cybersecurity, this is tricky because of the <strong>Cloud vs. On-Premises</strong> dilemma.</p>
+                    <ul class="list-disc ml-6 mb-4 space-y-2">
+                        <li><strong>On-Prem:</strong> Servers in the basement. You own them, you secure them.</li>
+                        <li><strong>Cloud:</strong> Servers rented from Amazon/Microsoft. You rely on the <em>Shared Responsibility Model</em>.</li>
+                    </ul>
+                    <div class="bg-solar-red/10 border-l-4 border-solar-red p-4 my-4">
+                        <p class="font-bold">Warning: Scope Creep</p>
+                        <p>If you audit a system without defined scope, you might accidentally scan a third-party server (like a payment gateway). This is illegal.</p>
+                    </div>
+                </div>
+
+                <!-- Visual 1: Scope Diagram -->
+                <div class="panel">
+                    <h3 class="text-xl font-semibold mb-4">Real-Life Example: The Student Portal</h3>
+                    <div class="flex flex-col md:flex-row gap-6 items-center">
+                        <div class="flex-1">
+                            <p class="mb-2"><strong>Task:</strong> Distinguish between assets you control (In-Scope) and vendor assets (Out-of-Scope).</p>
+                            <ul class="text-sm space-y-2">
+                                <li class="text-solar-green font-bold">✓ Grade DB (On-Prem) - IN SCOPE</li>
+                                <li class="text-solar-green font-bold">✓ Web Server (On-Prem) - IN SCOPE</li>
+                                <li class="text-solar-red font-bold">✗ PayQuick (Cloud) - OUT OF SCOPE</li>
+                            </ul>
+                        </div>
+                        <div class="flex-1 bg-white rounded-lg p-2 shadow-inner flex justify-center">
+                            <!-- SVG Scope Visualization -->
+                            <svg width="300" height="200" viewBox="0 0 300 200">
+                                <!-- Cloud -->
+                                <path d="M220,40 Q240,20 260,40 T290,60 T280,100 H210 Q190,80 220,40" fill="#eee" stroke="#999" stroke-width="2"/>
+                                <text x="235" y="80" font-size="10" fill="#555">Cloud (PayQuick)</text>
+                                <rect id="vis1-cloud-server" x="230" y="55" width="30" height="20" rx="2" fill="#dc322f" opacity="0.5"/>
+                                
+                                <!-- On Prem -->
+                                <rect x="10" y="110" width="180" height="80" rx="5" fill="#e6f3ff" stroke="#268bd2" stroke-width="2" stroke-dasharray="5,5"/>
+                                <text x="20" y="130" font-size="12" fill="#268bd2" font-weight="bold">Internal Network (Scope)</text>
+                                <text x="20" y="145" font-size="10" fill="#268bd2">192.168.1.0/24</text>
+                                
+                                <!-- Servers -->
+                                <rect id="vis1-db" x="30" y="155" width="30" height="20" rx="2" fill="#859900" stroke="#333"/>
+                                <text x="32" y="185" font-size="8">DB</text>
+                                <rect id="vis1-web" x="80" y="155" width="30" height="20" rx="2" fill="#859900" stroke="#333"/>
+                                <text x="82" y="185" font-size="8">Web</text>
+
+                                <!-- Scanner -->
+                                <circle cx="150" cy="40" r="15" fill="#b58900" stroke="#333"/>
+                                <text x="135" y="20" font-size="10" font-weight="bold">Auditor</text>
+                                
+                                <!-- Animation Elements -->
+                                <circle id="vis1-packet" cx="150" cy="40" r="5" fill="#cb4b16" opacity="0"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Python Sandbox 1 -->
+                <div class="panel border-solar-blue border-2">
+                    <h3 class="text-lg font-bold text-solar-blue mb-2">💻 Python Simulation: Scope Enforcer</h3>
+                    <p class="text-sm mb-4 italic">Task Definition: This script filters a list of potential target IP addresses against a defined "In-Scope" subnet. It prevents the auditor from scanning unauthorized assets.</p>
+                    
+                    <div class="bg-gray-900 rounded-t p-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-400">scope_enforcer.py</span>
+                        <div>
+                            <button onclick="runScopeCode()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition">RUN ▶</button>
+                            <button onclick="clearConsole('console1')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition ml-2">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-4 font-mono text-sm overflow-x-auto text-gray-300">
+                        <div class="text-green-400 mb-2"># Import library for IP math</div>
+                        <div>import ipaddress</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Define the allowed network boundary</div>
+                        <div>allowed_subnet_str = "192.168.1.0/24"</div>
+                        <div>target_ips = ["192.168.1.10", "192.168.1.55", "203.0.113.5"]</div>
+                        <br>
+                        <div>print(f"--- Scope Definition: {allowed_subnet_str} ---")</div>
+                        <div>allowed_network = ipaddress.ip_network(allowed_subnet_str)</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Loop through targets to check validity</div>
+                        <div>for ip_str in target_ips:</div>
+                        <div class="pl-4">ip_obj = ipaddress.ip_address(ip_str)</div>
+                        <div class="pl-4">if ip_obj in allowed_network:</div>
+                        <div class="pl-8">print(f"[+] IN SCOPE: {ip_str}")</div>
+                        <div class="pl-4">else:</div>
+                        <div class="pl-8">print(f"[-] OUT OF SCOPE: {ip_str} - DO NOT TOUCH.")</div>
+                    </div>
+                    <div id="console1" class="console mt-2">
+                        <div class="console-line">> Ready to execute...</div>
+                    </div>
+                </div>
+
+                <!-- Quiz 1 -->
+                <div class="panel border-solar-violet border-l-8">
+                    <h3 class="text-xl font-bold text-solar-violet mb-4">📝 Lesson 1 Quiz</h3>
+                    <div id="quiz1-container">
+                        <!-- Q1 -->
+                        <div class="mb-4">
+                            <p class="font-bold">1. What is the primary risk of not defining a scope?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="a"> A) The audit will take too long.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="b"> B) You might audit the wrong version of Windows.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="c"> C) You might illegally scan a third-party asset (Scope Creep).</label>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="mb-4">
+                            <p class="font-bold">2. In a Shared Responsibility Model (Cloud), who secures the physical data center?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="a"> A) The Cloud Provider (e.g., AWS).</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="b"> B) You (The Customer).</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="c"> C) The Auditor.</label>
+                        </div>
+                        <!-- Q3 MSQ -->
+                        <div class="mb-4">
+                            <p class="font-bold">3. Which of the following are likely "In-Scope" for an internal audit? (Select all that apply)</p>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3" value="a"> A) Company-owned Database Server.</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3" value="b"> B) Google's Gmail Servers.</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3" value="c"> C) Internal Wi-Fi Routers.</label>
+                        </div>
+                        <button onclick="checkQuiz1()" class="bg-solar-violet text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition">Submit Answers</button>
+                        <button onclick="resetQuiz1()" class="ml-2 text-solar-violet underline hover:text-purple-700">Reset</button>
+                    </div>
+                    <div id="quiz1-feedback" class="hidden mt-4 bg-solar-base2 dark:bg-solar-base02 p-4 rounded"></div>
+                </div>
+
+                <!-- Terms 1 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="flashcard">
+                        <strong>Scope</strong>
+                        <div class="definition">The boundaries of what is included in an assessment.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Scope Creep</strong>
+                        <div class="definition">Uncontrolled expansion of the audit boundaries, potentially leading to legal issues.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>On-Prem</strong>
+                        <div class="definition">Infrastructure located physically within the organization's building.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Shared Responsibility</strong>
+                        <div class="definition">Security model where Cloud provider handles hardware, and customer handles data/OS.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson 2 Tab -->
+            <div id="lesson2" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-blue">Lesson 2: Methodologies</h2>
+                
+                <div class="panel">
+                    <p class="mb-4">Once you know <em>what</em> to test, you decide <em>how</em>. NIST guidelines suggest "Triangulation" using three methods:</p>
+                    
+                    <div class="flex flex-col md:flex-row items-center justify-around gap-8 my-6">
+                        <div class="w-full md:w-1/2 space-y-4">
+                            <div class="flex items-start gap-3">
+                                <div class="bg-blue-100 p-2 rounded text-2xl">🗣️</div>
+                                <div>
+                                    <h4 class="font-bold">Interview</h4>
+                                    <p class="text-sm">Asking humans. Fast, but prone to lies or ignorance.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="bg-yellow-100 p-2 rounded text-2xl">👀</div>
+                                <div>
+                                    <h4 class="font-bold">Observation</h4>
+                                    <p class="text-sm">Watching a process. Shows reality, but people behave better when watched.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="bg-red-100 p-2 rounded text-2xl">💻</div>
+                                <div>
+                                    <h4 class="font-bold">Technical Testing</h4>
+                                    <p class="text-sm">Using scripts/tools. Undeniable evidence, but risky (can crash systems).</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Visual 2: Methodologies SVG -->
+                        <div class="w-full md:w-1/2 flex justify-center bg-white p-4 rounded shadow-inner">
+                            <svg width="250" height="200" viewBox="0 0 250 200">
+                                <polygon points="125,20 230,180 20,180" fill="none" stroke="#268bd2" stroke-width="2"/>
+                                <circle cx="125" cy="20" r="15" fill="#2aa198"/>
+                                <text x="125" y="25" text-anchor="middle" fill="white" font-size="16">👀</text>
+                                <text x="125" y="45" text-anchor="middle" font-size="10" font-weight="bold">Observation</text>
+                                
+                                <circle cx="20" cy="180" r="15" fill="#b58900"/>
+                                <text x="20" y="185" text-anchor="middle" fill="white" font-size="16">🗣️</text>
+                                <text x="20" y="160" text-anchor="middle" font-size="10" font-weight="bold">Interview</text>
+                                
+                                <circle cx="230" cy="180" r="15" fill="#dc322f"/>
+                                <text x="230" y="185" text-anchor="middle" fill="white" font-size="16">💻</text>
+                                <text x="230" y="160" text-anchor="middle" font-size="10" font-weight="bold">Testing</text>
+                                
+                                <text x="125" y="120" text-anchor="middle" fill="#586e75" font-size="12" font-style="italic">Triangulation</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Python Sandbox 2 -->
+                <div class="panel border-solar-blue border-2">
+                    <h3 class="text-lg font-bold text-solar-blue mb-2">💻 Python Simulation: Password Policy Validator</h3>
+                    <p class="text-sm mb-4 italic">Task Definition: This script simulates Technical Testing. It validates if a password meets complexity rules (Length > 8, Upper, Lower, Digit) to verify what the manager claimed in the Interview.</p>
+                    
+                    <!-- Visual Feedback for Password -->
+                    <div class="mb-4 p-3 bg-solar-base2 dark:bg-solar-base02 rounded flex gap-4 justify-around text-center">
+                        <div>
+                            <div id="vis2-len" class="w-4 h-4 rounded-full bg-gray-300 mx-auto transition-colors"></div>
+                            <span class="text-xs">Length > 8</span>
+                        </div>
+                        <div>
+                            <div id="vis2-upper" class="w-4 h-4 rounded-full bg-gray-300 mx-auto transition-colors"></div>
+                            <span class="text-xs">Uppercase</span>
+                        </div>
+                        <div>
+                            <div id="vis2-lower" class="w-4 h-4 rounded-full bg-gray-300 mx-auto transition-colors"></div>
+                            <span class="text-xs">Lowercase</span>
+                        </div>
+                        <div>
+                            <div id="vis2-digit" class="w-4 h-4 rounded-full bg-gray-300 mx-auto transition-colors"></div>
+                            <span class="text-xs">Digit</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-900 rounded-t p-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-400">password_tester.py</span>
+                        <div>
+                            <button onclick="runPasswordCode()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition">RUN ▶</button>
+                            <button onclick="clearConsole('console2')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition ml-2">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-4 font-mono text-sm overflow-x-auto text-gray-300">
+                        <div>import re</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Function to test password complexity</div>
+                        <div>def technical_test(password):</div>
+                        <div class="pl-4">results = {"len":False, "up":False, "low":False, "dig":False}</div>
+                        <div class="pl-4">if len(password) >= 8: results["len"] = True</div>
+                        <div class="pl-4">if re.search(r"[A-Z]", password): results["up"] = True</div>
+                        <div class="pl-4">if re.search(r"[a-z]", password): results["low"] = True</div>
+                        <div class="pl-4">if re.search(r"\d", password): results["dig"] = True</div>
+                        <br>
+                        <div class="pl-4">is_compliant = all(results.values())</div>
+                        <div class="pl-4">print(f"Password: '{password}' -> Pass? {is_compliant}")</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Execution</div>
+                        <div>technical_test("Password123") <span class="text-gray-500"># From Sticky Note</span></div>
+                        <div>technical_test("admin") <span class="text-gray-500"># Weak Guess</span></div>
+                    </div>
+                    <div id="console2" class="console mt-2">
+                        <div class="console-line">> Ready to execute...</div>
+                    </div>
+                </div>
+
+                <!-- Quiz 2 -->
+                <div class="panel border-solar-violet border-l-8">
+                    <h3 class="text-xl font-bold text-solar-violet mb-4">📝 Lesson 2 Quiz</h3>
+                    <div id="quiz2-container">
+                        <!-- Q1 -->
+                        <div class="mb-4">
+                            <p class="font-bold">1. Which methodology involves simply asking a user about a process?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_1" value="a"> A) Technical Testing.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_1" value="b"> B) Interview.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_1" value="c"> C) Observation.</label>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="mb-4">
+                            <p class="font-bold">2. What is the "Observer Effect"?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_2" value="a"> A) Tools break when you watch them.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_2" value="b"> B) People behave better/differently when they know they are being watched.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_2" value="c"> C) You cannot observe Cloud assets.</label>
+                        </div>
+                        <!-- Q3 MSQ -->
+                        <div class="mb-4">
+                            <p class="font-bold">3. Why is "Technical Testing" valuable? (Select all that apply)</p>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q2_3" value="a"> A) It provides undeniable evidence (True/False).</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q2_3" value="b"> B) It is the only legally required method.</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q2_3" value="c"> C) It validates if the system actually enforces the policy.</label>
+                        </div>
+                        <button onclick="checkQuiz2()" class="bg-solar-violet text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition">Submit Answers</button>
+                        <button onclick="resetQuiz2()" class="ml-2 text-solar-violet underline hover:text-purple-700">Reset</button>
+                    </div>
+                    <div id="quiz2-feedback" class="hidden mt-4 bg-solar-base2 dark:bg-solar-base02 p-4 rounded"></div>
+                </div>
+
+                <!-- Terms 2 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="flashcard">
+                        <strong>Triangulation</strong>
+                        <div class="definition">Using multiple methods (Interview, Observation, Testing) to verify a control.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Technical Testing</strong>
+                        <div class="definition">Using software tools to verify system configuration and security controls.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>NIST</strong>
+                        <div class="definition">National Institute of Standards and Technology - provides frameworks like 800-53.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson 3 Tab -->
+            <div id="lesson3" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-blue">Lesson 3: Stakeholder Identification</h2>
+                
+                <div class="panel">
+                    <p class="mb-4">In an assessment, you identify risks. But you must know who <strong>owns</strong> that risk so they can fix it.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="border border-solar-base1 p-3 rounded hover:bg-solar-base2 dark:hover:bg-solar-base02 transition">
+                            <h4 class="font-bold text-solar-magenta">HR (Human Resources)</h4>
+                            <p class="text-sm">Owns personnel data (Salaries, Offer Letters).</p>
+                        </div>
+                        <div class="border border-solar-base1 p-3 rounded hover:bg-solar-base2 dark:hover:bg-solar-base02 transition">
+                            <h4 class="font-bold text-solar-blue">IT (Information Tech)</h4>
+                            <p class="text-sm">Owns infrastructure (Servers, Patching, Firewalls).</p>
+                        </div>
+                        <div class="border border-solar-base1 p-3 rounded hover:bg-solar-base2 dark:hover:bg-solar-base02 transition">
+                            <h4 class="font-bold text-solar-yellow">Legal</h4>
+                            <p class="text-sm">Owns liability (Contracts, Privacy Notices, Trade Secrets).</p>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Visual 3: Risk Mapping Animation -->
+                 <div class="panel bg-white dark:bg-gray-800 text-center relative overflow-hidden h-40">
+                    <h3 class="text-lg font-semibold mb-2">Visualizing Risk Routing</h3>
+                    <div class="flex justify-between px-10 absolute w-full top-12 z-10">
+                        <div id="bldg-it" class="text-3xl filter grayscale opacity-50 transition">🏢<br><span class="text-xs">IT</span></div>
+                        <div id="bldg-hr" class="text-3xl filter grayscale opacity-50 transition">👥<br><span class="text-xs">HR</span></div>
+                        <div id="bldg-legal" class="text-3xl filter grayscale opacity-50 transition">⚖️<br><span class="text-xs">Legal</span></div>
+                    </div>
+                    <div id="risk-packet" class="absolute top-20 left-1/2 transform -translate-x-1/2 text-2xl opacity-0">📄</div>
+                 </div>
+
+                <!-- Python Sandbox 3 -->
+                <div class="panel border-solar-blue border-2">
+                    <h3 class="text-lg font-bold text-solar-blue mb-2">💻 Python Simulation: Stakeholder Lookup</h3>
+                    <p class="text-sm mb-4 italic">Task Definition: This script maps specific risk categories to the correct department and contact email using a Dictionary.</p>
+                    
+                    <div class="bg-gray-900 rounded-t p-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-400">risk_router.py</span>
+                        <div>
+                            <button onclick="runStakeholderCode()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition">RUN ▶</button>
+                            <button onclick="clearConsole('console3')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition ml-2">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-4 font-mono text-sm overflow-x-auto text-gray-300">
+                        <div class="text-green-400 mb-2"># Dictionary mapping risks to owners</div>
+                        <div>stakeholder_map = {</div>
+                        <div class="pl-4">"Unpatched Server": ("IT Operations", "sysadmin@co.com"),</div>
+                        <div class="pl-4">"Salary Leak": ("Human Resources", "hr@co.com"),</div>
+                        <div class="pl-4">"Copyright Issue": ("Legal", "counsel@co.com")</div>
+                        <div>}</div>
+                        <br>
+                        <div>def identify_stakeholder(risk):</div>
+                        <div class="pl-4">owner, email = stakeholder_map.get(risk, ("Unknown", "N/A"))</div>
+                        <div class="pl-4">print(f"RISK: {risk}")</div>
+                        <div class="pl-4">print(f" -> OWNER: {owner} ({email})")</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Execution</div>
+                        <div>identify_stakeholder("Salary Leak")</div>
+                        <div>identify_stakeholder("Unpatched Server")</div>
+                    </div>
+                    <div id="console3" class="console mt-2">
+                        <div class="console-line">> Ready to execute...</div>
+                    </div>
+                </div>
+
+                <!-- Quiz 3 -->
+                <div class="panel border-solar-violet border-l-8">
+                    <h3 class="text-xl font-bold text-solar-violet mb-4">📝 Lesson 3 Quiz</h3>
+                    <div id="quiz3-container">
+                        <!-- Q1 -->
+                        <div class="mb-4">
+                            <p class="font-bold">1. Who is likely the owner of a risk involving exposed Offer Letters?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_1" value="a"> A) IT Operations.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_1" value="b"> B) Human Resources (HR).</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_1" value="c"> C) The Auditor.</label>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="mb-4">
+                            <p class="font-bold">2. Why do we map risks to stakeholders?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_2" value="a"> A) To know who to blame/fire.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_2" value="b"> B) To ensure the right person fixes the problem.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_2" value="c"> C) To make the report longer.</label>
+                        </div>
+                        <!-- Q3 MSQ -->
+                        <div class="mb-4">
+                            <p class="font-bold">3. Which risks typically fall under "Legal"? (Select all that apply)</p>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3_3" value="a"> A) Slow Wi-Fi.</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3_3" value="b"> B) Missing Privacy Notice (GDPR/CCPA).</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3_3" value="c"> C) Contract violations.</label>
+                        </div>
+                        <button onclick="checkQuiz3()" class="bg-solar-violet text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition">Submit Answers</button>
+                        <button onclick="resetQuiz3()" class="ml-2 text-solar-violet underline hover:text-purple-700">Reset</button>
+                    </div>
+                    <div id="quiz3-feedback" class="hidden mt-4 bg-solar-base2 dark:bg-solar-base02 p-4 rounded"></div>
+                </div>
+
+                <!-- Terms 3 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="flashcard">
+                        <strong>Stakeholder</strong>
+                        <div class="definition">The person or department responsible for a specific asset or risk.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Risk Owner</strong>
+                        <div class="definition">The individual accountable for ensuring a risk is managed.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Data Owner</strong>
+                        <div class="definition">Usually the business unit (e.g., HR) that creates/uses the data, not IT.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusion Tab -->
+            <div id="conclusion" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-blue">Conclusion & References</h2>
+                <div class="panel">
+                    <h3 class="text-xl font-bold mb-2">Wrap Up</h3>
+                    <ul class="list-disc ml-6 space-y-2 mb-6">
+                        <li><strong>Scope</strong> keeps you out of jail. Know your boundaries.</li>
+                        <li><strong>Methodologies</strong> (Interview, Observation, Testing) ensure you aren't being lied to.</li>
+                        <li><strong>Stakeholders</strong> ensure the right people fix the problems you find.</li>
+                    </ul>
+                    <p class="italic">For next week, please read the NIST Special Publication 800-53 regarding Security Controls.</p>
+                </div>
+
+                <div class="panel border-t-4 border-solar-cyan">
+                    <h3 class="text-xl font-bold mb-2">References & Hyperlinks</h3>
+                    <p class="text-sm mb-4 text-solar-red font-bold">⚠️ Security Warning: Use VirusTotal to scan links before clicking.</p>
+                    <ul class="space-y-3">
+                        <li>
+                            <a href="https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 NIST Special Publication 800-53
+                                <span class="text-xs text-solar-base1 no-underline">(Security Controls Standard)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.iso.org/isoiec-27001-information-security.html" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 ISO 27001
+                                <span class="text-xs text-solar-base1 no-underline">(International ISMS Standard)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 AWS Shared Responsibility Model
+                                <span class="text-xs text-solar-base1 no-underline">(Cloud Security Definitions)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.virustotal.com/" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🛡️ VirusTotal URL Scanner
+                                <span class="text-xs text-solar-base1 no-underline">(Malware Safety Tool)</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="text-xs text-solar-base1 mt-8">
+                    <h4 class="font-bold uppercase mb-1">Disclaimer</h4>
+                    <p class="mb-2"><strong>Intellectual Property:</strong> This material is the property of Cyber.SoHo. All rights reserved.</p>
+                    <p class="mb-2"><strong>Liability & Ethics:</strong> The code examples provided are for educational simulation purposes only. Executing these scripts against networks or systems without explicit written permission is illegal. Cyber.SoHo accepts no liability for misuse.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="bg-stone-900 text-stone-400 py-6 mt-8 border-t border-stone-700 bg-solar-base03 text-solar-base1">
+                <div class="container mx-auto text-center text-sm">
+                    <p style="display:flex; justify-content:center; align-items:center; gap:8px; margin:0;">
+                        <img src="cyber_soho.png" alt="Cyber Soho" style="height:32px;" onerror="this.style.display='none'; this.nextElementSibling.innerText = '[Cyber.SoHo Logo Missing] ' + this.nextElementSibling.innerText">
+                        <span>&copy; 2025 Cybersecurity Compliance Assessments Program. Educational Use Only.</span>
+                    </p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Navigation ---
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Show selected
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById('nav-' + tabId).classList.add('active');
+        }
+
+        // --- Theme Toggle ---
+        function toggleTheme() {
+            const html = document.querySelector('html');
+            const knob = document.getElementById('toggleKnob');
+            
+            if (html.classList.contains('light')) {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                knob.classList.add('translate-x-6');
+                knob.classList.remove('translate-x-1');
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                knob.classList.remove('translate-x-6');
+                knob.classList.add('translate-x-1');
+            }
+        }
+
+        // --- Utils ---
+        function log(consoleId, text, type="text-gray-300") {
+            const consoleEl = document.getElementById(consoleId);
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = text;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearConsole(consoleId) {
+            const consoleEl = document.getElementById(consoleId);
+            consoleEl.innerHTML = '<div class="console-line">> Console cleared. Ready...</div>';
+            
+            // Reset visuals if needed
+            if(consoleId === 'console2') {
+                ['vis2-len', 'vis2-upper', 'vis2-lower', 'vis2-digit'].forEach(id => {
+                    document.getElementById(id).className = "w-4 h-4 rounded-full bg-gray-300 mx-auto transition-colors";
+                });
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // --- Lesson 1: Scope Enforcer Code & Visualization ---
+        async function runScopeCode() {
+            const c = 'console1';
+            clearConsole(c);
+            log(c, "Importing ipaddress...", "console-info");
+            await sleep(500);
+            
+            const scope = "192.168.1.0/24";
+            log(c, `--- Scope Definition: ${scope} ---`, "text-white font-bold");
+            
+            const targets = [
+                {ip: "192.168.1.10", name: "Grade DB"}, 
+                {ip: "192.168.1.55", name: "Web Server"}, 
+                {ip: "203.0.113.5", name: "PayQuick"}
+            ];
+            
+            // Vis elements
+            const packet = document.getElementById('vis1-packet');
+            const scannerX = 150;
+            const scannerY = 40;
+            
+            for(let t of targets) {
+                await sleep(800);
+                log(c, `Checking IP: ${t.ip}...`);
+                
+                // Visual Animation Start
+                packet.setAttribute('opacity', '1');
+                packet.setAttribute('cx', scannerX);
+                packet.setAttribute('cy', scannerY);
+                packet.setAttribute('fill', '#cb4b16'); // Reset color
+                
+                await sleep(500);
+
+                let inScope = t.ip.startsWith("192.168.1"); // Simple string check for simulation
+                
+                if (inScope) {
+                    // Animate to server
+                    let targetX = (t.name === "Grade DB") ? 45 : 95;
+                    packet.setAttribute('cx', targetX);
+                    packet.setAttribute('cy', 165);
+                    packet.setAttribute('fill', '#859900'); // Green
+                    log(c, `[+] IN SCOPE: ${t.ip} - Authorized.`, "console-success");
+                } else {
+                    // Animate to cloud (block)
+                    packet.setAttribute('cx', 245);
+                    packet.setAttribute('cy', 65);
+                    packet.setAttribute('fill', '#dc322f'); // Red
+                    log(c, `[-] OUT OF SCOPE: ${t.ip} - EXTERNAL ASSET. DO NOT TOUCH.`, "console-error");
+                }
+            }
+            await sleep(500);
+            packet.setAttribute('opacity', '0'); // Hide packet
+            log(c, "Process Complete.", "console-info");
+        }
+
+        // --- Lesson 2: Password Tester Code & Visualization ---
+        async function runPasswordCode() {
+            const c = 'console2';
+            clearConsole(c);
+            
+            // Scenario 1
+            let pw1 = "Password123";
+            log(c, `Testing Password: '${pw1}'...`, "text-white");
+            await validatePasswordVisually(pw1);
+            log(c, "Compliance Result: True", "console-success");
+            
+            await sleep(1500);
+            
+            // Scenario 2
+            let pw2 = "admin";
+            log(c, `Testing Password: '${pw2}'...`, "text-white");
+            await validatePasswordVisually(pw2);
+            log(c, "Compliance Result: False", "console-error");
+        }
+
+        async function validatePasswordVisually(pw) {
+            // Reset lights
+            ['vis2-len', 'vis2-upper', 'vis2-lower', 'vis2-digit'].forEach(id => {
+                document.getElementById(id).classList.remove('bg-green-500', 'bg-red-500');
+                document.getElementById(id).classList.add('bg-gray-300');
+            });
+
+            await sleep(300);
+            // Length
+            const isLen = pw.length >= 8;
+            updateLight('vis2-len', isLen);
+            await sleep(200);
+
+            // Upper
+            const isUp = /[A-Z]/.test(pw);
+            updateLight('vis2-upper', isUp);
+            await sleep(200);
+
+            // Lower
+            const isLow = /[a-z]/.test(pw);
+            updateLight('vis2-lower', isLow);
+            await sleep(200);
+
+            // Digit
+            const isDig = /\d/.test(pw);
+            updateLight('vis2-digit', isDig);
+            await sleep(200);
+        }
+
+        function updateLight(id, isPass) {
+            const el = document.getElementById(id);
+            el.classList.remove('bg-gray-300');
+            el.classList.add(isPass ? 'bg-green-500' : 'bg-red-500');
+        }
+
+        // --- Lesson 3: Stakeholder Code & Visualization ---
+        async function runStakeholderCode() {
+            const c = 'console3';
+            clearConsole(c);
+            
+            const risks = [
+                {name: "Salary Leak", type: "HR"},
+                {name: "Unpatched Server", type: "IT"}
+            ];
+
+            // Reset Buildings
+            const buildings = {
+                'IT': document.getElementById('bldg-it'),
+                'HR': document.getElementById('bldg-hr'),
+                'Legal': document.getElementById('bldg-legal')
+            };
+            Object.values(buildings).forEach(b => {
+                b.classList.add('grayscale', 'opacity-50');
+                b.classList.remove('grayscale-0', 'opacity-100', 'scale-110');
+            });
+
+            const packet = document.getElementById('risk-packet');
+
+            for (let r of risks) {
+                log(c, `Processing Risk: ${r.name}...`);
+                
+                // Show Packet center
+                packet.style.left = '50%';
+                packet.style.opacity = '1';
+                await sleep(500);
+
+                // Move packet
+                if(r.type === 'HR') {
+                    packet.style.left = '50%'; // It is center visually in HTML structure, actually let's just highlight building
+                    // Simpler visual: highlight building
+                    log(c, " -> Map Found: Human Resources", "console-success");
+                    buildings['HR'].classList.remove('grayscale', 'opacity-50');
+                    buildings['HR'].classList.add('grayscale-0', 'opacity-100', 'scale-110');
+                } else if (r.type === 'IT') {
+                    log(c, " -> Map Found: IT Operations", "console-info");
+                    buildings['IT'].classList.remove('grayscale', 'opacity-50');
+                    buildings['IT'].classList.add('grayscale-0', 'opacity-100', 'scale-110');
+                }
+
+                await sleep(1000);
+                // Reset for next
+                Object.values(buildings).forEach(b => {
+                    b.classList.add('grayscale', 'opacity-50');
+                    b.classList.remove('grayscale-0', 'opacity-100', 'scale-110');
+                });
+                packet.style.opacity = '0';
+                await sleep(500);
+            }
+        }
+
+        // --- Quiz Logic ---
+        function checkQuiz1() {
+            let score = 0;
+            const feedback = [];
+            
+            // Q1
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            if (q1 && q1.value === 'c') { score++; feedback.push("Q1: Correct! Scope creep is a major legal risk."); }
+            else feedback.push("Q1: Incorrect. Scanning outside the boundary (Scope Creep) is the main danger.");
+
+            // Q2
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            if (q2 && q2.value === 'a') { score++; feedback.push("Q2: Correct! In the Cloud (AWS), Amazon secures the concrete walls."); }
+            else feedback.push("Q2: Incorrect. The Cloud Provider handles physical security.");
+
+            // Q3 (MSQ)
+            const q3a = document.querySelector('input[name="q3"][value="a"]').checked;
+            const q3b = document.querySelector('input[name="q3"][value="b"]').checked;
+            const q3c = document.querySelector('input[name="q3"][value="c"]').checked;
+            
+            if (q3a && q3c && !q3b) { score++; feedback.push("Q3: Correct! You control DBs and Routers. You do NOT control Gmail."); }
+            else feedback.push("Q3: Incorrect. Only select assets you own (DB, Routers). Google owns Gmail.");
+
+            displayFeedback('quiz1-feedback', score, 3, feedback);
+        }
+
+        function resetQuiz1() {
+            document.querySelectorAll('#quiz1-container input').forEach(i => i.checked = false);
+            document.getElementById('quiz1-feedback').classList.add('hidden');
+        }
+
+        function checkQuiz2() {
+            let score = 0;
+            const feedback = [];
+            
+            // Q1
+            const q1 = document.querySelector('input[name="q2_1"]:checked');
+            if (q1 && q1.value === 'b') { score++; feedback.push("Q1: Correct! Interviews involve asking people."); }
+            else feedback.push("Q1: Incorrect. Asking questions is an Interview.");
+
+            // Q2
+            const q2 = document.querySelector('input[name="q2_2"]:checked');
+            if (q2 && q2.value === 'b') { score++; feedback.push("Q2: Correct! People act differently when observed."); }
+            else feedback.push("Q2: Incorrect. Observer Effect relates to human behavior changes.");
+
+            // Q3 (MSQ)
+            const q3a = document.querySelector('input[name="q2_3"][value="a"]').checked;
+            const q3b = document.querySelector('input[name="q2_3"][value="b"]').checked;
+            const q3c = document.querySelector('input[name="q2_3"][value="c"]').checked;
+
+            if (q3a && q3c && !q3b) { score++; feedback.push("Q3: Correct! Technical testing proves policy enforcement."); }
+            else feedback.push("Q3: Incorrect. It gives evidence and validates enforcement, but isn't the ONLY method required.");
+
+            displayFeedback('quiz2-feedback', score, 3, feedback);
+        }
+        function resetQuiz2() {
+            document.querySelectorAll('#quiz2-container input').forEach(i => i.checked = false);
+            document.getElementById('quiz2-feedback').classList.add('hidden');
+        }
+
+        function checkQuiz3() {
+            let score = 0;
+            const feedback = [];
+            
+            // Q1
+            const q1 = document.querySelector('input[name="q3_1"]:checked');
+            if (q1 && q1.value === 'b') { score++; feedback.push("Q1: Correct! Offer letters are personnel data (HR)."); }
+            else feedback.push("Q1: Incorrect. HR owns personnel files.");
+
+            // Q2
+            const q2 = document.querySelector('input[name="q3_2"]:checked');
+            if (q2 && q2.value === 'b') { score++; feedback.push("Q2: Correct! We need to know who fixes the issue."); }
+            else feedback.push("Q2: Incorrect. It's about remediation, not blame.");
+
+            // Q3 (MSQ)
+            const q3a = document.querySelector('input[name="q3_3"][value="a"]').checked;
+            const q3b = document.querySelector('input[name="q3_3"][value="b"]').checked;
+            const q3c = document.querySelector('input[name="q3_3"][value="c"]').checked;
+
+            if (q3b && q3c && !q3a) { score++; feedback.push("Q3: Correct! Contracts and Privacy laws are Legal issues."); }
+            else feedback.push("Q3: Incorrect. Wi-Fi is IT. Privacy and Contracts are Legal.");
+
+            displayFeedback('quiz3-feedback', score, 3, feedback);
+        }
+        function resetQuiz3() {
+            document.querySelectorAll('#quiz3-container input').forEach(i => i.checked = false);
+            document.getElementById('quiz3-feedback').classList.add('hidden');
+        }
+
+        function displayFeedback(id, score, max, details) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            let html = `<h4 class="font-bold mb-2">Score: ${score}/${max}</h4>`;
+            html += '<ul class="list-disc ml-4 text-sm space-y-1">';
+            details.forEach(d => html += `<li>${d}</li>`);
+            html += '</ul>';
+            el.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
