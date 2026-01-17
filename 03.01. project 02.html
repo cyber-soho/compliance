@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Compliance Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F0; /* Warm Neutral Background */
+            color: #374151;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        .nav-active {
+            border-bottom: 2px solid #4B5563;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar for Matrix Table */
+        .matrix-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .matrix-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .matrix-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .matrix-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Decision Tree Connector Lines */
+        .tree-line {
+            position: absolute;
+            background-color: #CBD5E1;
+            z-index: 0;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone/Warm Grey) with Professional Blue/Red Accents for Comparative Analysis -->
+    <!-- Application Structure Plan: 
+         1. Regulatory Radar: Uses a Radar Chart to visually compare the "strictness" of GDPR vs PIPEDA across 5 dimensions. This allows instant visual understanding of where the major gaps lie.
+         2. Scenario Analyzer: Interactive breakdown of the NorthStream text. Users click specific scenario details to see the regulatory implication, fostering active reading.
+         3. Compliance Matrix: A dynamic table with risk filtering. This turns the static "Legal Register" into a functional tool for prioritizing issues.
+         4. Transfer Flow: A step-by-step interactive decision tree (HTML/JS) to navigate the complex Cross-Border logic, simplifying the decision-making process.
+         5. Executive Briefing: A synthesized dashboard view summarizing the lab's final output.
+    -->
+    <!-- Visualization & Content Choices:
+         - Radar Chart (Chart.js): Comparison -> Compare strictness levels of regulations. Justification: Radar charts are excellent for multi-variate comparison of two distinct entities.
+         - Donut Chart (Chart.js): Inform -> Show distribution of Risk Ratings in the matrix. Justification: Quickly conveys the severity of the compliance gap.
+         - Interactive Table: Organize -> The Compliance Matrix. Allows sorting/filtering which is impossible in a static PDF.
+         - CSS Grid/Flex Process Map: Change/Flow -> Decision tree for data transfers. Justification: Replaces static diagrams with interactive steps.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-[#F5F5F0] min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-stone-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="h-8 w-8 bg-stone-800 rounded-md flex items-center justify-center text-white font-bold mr-3">N</div>
+                    <span class="font-bold text-xl tracking-tight text-stone-900">NorthStream <span class="font-light text-stone-500">Compliance Hub</span></span>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <button onclick="switchTab('radar')" id="nav-radar" class="nav-btn nav-active px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors">Regulatory Comparison</button>
+                    <button onclick="switchTab('scenario')" id="nav-scenario" class="nav-btn px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors">Scenario Analysis</button>
+                    <button onclick="switchTab('matrix')" id="nav-matrix" class="nav-btn px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors">Compliance Matrix</button>
+                    <button onclick="switchTab('transfers')" id="nav-transfers" class="nav-btn px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors">Data Transfers</button>
+                    <button onclick="switchTab('briefing')" id="nav-briefing" class="nav-btn px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors">Executive Brief</button>
+                </nav>
+                <div class="md:hidden">
+                    <!-- Mobile menu button placeholder -->
+                    <button class="text-stone-500">Menu</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- SECTION 1: REGULATORY RADAR -->
+        <section id="radar" class="tab-content fade-in">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-stone-900 mb-2">GDPR vs. PIPEDA: Regulatory Landscape</h1>
+                <p class="text-stone-600 max-w-3xl leading-relaxed">
+                    Understanding the fundamental differences between the General Data Protection Regulation (GDPR) and the Personal Information Protection and Electronic Documents Act (PIPEDA) is the foundation of our compliance strategy. Use this interactive comparison tool to visualize the difference in strictness and scope across key dimensions.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <!-- Left: Visualization -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-4">Strictness Comparison Model</h3>
+                    <div class="chart-container">
+                        <canvas id="comparisonRadar"></canvas>
+                    </div>
+                    <div class="mt-4 flex justify-center space-x-6 text-sm">
+                        <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>GDPR (EU)</div>
+                        <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-400 mr-2"></span>PIPEDA (Canada)</div>
+                    </div>
+                </div>
+
+                <!-- Right: Detailed Text Interaction -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 h-full flex flex-col">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-4">Deep Dive: Key Dimensions</h3>
+                    <div class="flex space-x-2 mb-4 overflow-x-auto pb-2">
+                        <button onclick="updateDimension('scope')" class="dim-btn bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded text-sm font-medium transition active-dim ring-1 ring-stone-300" data-dim="scope">Scope</button>
+                        <button onclick="updateDimension('consent')" class="dim-btn bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded text-sm font-medium transition" data-dim="consent">Consent</button>
+                        <button onclick="updateDimension('breach')" class="dim-btn bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded text-sm font-medium transition" data-dim="breach">Breach</button>
+                        <button onclick="updateDimension('rights')" class="dim-btn bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded text-sm font-medium transition" data-dim="rights">Rights</button>
+                        <button onclick="updateDimension('penalties')" class="dim-btn bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded text-sm font-medium transition" data-dim="penalties">Penalties</button>
+                    </div>
+                    
+                    <div id="dimension-content" class="flex-grow bg-stone-50 p-4 rounded-lg border border-stone-100">
+                        <!-- Dynamic Content Loaded Here -->
+                        <h4 class="font-bold text-stone-800 text-lg mb-2">Territorial Scope</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="border-l-4 border-blue-500 pl-3">
+                                <span class="text-xs font-bold text-blue-600 uppercase">GDPR</span>
+                                <p class="text-sm mt-1">Applies to ANY organization processing data of subjects in the EU, regardless of the company's location. This includes NorthStream's 150 EU customers.</p>
+                            </div>
+                            <div class="border-l-4 border-red-400 pl-3">
+                                <span class="text-xs font-bold text-red-500 uppercase">PIPEDA</span>
+                                <p class="text-sm mt-1">Applies to private sector organizations in Canada collecting data for commercial activity. Generally does not apply extraterritorially unless there is a "real and substantial connection".</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: SCENARIO ANALYZER -->
+        <section id="scenario" class="tab-content hidden fade-in">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-stone-900 mb-2">NorthStream Scenario Analysis</h1>
+                <p class="text-stone-600 max-w-3xl">
+                    Analyze the NorthStream Technologies operational context to identify specific trigger points for international compliance. Click on the highlighted segments of the scenario to reveal the regulatory implications.
+                </p>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-stone-200 max-w-4xl mx-auto relative">
+                <div class="absolute -top-3 left-8 bg-amber-100 text-amber-800 px-3 py-1 rounded text-xs font-bold tracking-wider uppercase border border-amber-200">Case Study</div>
+                
+                <p class="text-lg leading-loose text-stone-800" id="scenario-text">
+                    "NorthStream Technologies operates its primary servers in <span class="highlight cursor-pointer bg-stone-200 hover:bg-stone-300 px-1 rounded transition border-b-2 border-stone-400" onclick="showScenarioInsight('location')">Toronto, Ontario</span>. The company offers a <span class="highlight cursor-pointer bg-stone-200 hover:bg-stone-300 px-1 rounded transition border-b-2 border-stone-400" onclick="showScenarioInsight('saas')">SaaS (Software-as-a-Service)</span> project management platform. Recently, NorthStream acquired <span class="highlight cursor-pointer bg-blue-100 hover:bg-blue-200 px-1 rounded transition border-b-2 border-blue-400 text-blue-900 font-medium" onclick="showScenarioInsight('eu-customers')">150 customers based in France, Germany, and the Netherlands</span>. The platform collects: user names, email addresses, IP addresses, <span class="highlight cursor-pointer bg-stone-200 hover:bg-stone-300 px-1 rounded transition border-b-2 border-stone-400" onclick="showScenarioInsight('data-type')">project documentation and usage analytics</span>. NorthStream uses a <span class="highlight cursor-pointer bg-red-100 hover:bg-red-200 px-1 rounded transition border-b-2 border-red-400 text-red-900 font-medium" onclick="showScenarioInsight('storage')">U.S.-based cloud provider (AWS us-east region)</span> for data storage backup."
+                </p>
+
+                <div id="insight-box" class="mt-8 bg-stone-50 border-l-4 border-stone-400 p-4 rounded-r hidden">
+                    <h4 id="insight-title" class="font-bold text-stone-900 text-lg">Click a highlighted term above</h4>
+                    <p id="insight-desc" class="text-stone-600 mt-2">Select any highlighted part of the scenario to understand its specific compliance implication.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: COMPLIANCE MATRIX -->
+        <section id="matrix" class="tab-content hidden fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-stone-900 mb-2">International Compliance Matrix</h1>
+                    <p class="text-stone-600 max-w-2xl text-sm">
+                        This interactive register maps specific requirements across jurisdictions, identifying gaps where NorthStream's current PIPEDA compliance may fall short of GDPR standards.
+                    </p>
+                </div>
+                <!-- Risk Summary Chart Mini -->
+                <div class="flex items-center bg-white px-4 py-2 rounded-lg border border-stone-200 shadow-sm">
+                    <div style="width: 60px; height: 60px;">
+                        <canvas id="riskDonut"></canvas>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-xs text-stone-500 uppercase font-bold">Risk Profile</div>
+                        <div class="text-sm font-semibold text-stone-900">2 Critical, 2 High</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex space-x-2 mb-4">
+                <button onclick="filterMatrix('all')" class="filter-btn bg-stone-800 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition shadow-sm" data-filter="all">ALL</button>
+                <button onclick="filterMatrix('Critical')" class="filter-btn bg-white text-stone-600 border border-stone-200 hover:bg-red-50 hover:text-red-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition" data-filter="Critical">CRITICAL</button>
+                <button onclick="filterMatrix('High')" class="filter-btn bg-white text-stone-600 border border-stone-200 hover:bg-orange-50 hover:text-orange-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition" data-filter="High">HIGH</button>
+                <button onclick="filterMatrix('Medium')" class="filter-btn bg-white text-stone-600 border border-stone-200 hover:bg-yellow-50 hover:text-yellow-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition" data-filter="Medium">MEDIUM</button>
+            </div>
+
+            <!-- Matrix Table -->
+            <div class="bg-white rounded-lg shadow border border-stone-200 overflow-hidden">
+                <div class="overflow-x-auto matrix-scroll">
+                    <table class="min-w-full divide-y divide-stone-200">
+                        <thead class="bg-stone-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Requirement Category</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Comparison</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Gap / Conflict Analysis</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Risk Rating</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrix-body" class="bg-white divide-y divide-stone-200">
+                            <!-- Rows populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: DATA TRANSFERS -->
+        <section id="transfers" class="tab-content hidden fade-in">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-stone-900 mb-2">Cross-Border Transfer Logic</h1>
+                <p class="text-stone-600 max-w-3xl">
+                    GDPR Chapter V restricts data transfers outside the EEA. NorthStream stores backups in the US (AWS). Use this decision flow to determine the correct legal mechanism for compliance.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Interactive Flowchart -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-bold text-stone-800 mb-6 border-b pb-2">Transfer Decision Engine</h3>
+                    
+                    <div class="space-y-6 relative">
+                        <!-- Step 1 -->
+                        <div class="flow-step transition-all duration-300" id="step-1">
+                            <div class="flex items-start">
+                                <div class="bg-stone-800 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0 mt-1">1</div>
+                                <div class="ml-4 bg-stone-50 p-4 rounded-lg w-full border border-stone-200">
+                                    <p class="font-semibold text-stone-900">Is personal data being transferred outside the European Economic Area (EEA)?</p>
+                                    <p class="text-sm text-stone-500 mb-3">Context: NorthStream EU customer data -> AWS US East.</p>
+                                    <div class="flex space-x-3">
+                                        <button onclick="flowStep(1, true)" class="px-4 py-1.5 bg-white border border-stone-300 rounded hover:bg-stone-100 text-sm font-medium">Yes</button>
+                                        <button onclick="flowStep(1, false)" class="px-4 py-1.5 bg-white border border-stone-300 rounded hover:bg-stone-100 text-sm font-medium">No</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="flow-step hidden opacity-0 transition-all duration-300" id="step-2">
+                            <div class="flex items-start">
+                                <div class="bg-stone-800 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0 mt-1">2</div>
+                                <div class="ml-4 bg-stone-50 p-4 rounded-lg w-full border border-stone-200">
+                                    <p class="font-semibold text-stone-900">Does the destination country (USA) have a valid EU "Adequacy Decision"?</p>
+                                    <p class="text-sm text-stone-500 mb-3">Research: Check status of EU-US Data Privacy Framework (Jan 2026).</p>
+                                    <div class="flex space-x-3">
+                                        <button onclick="flowStep(2, true)" class="px-4 py-1.5 bg-white border border-stone-300 rounded hover:bg-stone-100 text-sm font-medium">Yes (Adequate)</button>
+                                        <button onclick="flowStep(2, false)" class="px-4 py-1.5 bg-white border border-stone-300 rounded hover:bg-stone-100 text-sm font-medium">No</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="flow-step hidden opacity-0 transition-all duration-300" id="step-3">
+                            <div class="flex items-start">
+                                <div class="bg-stone-800 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0 mt-1">3</div>
+                                <div class="ml-4 bg-stone-50 p-4 rounded-lg w-full border border-stone-200">
+                                    <p class="font-semibold text-stone-900">Required Mechanism: Standard Contractual Clauses (SCCs)</p>
+                                    <p class="text-sm text-stone-600 mt-2">Since adequacy is uncertain or partial, NorthStream must sign SCCs with AWS.</p>
+                                    <div class="mt-3 p-3 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-200">
+                                        <strong>Action:</strong> Implement EU Model Clauses (Module 2: Controller-to-Processor) in the AWS service agreement.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Panel -->
+                <div class="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                    <h4 class="font-bold text-blue-900 mb-4">Key Terms</h4>
+                    <ul class="space-y-4 text-sm text-blue-800">
+                        <li>
+                            <strong class="block">Adequacy Decision</strong>
+                            A status granted by the EU Commission allowing free data flow. The US status has historically fluctuated (Safe Harbor -> Invalid, Privacy Shield -> Invalid, DPF -> Active/Challenged).
+                        </li>
+                        <li>
+                            <strong class="block">Standard Contractual Clauses (SCCs)</strong>
+                            Pre-approved non-negotiable legal text that ensures data protection travels with the data.
+                        </li>
+                        <li>
+                            <strong class="block">Supplementary Measures</strong>
+                            Additional technical steps (like encryption keys held in Canada/EU) required if the destination country's laws allow government surveillance (e.g., US FISA 702).
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: EXECUTIVE BRIEFING -->
+        <section id="briefing" class="tab-content hidden fade-in">
+             <div class="bg-white shadow-lg rounded-xl overflow-hidden border border-stone-200 max-w-5xl mx-auto">
+                <div class="bg-stone-800 px-8 py-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Executive Compliance Brief</h2>
+                        <p class="text-stone-400 text-sm mt-1">Prepared for: NorthStream Leadership Team</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-stone-400 text-xs uppercase tracking-wider">Date</span>
+                        <span class="block text-white font-medium">January 17, 2026</span>
+                    </div>
+                </div>
+
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-lg font-bold text-stone-900 mb-3 border-b pb-2">Situation Analysis</h3>
+                        <p class="text-stone-600 text-sm mb-4">
+                            NorthStream's acquisition of 150 EU-based customers has triggered immediate applicability of the GDPR. Our current operations, designed for Canadian PIPEDA compliance, currently have significant gaps regarding international standards.
+                        </p>
+                        
+                        <h3 class="text-lg font-bold text-stone-900 mb-3 border-b pb-2">Business Impact</h3>
+                        <ul class="list-disc pl-5 text-sm text-stone-600 space-y-2">
+                            <li><strong>Financial Risk:</strong> Potential fines up to 4% of global turnover for non-compliance.</li>
+                            <li><strong>Operational Risk:</strong> Inability to legally transfer data to our US backups without new contracts.</li>
+                            <li><strong>Opportunity:</strong> Full compliance opens the entire EU market for further expansion.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-stone-900 mb-3 border-b pb-2">Top 3 Strategic Priorities</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded mt-0.5 mr-3 w-16 text-center">CRITICAL</span>
+                                <div>
+                                    <p class="font-semibold text-stone-800 text-sm">Update Consent Mechanisms</p>
+                                    <p class="text-xs text-stone-500">Transition from implied to explicit, granular consent for EU users.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded mt-0.5 mr-3 w-16 text-center">HIGH</span>
+                                <div>
+                                    <p class="font-semibold text-stone-800 text-sm">Legalize US Data Transfers</p>
+                                    <p class="text-xs text-stone-500">Execute Standard Contractual Clauses (SCCs) with AWS immediately.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded mt-0.5 mr-3 w-16 text-center">MEDIUM</span>
+                                <div>
+                                    <p class="font-semibold text-stone-800 text-sm">Breach Notification Process</p>
+                                    <p class="text-xs text-stone-500">Update incident response plans to meet the 72-hour reporting deadline.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-stone-50 border-t border-stone-200 mt-auto py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-stone-400 text-sm">
+            <p>Module 3 - Project Task 2 Laboratory Exercise | Cybersecurity Compliance Project</p>
+            <p class="mt-1 text-xs"></p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            activeTab: 'radar',
+            matrixFilter: 'all'
+        };
+
+        // --- Data: Comparison Dimensions ---
+        const dimensionData = {
+            scope: {
+                gdpr: { title: "Extraterritorial", desc: "Applies to ANY organization processing EU data, regardless of location." },
+                pipeda: { title: "Commercial Activity", desc: "Applies to private sector organizations in Canada. Less clear extraterritorial reach." },
+                comparison: "GDPR has a broader, more aggressive extraterritorial scope."
+            },
+            consent: {
+                gdpr: { title: "Explicit & Granular", desc: "Must be freely given, specific, informed, and unambiguous. No pre-ticked boxes." },
+                pipeda: { title: "Implied & Explicit", desc: "Allows implied consent for less sensitive data/routine purposes. Explicit for sensitive." },
+                comparison: "GDPR prohibits implied consent for data processing, creating a stricter standard."
+            },
+            breach: {
+                gdpr: { title: "72 Hours", desc: "Mandatory reporting to authority within 72 hours of awareness." },
+                pipeda: { title: "Real Risk of Harm", desc: "Report as soon as feasible if 'Real Risk of Significant Harm' exists." },
+                comparison: "GDPR has a strict time limit; PIPEDA has a harm threshold trigger."
+            },
+            rights: {
+                gdpr: { title: "Broad Rights", desc: "Erasure (Right to be Forgotten), Portability, Restriction of Processing." },
+                pipeda: { title: "Access & Correction", desc: "Right to access and correct. Erasure rights are more limited/implied." },
+                comparison: "GDPR grants significantly more control to the individual (data subject)."
+            },
+            penalties: {
+                gdpr: { title: "Massive Fines", desc: "Up to 20 Million EUR or 4% of Global Turnover." },
+                pipeda: { title: "Court Focused", desc: "Fines historically lower ($100k), focused on ombudsman/court orders. (Changes pending)." },
+                comparison: "GDPR carries existential financial risk for non-compliance."
+            }
+        };
+
+        // --- Data: Matrix ---
+        const matrixData = [
+            { cat: "Consent", comp: "Stricter (GDPR)", gap: "Current 'implied consent' for analytics violates GDPR Art 6.", risk: "Critical", action: "Implement cookie banner & opt-in forms for EU IPs." },
+            { cat: "Breach Notification", comp: "Stricter (GDPR)", gap: "Current 7-day target exceeds GDPR 72-hour limit.", risk: "High", action: "Revise Incident Response Plan timelines." },
+            { cat: "Data Transfer", comp: "Conflicting", gap: "AWS US-East storage lacks valid transfer mechanism.", risk: "Critical", action: "Sign SCCs with AWS or move EU data to Frankfurt region." },
+            { cat: "Right to Erasure", comp: "Stricter (GDPR)", gap: "No automated way to delete user backups upon request.", risk: "Medium", action: "Develop script to purge user data from backups." },
+            { cat: "Data Portability", comp: "Stricter (GDPR)", gap: "Platform exports to proprietary format, not common (CSV/JSON).", risk: "Medium", action: "Add 'Export to CSV' feature." },
+            { cat: "Security", comp: "Harmonious", gap: "Current encryption meets both standards.", risk: "Low", action: "Maintain current safeguards." },
+            { cat: "DPO", comp: "Stricter (GDPR)", gap: "No dedicated DPO appointed.", risk: "High", action: "Appoint DPO or EU Representative." },
+            { cat: "Access Request", comp: "Harmonious", gap: "30-day timeline is consistent in both.", risk: "Low", action: "Standardize process." }
+        ];
+
+        // --- Data: Scenario Insights ---
+        const scenarioInsights = {
+            'location': { title: "Jurisdiction Anchor", text: "Being based in Toronto subjects NorthStream to PIPEDA primarily. However, the location of the company does not shield it from GDPR." },
+            'saas': { title: "Data Controller vs Processor", text: "As a SaaS offering Project Management, NorthStream acts as a Data Processor for its B2B clients, but a Data Controller for user account info." },
+            'eu-customers': { title: "The GDPR Trigger", text: "Acquiring 150 customers in France/Germany/Netherlands clearly brings NorthStream under GDPR scope (Article 3 - Offering goods/services)." },
+            'data-type': { title: "Identifiable Information", text: "Names and IP addresses are PII (Personally Identifiable Information) in both jurisdictions. Usage analytics can also be PII if linked to users." },
+            'storage': { title: "Cross-Border Conflict", text: "Storing EU data in the US (AWS us-east) creates a 'Restricted Transfer' under GDPR Chapter V. This requires Adequacy or SCCs." }
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initRadarChart();
+            initDonutChart();
+            renderMatrix('all');
+            
+            // Default dimension view
+            updateDimension('scope');
+        });
+
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            // Update Tab UI
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('nav-active', 'text-stone-900');
+                btn.classList.add('text-stone-500');
+            });
+            document.getElementById(`nav-${tabId}`).classList.add('nav-active', 'text-stone-900');
+            document.getElementById(`nav-${tabId}`).classList.remove('text-stone-500');
+
+            // Hide all content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Show selected
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            // Trigger chart resize if needed
+            if(tabId === 'radar' && window.radarChart) window.radarChart.resize();
+        }
+
+        // --- Feature: Regulatory Radar ---
+        function initRadarChart() {
+            const ctx = document.getElementById('comparisonRadar').getContext('2d');
+            window.radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Territorial Scope', 'Consent Rigor', 'Breach Timeline', 'User Rights', 'Financial Penalties'],
+                    datasets: [{
+                        label: 'GDPR (EU)',
+                        data: [9, 9, 10, 8, 10], // Qualitative scoring based on "Strictness"
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(59, 130, 246)'
+                    }, {
+                        label: 'PIPEDA (Canada)',
+                        data: [6, 5, 6, 6, 4], // Qualitative scoring
+                        fill: true,
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        pointBackgroundColor: 'rgb(239, 68, 68)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(239, 68, 68)'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#E5E7EB' },
+                            grid: { color: '#E5E7EB' },
+                            pointLabels: {
+                                font: { size: 12, weight: 'bold' },
+                                color: '#374151'
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 10
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false } // Custom legend used in HTML
+                    }
+                }
+            });
+        }
+
+        function updateDimension(dimKey) {
+            const data = dimensionData[dimKey];
+            const container = document.getElementById('dimension-content');
+            
+            // Button Styles
+            document.querySelectorAll('.dim-btn').forEach(btn => {
+                btn.classList.remove('ring-1', 'ring-stone-300', 'bg-stone-200');
+                if(btn.dataset.dim === dimKey) {
+                    btn.classList.add('ring-1', 'ring-stone-300', 'bg-stone-200');
+                }
+            });
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-[fadeIn_0.3s_ease-in-out]">
+                    <div class="border-l-4 border-blue-500 pl-3">
+                        <span class="text-xs font-bold text-blue-600 uppercase">GDPR</span>
+                        <h5 class="font-bold text-stone-900 text-sm">${data.gdpr.title}</h5>
+                        <p class="text-sm mt-1 text-stone-600">${data.gdpr.desc}</p>
+                    </div>
+                    <div class="border-l-4 border-red-400 pl-3">
+                        <span class="text-xs font-bold text-red-500 uppercase">PIPEDA</span>
+                        <h5 class="font-bold text-stone-900 text-sm">${data.pipeda.title}</h5>
+                        <p class="text-sm mt-1 text-stone-600">${data.pipeda.desc}</p>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-stone-100 rounded text-sm text-stone-700 italic border border-stone-200">
+                    <span class="font-bold not-italic">Gap Analysis:</span> ${data.comparison}
+                </div>
+            `;
+        }
+
+        // --- Feature: Scenario Analyzer ---
+        function showScenarioInsight(key) {
+            const insight = scenarioInsights[key];
+            const box = document.getElementById('insight-box');
+            
+            document.getElementById('insight-title').textContent = insight.title;
+            document.getElementById('insight-desc').textContent = insight.text;
+            
+            box.classList.remove('hidden');
+            box.classList.add('fade-in');
+        }
+
+        // --- Feature: Matrix ---
+        function initDonutChart() {
+            const ctx = document.getElementById('riskDonut').getContext('2d');
+            // Count risks
+            const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+            matrixData.forEach(item => counts[item.risk]++);
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [counts.Critical, counts.High, counts.Medium, counts.Low],
+                        backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#10B981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderMatrix(filter) {
+            const tbody = document.getElementById('matrix-body');
+            tbody.innerHTML = '';
+
+            const filteredData = filter === 'all' 
+                ? matrixData 
+                : matrixData.filter(item => item.risk === filter);
+
+            filteredData.forEach(row => {
+                let badgeClass = '';
+                if(row.risk === 'Critical') badgeClass = 'bg-red-100 text-red-800';
+                else if(row.risk === 'High') badgeClass = 'bg-orange-100 text-orange-800';
+                else if(row.risk === 'Medium') badgeClass = 'bg-yellow-100 text-yellow-800';
+                else badgeClass = 'bg-green-100 text-green-800';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">${row.cat}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">${row.comp}</td>
+                    <td class="px-6 py-4 text-sm text-stone-600 max-w-xs truncate" title="${row.gap}">${row.gap}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${badgeClass}">
+                            ${row.risk}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-stone-500 max-w-xs truncate" title="${row.action}">${row.action}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterMatrix(filter) {
+            // Button Styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if(btn.dataset.filter === filter) {
+                    btn.classList.remove('bg-white', 'text-stone-600');
+                    btn.classList.add('bg-stone-800', 'text-white');
+                } else {
+                    btn.classList.add('bg-white', 'text-stone-600');
+                    btn.classList.remove('bg-stone-800', 'text-white');
+                }
+            });
+            renderMatrix(filter);
+        }
+
+        // --- Feature: Data Transfer Flow ---
+        function flowStep(stepNumber, isYes) {
+            if (stepNumber === 1) {
+                if (isYes) {
+                    document.getElementById('step-2').classList.remove('hidden', 'opacity-0');
+                    // Scroll slightly
+                } else {
+                    alert("If data stays in EEA/Canada (assuming adequacy), no special transfer mechanism is needed beyond basic compliance.");
+                }
+            } else if (stepNumber === 2) {
+                if (isYes) {
+                    alert("If Adequacy exists (e.g., specific framework active), transfers are allowed without extra authorization.");
+                } else {
+                    document.getElementById('step-3').classList.remove('hidden', 'opacity-0');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
