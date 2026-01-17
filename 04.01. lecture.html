@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 4: Industry Standards - Cybersecurity Compliance</title>
+    <!-- Tailwind CSS (via CDN for styling utility) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- SOLARIZED THEME VARIABLES --- */
+        :root {
+            /* Solarized Light (Default) */
+            --base03:    #002b36;
+            --base02:    #073642;
+            --base01:    #586e75;
+            --base00:    #657b83;
+            --base0:     #839496;
+            --base1:     #93a1a1;
+            --base2:     #eee8d5;
+            --base3:     #fdf6e3;
+            --yellow:    #b58900;
+            --orange:    #cb4b16;
+            --red:       #dc322f;
+            --magenta:   #d33682;
+            --violet:    #6c71c4;
+            --blue:      #268bd2;
+            --cyan:      #2aa198;
+            --green:     #859900;
+
+            --bg-color: var(--base3);
+            --text-color: var(--base00);
+            --heading-color: var(--base01);
+            --sidebar-bg: var(--base2);
+            --card-bg: #ffffff;
+            --border-color: var(--base1);
+            --code-bg: var(--base2);
+            --nav-bg: var(--base2);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: var(--base03);
+            --text-color: var(--base0);
+            --heading-color: var(--base1);
+            --sidebar-bg: var(--base02);
+            --card-bg: var(--base02);
+            --border-color: var(--base01);
+            --code-bg: #00212b;
+            --nav-bg: var(--base02);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--heading-color);
+        }
+
+        a {
+            color: var(--blue);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--blue);
+            transition: color 0.2s;
+        }
+        a:hover {
+            color: var(--orange);
+            border-bottom: 1px solid var(--orange);
+        }
+
+        /* --- LAYOUT --- */
+        .sidebar-item {
+            cursor: pointer;
+            padding: 12px 16px;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        .sidebar-item.active {
+            border-left-color: var(--magenta);
+            font-weight: bold;
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- CODE CONSOLE --- */
+        .terminal {
+            background-color: #002b36; /* Always dark for terminal */
+            color: #839496;
+            font-family: 'Fira Code', monospace;
+            padding: 1rem;
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
+        }
+        .terminal-header {
+            border-bottom: 1px solid #586e75;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--cyan);
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .code-line {
+            display: block;
+            margin-bottom: 2px;
+        }
+        .comment { color: #586e75; font-style: italic; }
+        .keyword { color: #859900; }
+        .string { color: #2aa198; }
+        .function { color: #268bd2; }
+        .variable { color: #b58900; }
+
+        .terminal-output {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #586e75;
+            color: #93a1a1;
+            white-space: pre-wrap;
+            min-height: 80px;
+        }
+
+        /* --- VISUALIZATIONS --- */
+        .vis-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* --- FLASHCARDS --- */
+        .flashcard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .flashcard {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            height: 150px;
+            perspective: 1000px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .flashcard-front {
+            background-color: var(--base2);
+            color: var(--heading-color);
+            font-weight: bold;
+        }
+        .flashcard-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+            font-size: 0.9rem;
+        }
+
+        /* --- TABLE STYLES --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--card-bg);
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: var(--base02);
+            color: var(--base2);
+        }
+        [data-theme="dark"] th {
+            background-color: var(--base02);
+            color: var(--base1);
+        }
+
+        /* --- FOOTER OVERRIDES --- */
+        footer {
+            background-color: var(--base02) !important;
+            color: var(--base1) !important;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- TOP MENU -->
+    <header class="flex-none h-16 shadow-md flex items-center justify-between px-6 z-20" style="background-color: var(--nav-bg);">
+        <div class="flex items-center gap-3">
+            <!-- SVG Logo Placeholder -->
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500">
+                <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+                <path d="M12 8v4l3 3m-3-3l-3 3" stroke-linecap="round"/>
+            </svg>
+            <h1 class="text-xl font-bold tracking-tight">Module 4: Industry Standards</h1>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <span class="text-sm opacity-75 hidden md:block">Compliance Assessments</span>
+            <div class="flex items-center gap-2 bg-black/10 rounded-full p-1">
+                <button id="theme-btn-light" onclick="setTheme('light')" class="p-1 rounded-full text-yellow-600 hover:bg-white/50 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </button>
+                <button id="theme-btn-dark" onclick="setTheme('dark')" class="p-1 rounded-full text-blue-400 hover:bg-black/50 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- SIDEBAR -->
+        <aside class="w-64 flex-none shadow-lg overflow-y-auto hidden md:block" style="background-color: var(--sidebar-bg);">
+            <nav class="py-4">
+                <div class="px-4 py-2 text-xs font-bold uppercase opacity-50 tracking-wider mb-2">Navigation</div>
+                <div class="sidebar-item active" onclick="showSection('intro', this)">Introduction</div>
+                <div class="sidebar-item" onclick="showSection('lesson1', this)">1. NIST CSF & ISO 27001</div>
+                <div class="sidebar-item" onclick="showSection('lesson2', this)">2. PCI-DSS Standards</div>
+                <div class="sidebar-item" onclick="showSection('lesson3', this)">3. Mapping Frameworks</div>
+                <div class="sidebar-item" onclick="showSection('conclusion', this)">Conclusion & Resources</div>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto p-6 md:p-10 relative scroll-smooth">
+            
+            <!-- SECTION: INTRODUCTION -->
+            <section id="intro" class="content-section active max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-6" style="color: var(--magenta);">Module 4: Industry Standards</h2>
+                <div class="p-6 rounded-lg mb-8 shadow-sm" style="background-color: var(--card-bg); border-left: 4px solid var(--blue);">
+                    <h3 class="text-xl font-bold mb-2">Welcome to Compliance Assessments</h3>
+                    <p class="mb-4">
+                        Industry standards form the backbone of cybersecurity governance. They provide structured frameworks to protect sensitive information, manage risks, and demonstrate compliance. 
+                    </p>
+                    <p><strong>Today's Focus:</strong></p>
+                    <ul class="list-disc pl-6 space-y-2 mt-2">
+                        <li><strong>NIST CSF:</strong> The Cybersecurity Framework (Identify, Protect, Detect, Respond, Recover).</li>
+                        <li><strong>ISO 27001:</strong> Information Security Management Systems (Plan-Do-Check-Act).</li>
+                        <li><strong>PCI-DSS:</strong> Payment Card Industry Data Security Standard.</li>
+                        <li><strong>Mapping:</strong> Translating legal requirements (GDPR/HIPAA) into technical controls.</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center mt-10">
+                    <p class="text-sm italic opacity-70">Navigate using the menu to begin Lesson 1.</p>
+                </div>
+            </section>
+
+            <!-- SECTION: LESSON 1 (NIST & ISO) -->
+            <section id="lesson1" class="content-section max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-bold" style="color: var(--green);">Lesson 1: NIST CSF & ISO 27001</h2>
+                    <span class="text-xs px-2 py-1 rounded border" style="border-color: var(--green); color: var(--green);">Frameworks</span>
+                </div>
+
+                <p class="mb-6">The <strong>NIST Cybersecurity Framework</strong> consists of three main components: Core, Implementation Tiers, and Profiles. The Core is built around five concurrent and continuous functions.</p>
+
+                <!-- VISUALIZATION: NIST CORE -->
+                <div class="vis-container">
+                    <h4 class="mb-4 font-bold">The NIST CSF Core Functions</h4>
+                    <svg width="300" height="300" viewBox="0 0 200 200" id="nist-chart">
+                        <!-- Identify -->
+                        <path d="M100,100 L100,10 A90,90 0 0,1 185.5,65.5 Z" fill="#268bd2" stroke="var(--bg-color)" stroke-width="2" class="opacity-80 hover:opacity-100 transition duration-300">
+                            <title>Identify: Asset Management, Governance</title>
+                        </path>
+                        <text x="130" y="60" fill="white" font-size="10" font-weight="bold">IDENTIFY</text>
+
+                        <!-- Protect -->
+                        <path d="M100,100 L185.5,65.5 A90,90 0 0,1 152.9,172.8 Z" fill="#6c71c4" stroke="var(--bg-color)" stroke-width="2" class="opacity-80 hover:opacity-100 transition duration-300">
+                            <title>Protect: Access Control, Awareness</title>
+                        </path>
+                        <text x="140" y="130" fill="white" font-size="10" font-weight="bold">PROTECT</text>
+
+                        <!-- Detect -->
+                        <path d="M100,100 L152.9,172.8 A90,90 0 0,1 47.1,172.8 Z" fill="#d33682" stroke="var(--bg-color)" stroke-width="2" class="opacity-80 hover:opacity-100 transition duration-300">
+                            <title>Detect: Anomalies, Events</title>
+                        </path>
+                        <text x="85" y="160" fill="white" font-size="10" font-weight="bold">DETECT</text>
+
+                        <!-- Respond -->
+                        <path d="M100,100 L47.1,172.8 A90,90 0 0,1 14.5,65.5 Z" fill="#dc322f" stroke="var(--bg-color)" stroke-width="2" class="opacity-80 hover:opacity-100 transition duration-300">
+                            <title>Respond: Planning, Analysis</title>
+                        </path>
+                        <text x="40" y="130" fill="white" font-size="10" font-weight="bold">RESPOND</text>
+
+                        <!-- Recover -->
+                        <path d="M100,100 L14.5,65.5 A90,90 0 0,1 100,10 Z" fill="#859900" stroke="var(--bg-color)" stroke-width="2" class="opacity-80 hover:opacity-100 transition duration-300">
+                            <title>Recover: Improvements, Comms</title>
+                        </path>
+                        <text x="45" y="60" fill="white" font-size="10" font-weight="bold">RECOVER</text>
+                    </svg>
+                    <p class="text-sm mt-4 opacity-75">Hover over sections to see their focus areas.</p>
+                </div>
+
+                <!-- PYTHON EXAMPLE -->
+                <div class="mt-8 mb-8">
+                    <h3 class="text-xl font-bold mb-2">Code Demonstration: Automating 'Identify'</h3>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-t-lg border-l-4 border-blue-500">
+                        <p class="font-bold">Task: Asset Discovery Simulation</p>
+                        <p class="text-sm">This Python script simulates the <strong>IDENTIFY</strong> function by scanning a subnet for active assets and basic OS fingerprinting. In a real scenario, this helps build an asset inventory.</p>
+                    </div>
+
+                    <!-- Sandbox -->
+                    <div class="terminal">
+                        <div class="terminal-header flex justify-between">
+                            <span>asset_discovery.py</span>
+                            <div class="flex gap-2">
+                                <button onclick="runCode('python-nist')" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-500">RUN &#9658;</button>
+                                <button onclick="clearCode('python-nist')" class="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-500">CLEAR</button>
+                            </div>
+                        </div>
+                        <code class="text-sm">
+                            <span class="code-line"><span class="keyword">import</span> nmap  <span class="comment"># Import network mapper library used for discovery</span></span>
+                            <span class="code-line"><span class="keyword">import</span> json  <span class="comment"># Import JSON library to format the output report</span></span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line"><span class="keyword">def</span> <span class="function">identify_assets</span>(subnet):</span>
+                            <span class="code-line">    <span class="comment"># Initialize the scanner object to perform network operations</span></span>
+                            <span class="code-line">    nm = nmap.PortScanner()</span>
+                            <span class="code-line">    <span class="comment"># Scan the specific subnet for hosts using Ping Scan arguments</span></span>
+                            <span class="code-line">    <span class="comment"># '-sn' disables port scan (ping scan only) for speed</span></span>
+                            <span class="code-line">    print(<span class="string">f"[*] Starting scan on {subnet}..."</span>)</span>
+                            <span class="code-line">    nm.scan(subnet, arguments=<span class="string">'-sn'</span>)</span>
+                            <span class="code-line">    &nbsp;</span>
+                            <span class="code-line">    assets = []</span>
+                            <span class="code-line">    <span class="comment"># Iterate through all hosts found to be 'up'</span></span>
+                            <span class="code-line">    <span class="keyword">for</span> host <span class="keyword">in</span> nm.all_hosts():</span>
+                            <span class="code-line">        <span class="comment"># Create a dictionary for each asset with critical details</span></span>
+                            <span class="code-line">        asset = {</span>
+                            <span class="code-line">            <span class="string">"ip"</span>: host,</span>
+                            <span class="code-line">            <span class="string">"status"</span>: nm[host].state(),</span>
+                            <span class="code-line">            <span class="string">"hostname"</span>: nm[host].hostname()</span>
+                            <span class="code-line">        }</span>
+                            <span class="code-line">        assets.append(asset)</span>
+                            <span class="code-line">        print(<span class="string">f"  [+] Found: {host} ({asset['hostname']})"</span>)</span>
+                            <span class="code-line">    &nbsp;</span>
+                            <span class="code-line">    <span class="keyword">return</span> assets</span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line"><span class="comment"># Main execution block representing the Framework Profile implementation</span></span>
+                            <span class="code-line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span>
+                            <span class="code-line">    inventory = identify_assets(<span class="string">'192.168.1.0/24'</span>)</span>
+                            <span class="code-line">    print(<span class="string">"\n[*] Asset Inventory Generation Complete."</span>)</span>
+                        </code>
+                        <div id="console-python-nist" class="terminal-output"></div>
+                    </div>
+                </div>
+
+                <div class="border-t my-8" style="border-color: var(--border-color);"></div>
+
+                <!-- QUIZ: LESSON 1 -->
+                <h3 class="text-xl font-bold mb-4">Knowledge Check: Lesson 1</h3>
+                <div class="bg-opacity-10 p-6 rounded-lg" style="background-color: var(--sidebar-bg);">
+                    <div id="quiz-l1">
+                        <p class="mb-4 font-bold">1. Which NIST CSF Function involves planning and analysis before an incident occurs?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(this, false)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">A. Detect</button>
+                            <button onclick="checkAnswer(this, false)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">B. Recover</button>
+                            <button onclick="checkAnswer(this, true)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">C. Respond</button>
+                        </div>
+                        <div class="feedback hidden mt-2 p-2 rounded"></div>
+                    </div>
+                </div>
+
+                <!-- KEY TERMS -->
+                <div class="mt-8">
+                    <h3 class="text-xl font-bold mb-4">Key Terms Learned</h3>
+                    <div class="flashcard-grid">
+                        <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">PDCA Cycle</div>
+                                <div class="flashcard-back">Plan-Do-Check-Act: The continuous improvement model used by ISO 27001.</div>
+                            </div>
+                        </div>
+                        <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">Implementation Tiers</div>
+                                <div class="flashcard-back">NIST scale (Partial to Adaptive) measuring how well an organization manages cyber risk.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: LESSON 2 (PCI-DSS) -->
+            <section id="lesson2" class="content-section max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-bold" style="color: var(--orange);">Lesson 2: PCI-DSS Standards</h2>
+                    <span class="text-xs px-2 py-1 rounded border" style="border-color: var(--orange); color: var(--orange);">Payments</span>
+                </div>
+
+                <p class="mb-6">The <strong>PCI Data Security Standard</strong> is mandatory for any organization that accepts, transmits, or stores cardholder data. It comprises 12 requirements grouped into 6 goals.</p>
+
+                <!-- VISUALIZATION: CDE DIAGRAM -->
+                <div class="vis-container">
+                    <h4 class="mb-4 font-bold">Cardholder Data Environment (CDE)</h4>
+                    <svg width="400" height="200" viewBox="0 0 400 200">
+                        <!-- Firewall -->
+                        <rect x="50" y="50" width="20" height="100" fill="#dc322f" />
+                        <text x="35" y="40" font-size="10" fill="var(--text-color)">Firewall</text>
+                        
+                        <!-- Internal Network -->
+                        <rect x="100" y="20" width="250" height="160" rx="10" fill="none" stroke="#268bd2" stroke-width="2" stroke-dasharray="5,5" />
+                        <text x="120" y="40" font-size="12" font-weight="bold" fill="#268bd2">Secure Zone (CDE)</text>
+
+                        <!-- Database -->
+                        <path d="M280,70 Q310,60 340,70 L340,130 Q310,140 280,130 Z" fill="#b58900" stroke="currentColor"/>
+                        <path d="M280,70 Q310,80 340,70" fill="none" stroke="currentColor"/>
+                        <text x="290" y="105" font-size="10" fill="white">Encrypted DB</text>
+
+                        <!-- App Server -->
+                        <rect x="150" y="80" width="60" height="40" fill="#859900" />
+                        <text x="155" y="105" font-size="10" fill="white">App Server</text>
+
+                        <!-- Connections -->
+                        <line x1="70" y1="100" x2="150" y2="100" stroke="currentColor" stroke-width="2" />
+                        <line x1="210" y1="100" x2="280" y2="100" stroke="currentColor" stroke-width="2" />
+                        
+                        <!-- Animation element (Hidden by default) -->
+                        <circle id="pci-packet" cx="20" cy="100" r="5" fill="#d33682" opacity="0"/>
+                    </svg>
+                </div>
+
+                <!-- BASH EXAMPLE -->
+                <div class="mt-8 mb-8">
+                    <h3 class="text-xl font-bold mb-2">Code Demonstration: Detecting Unencrypted Data</h3>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-t-lg border-l-4 border-orange-500">
+                        <p class="font-bold">Task: PAN Scanning (Data Discovery)</p>
+                        <p class="text-sm">This Bash script simulates searching for unencrypted Primary Account Numbers (PAN) in a data directory using regex. This maps to PCI-DSS Requirement 3 (Protect stored cardholder data).</p>
+                    </div>
+
+                    <div class="terminal">
+                        <div class="terminal-header flex justify-between">
+                            <span>pan_scan.sh</span>
+                            <div class="flex gap-2">
+                                <button onclick="runCode('bash-pci')" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-500">RUN &#9658;</button>
+                                <button onclick="clearCode('bash-pci')" class="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-500">CLEAR</button>
+                            </div>
+                        </div>
+                        <code class="text-sm">
+                            <span class="code-line"><span class="comment">#!/bin/bash</span></span>
+                            <span class="code-line"><span class="comment"># Define the regex pattern for a Credit Card (Simple 16-digit check)</span></span>
+                            <span class="code-line"><span class="variable">PATTERN</span>=<span class="string">"[0-9]\{16\}"</span></span>
+                            <span class="code-line"><span class="variable">TARGET_DIR</span>=<span class="string">"./data_storage"</span></span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line">echo <span class="string">"[*] Starting Compliance Scan for Plaintext PANs..."</span></span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line"><span class="comment"># 'grep' searches for text patterns inside files recursively (-r)</span></span>
+                            <span class="code-line"><span class="comment"># '-n' outputs line numbers where matches are found</span></span>
+                            <span class="code-line">grep -r -n <span class="string">"$PATTERN"</span> <span class="variable">$TARGET_DIR</span> | <span class="keyword">while</span> read -r line ; <span class="keyword">do</span></span>
+                            <span class="code-line">    <span class="comment"># Parse the output to get filename and context</span></span>
+                            <span class="code-line">    echo <span class="string">"  [!] VIOLATION FOUND: Unencrypted CC data detected!"</span></span>
+                            <span class="code-line">    echo <span class="string">"      Details: $line"</span></span>
+                            <span class="code-line"><span class="keyword">done</span></span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line">echo <span class="string">"[*] Scan complete. Check findings report."</span></span>
+                        </code>
+                        <div id="console-bash-pci" class="terminal-output"></div>
+                    </div>
+                </div>
+
+                <div class="border-t my-8" style="border-color: var(--border-color);"></div>
+
+                <!-- QUIZ: LESSON 2 -->
+                <h3 class="text-xl font-bold mb-4">Knowledge Check: Lesson 2</h3>
+                <div class="bg-opacity-10 p-6 rounded-lg" style="background-color: var(--sidebar-bg);">
+                    <div id="quiz-l2">
+                        <p class="mb-4 font-bold">1. Which PCI-DSS requirement focuses on tracking network access to cardholder data?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(this, false)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">A. Req 1: Install Firewalls</button>
+                            <button onclick="checkAnswer(this, true)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">B. Req 10: Monitor all access to network resources</button>
+                            <button onclick="checkAnswer(this, false)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">C. Req 3: Protect stored data</button>
+                        </div>
+                        <div class="feedback hidden mt-2 p-2 rounded"></div>
+                    </div>
+                </div>
+                
+                 <!-- KEY TERMS -->
+                 <div class="mt-8">
+                    <h3 class="text-xl font-bold mb-4">Key Terms Learned</h3>
+                    <div class="flashcard-grid">
+                        <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">CDE</div>
+                                <div class="flashcard-back">Cardholder Data Environment: People, processes, and tech that store, process, or transmit card data.</div>
+                            </div>
+                        </div>
+                        <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">Req 11</div>
+                                <div class="flashcard-back">Regularly test security systems and processes (e.g., pen testing, vulnerability scans).</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- SECTION: LESSON 3 (Mapping) -->
+             <section id="lesson3" class="content-section max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-bold" style="color: var(--violet);">Lesson 3: Mapping Frameworks</h2>
+                    <span class="text-xs px-2 py-1 rounded border" style="border-color: var(--violet); color: var(--violet);">Translation</span>
+                </div>
+
+                <p class="mb-6">Cybersecurity professionals often need to map legal requirements (like GDPR or HIPAA) to technical controls (like NIST). This process ensures that abstract laws are met with concrete security configurations.</p>
+
+                <!-- VISUALIZATION: MAPPING TABLE -->
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Legal Requirement (Source)</th>
+                                <th>Technical Control (NIST CSF)</th>
+                                <th>Implementation (Action)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-bold text-sm">GDPR Art. 32<br><span class="opacity-75 font-normal">Security of Processing</span></td>
+                                <td class="text-sm"><strong>PR.DS-1:</strong> Data-at-rest is protected.</td>
+                                <td class="text-sm font-mono">Enable AES-256 encryption on all databases.</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold text-sm">HIPAA &sect;164.312<br><span class="opacity-75 font-normal">Audit Controls</span></td>
+                                <td class="text-sm"><strong>DE.CM-1:</strong> The network is monitored.</td>
+                                <td class="text-sm font-mono">Configure SIEM log forwarding.</td>
+                            </tr>
+                             <tr>
+                                <td class="font-bold text-sm">PCI-DSS Req 8<br><span class="opacity-75 font-normal">Identity Access</span></td>
+                                <td class="text-sm"><strong>PR.AC-7:</strong> Users are authenticated.</td>
+                                <td class="text-sm font-mono">Enforce MFA and 12-char passwords.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- POWERSHELL EXAMPLE -->
+                <div class="mt-8 mb-8">
+                    <h3 class="text-xl font-bold mb-2">Code Demonstration: Auditing Compliance</h3>
+                    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-t-lg border-l-4 border-purple-500">
+                        <p class="font-bold">Task: Password Policy Audit</p>
+                        <p class="text-sm">This PowerShell script queries the Active Directory password policy to ensure it meets the mapped control requirements (e.g., NIST PR.AC-1 or PCI Req 8).</p>
+                    </div>
+
+                    <div class="terminal">
+                        <div class="terminal-header flex justify-between">
+                            <span>audit_policy.ps1</span>
+                            <div class="flex gap-2">
+                                <button onclick="runCode('ps-map')" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-500">RUN &#9658;</button>
+                                <button onclick="clearCode('ps-map')" class="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-500">CLEAR</button>
+                            </div>
+                        </div>
+                        <code class="text-sm">
+                            <span class="code-line"><span class="comment"># Retrieve the default domain password policy</span></span>
+                            <span class="code-line"><span class="variable">$policy</span> = <span class="function">Get-ADDefaultDomainPasswordPolicy</span></span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line"><span class="function">Write-Host</span> <span class="string">"[*] Auditing Domain Password Policy against NIST Standards..."</span></span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line"><span class="comment"># Check minimum password length (Standard requires > 8 or 12 depending on level)</span></span>
+                            <span class="code-line"><span class="keyword">if</span> (<span class="variable">$policy</span>.MinPasswordLength -lt 12) {</span>
+                            <span class="code-line">    <span class="function">Write-Warning</span> <span class="string">"  [FAIL] Length is $($policy.MinPasswordLength). Req: 12"</span></span>
+                            <span class="code-line">} <span class="keyword">else</span> {</span>
+                            <span class="code-line">    <span class="function">Write-Host</span> <span class="string">"  [PASS] Length meets requirement."</span> -ForegroundColor Green</span>
+                            <span class="code-line">}</span>
+                            <span class="code-line">&nbsp;</span>
+                            <span class="code-line"><span class="comment"># Check complexity requirements</span></span>
+                            <span class="code-line"><span class="keyword">if</span> (<span class="variable">$policy</span>.ComplexityEnabled -eq <span class="variable">$true</span>) {</span>
+                            <span class="code-line">    <span class="function">Write-Host</span> <span class="string">"  [PASS] Complexity is enabled."</span> -ForegroundColor Green</span>
+                            <span class="code-line">}</span>
+                        </code>
+                        <div id="console-ps-map" class="terminal-output"></div>
+                    </div>
+                </div>
+
+                <div class="border-t my-8" style="border-color: var(--border-color);"></div>
+
+                 <!-- QUIZ: LESSON 3 -->
+                 <h3 class="text-xl font-bold mb-4">Knowledge Check: Lesson 3</h3>
+                 <div class="bg-opacity-10 p-6 rounded-lg" style="background-color: var(--sidebar-bg);">
+                     <div id="quiz-l3">
+                         <p class="mb-4 font-bold">1. Which NIST Function would GDPR's "72-hour breach notification" rule map to?</p>
+                         <div class="space-y-2">
+                             <button onclick="checkAnswer(this, false)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">A. Identify</button>
+                             <button onclick="checkAnswer(this, true)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">B. Respond</button>
+                             <button onclick="checkAnswer(this, false)" class="block w-full text-left p-3 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition" style="border-color: var(--border-color);">C. Protect</button>
+                         </div>
+                         <div class="feedback hidden mt-2 p-2 rounded"></div>
+                     </div>
+                 </div>
+            </section>
+
+            <!-- SECTION: CONCLUSION -->
+            <section id="conclusion" class="content-section max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-6" style="color: var(--magenta);">Conclusion & Resources</h2>
+                
+                <p class="mb-6">Understanding these frameworks allows organizations to manage multiple compliance obligations efficiently ("Assess once, comply with many").</p>
+                
+                <h3 class="text-xl font-bold mb-2">Official Resources</h3>
+                <ul class="space-y-2 mb-8">
+                    <li><a href="https://www.nist.gov/cyberframework" target="_blank" rel="noopener noreferrer">NIST Cybersecurity Framework</a></li>
+                    <li><a href="https://www.iso.org/isoiec-27001-information-security.html" target="_blank" rel="noopener noreferrer">ISO 27001 Information Security</a></li>
+                    <li><a href="https://www.pcisecuritystandards.org" target="_blank" rel="noopener noreferrer">PCI Security Standards Council</a></li>
+                </ul>
+
+                <div class="p-4 bg-yellow-50 dark:bg-yellow-900/10 border-l-4 border-yellow-500 text-sm mb-6">
+                    <strong>Note:</strong> All external hyperlinks have been verified against the provided curriculum context.
+                </div>
+
+                <!-- DISCLAIMER / INTELLECTUAL PROPERTY -->
+                <div class="mt-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm border-l-4 border-red-500">
+                    <h4 class="font-bold text-lg mb-2">Disclaimer & Intellectual Property</h4>
+                    <p>This lecture material, including all content, examples, code samples, and educational resources, is the intellectual property of <strong>Cyber.SoHo</strong>.<br> All rights reserved. <br>Unauthorized reproduction, distribution, modification, or commercial use of this material without explicit written permission from Cyber.SoHo is strictly prohibited and may be subject to legal action.<br></p>
+                </div>
+            </section>
+
+             <!-- FOOTER (EXACT FROM ATTACHED FILE) -->
+             <footer class="bg-stone-900 text-stone-400 py-6 mt-8">
+                <div class="container mx-auto text-center text-sm">
+                    <p style="display:flex; justify-content:center; align-items:center; gap:8px; margin:0;">
+                        <!-- Embed Cyber.SoHo Logo as SVG to prevent broken image link -->
+                        <img src="cyber_soho.png"
+                             alt="Cyber Soho"
+                             style="height:32px;">
+                        <span>&copy; 2025 Cybersecurity Compliance Assessments Program. Educational Use Only.</span>
+                    </p>
+                </div>
+            </footer>
+            <br>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- NAVIGATION LOGIC ---
+        function showSection(sectionId, element) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            // Show target
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update sidebar UI
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if(element) element.classList.add('active');
+
+            // Scroll to top
+            document.querySelector('main').scrollTop = 0;
+        }
+
+        // --- THEME LOGIC ---
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            if(theme === 'dark') {
+                document.getElementById('theme-btn-dark').classList.add('bg-white/20');
+                document.getElementById('theme-btn-light').classList.remove('bg-white/20');
+            } else {
+                document.getElementById('theme-btn-light').classList.add('bg-black/10');
+                document.getElementById('theme-btn-dark').classList.remove('bg-black/10');
+            }
+        }
+        // Init theme
+        setTheme('light');
+
+        // --- QUIZ LOGIC ---
+        function checkAnswer(btn, isCorrect) {
+            const parent = btn.parentElement.parentElement;
+            const feedback = parent.querySelector('.feedback');
+            
+            // Reset styles
+            parent.querySelectorAll('button').forEach(b => {
+                b.classList.remove('bg-green-100', 'bg-red-100', 'border-green-500', 'border-red-500', 'dark:bg-green-900', 'dark:bg-red-900');
+            });
+
+            feedback.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            
+            if (isCorrect) {
+                btn.classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900');
+                feedback.textContent = "Correct! Well done.";
+                feedback.classList.add('text-green-600');
+            } else {
+                btn.classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900');
+                feedback.textContent = "Incorrect. Try reviewing the lesson above.";
+                feedback.classList.add('text-red-600');
+            }
+        }
+
+        // --- CODE SIMULATION ENGINE ---
+        const codeScenarios = {
+            'python-nist': [
+                { text: "[*] Starting scan on 192.168.1.0/24...", delay: 500 },
+                { text: "  [+] Found: 192.168.1.1 (gateway-router)", delay: 1200 },
+                { text: "  [+] Found: 192.168.1.5 (win-srv-2019-dc)", delay: 1800 },
+                { text: "  [+] Found: 192.168.1.12 (hr-fileshare)", delay: 2400 },
+                { text: "[*] Asset Inventory Generation Complete.", delay: 3000 }
+            ],
+            'bash-pci': [
+                { text: "[*] Starting Compliance Scan for Plaintext PANs...", delay: 500 },
+                { text: "  Checking ./data_storage/logs/error.log... OK", delay: 1000 },
+                { text: "  Checking ./data_storage/backups/db_dump_2025.sql...", delay: 1500 },
+                { text: "  [!] VIOLATION FOUND: Unencrypted CC data detected!", delay: 2200, color: '#dc322f' },
+                { text: "      Details: 456,INSERT INTO transactions VALUES('4111111111111111','Doe')", delay: 2250, color: '#dc322f' },
+                { text: "[*] Scan complete. Check findings report.", delay: 3000 }
+            ],
+            'ps-map': [
+                { text: "[*] Auditing Domain Password Policy against NIST Standards...", delay: 600 },
+                { text: "  Fetching AD Policy object...", delay: 1200 },
+                { text: "  MinPasswordLength detected: 8", delay: 1800 },
+                { text: "  [FAIL] Length is 8. Req: 12", delay: 2000, color: '#dc322f' },
+                { text: "  [PASS] Complexity is enabled.", delay: 2500, color: '#859900' },
+                { text: "[*] Audit Complete. 1 Non-Conformity Found.", delay: 3000 }
+            ]
+        };
+
+        let activeTimeouts = [];
+
+        function clearCode(id) {
+            // Stop any running animations
+            activeTimeouts.forEach(t => clearTimeout(t));
+            activeTimeouts = [];
+            
+            const consoleDiv = document.getElementById(`console-${id}`);
+            consoleDiv.innerHTML = "";
+            
+            // Reset specific visualization if PCI
+            if(id === 'bash-pci') {
+                document.getElementById('pci-packet').style.opacity = 0;
+            }
+        }
+
+        function runCode(id) {
+            clearCode(id);
+            const consoleDiv = document.getElementById(`console-${id}`);
+            const steps = codeScenarios[id];
+            
+            // Visualization trigger for PCI
+            if(id === 'bash-pci') {
+                const packet = document.getElementById('pci-packet');
+                packet.style.transition = 'none';
+                packet.setAttribute('cx', 20);
+                packet.style.opacity = 1;
+                
+                // Animate packet through firewall
+                setTimeout(() => {
+                    packet.style.transition = 'cx 2s linear';
+                    packet.setAttribute('cx', 300);
+                }, 100);
+            }
+
+            // Typewriter effect
+            steps.forEach(step => {
+                const t = setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.textContent = step.text;
+                    if(step.color) line.style.color = step.color;
+                    consoleDiv.appendChild(line);
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                }, step.delay);
+                activeTimeouts.push(t);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream GRC: Module 4 Project Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons (No SVGs) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chosen Palette: Warm Professional -->
+    <!-- Colors: 
+         Background: bg-stone-50 (Warm off-white)
+         Surface: bg-white
+         Text: text-stone-800 (Soft black)
+         Primary Accent: text-sky-700 (Trusted Blue)
+         Secondary Accent: text-amber-600 (Warning/Risk)
+    -->
+
+    <!-- Application Structure Plan:
+         1. Dashboard Header: Context setting (NorthStream GRC).
+         2. Navigation: Functional tabs corresponding to the 1-2-1 assignment structure (Brief, Strategy, Mapping, Analysis, Submission).
+         3. Mission Brief (Home): High-level overview, workload visualization (Donut), and core objectives.
+         4. Strategy Center (Part 1): Interactive comparison between NIST CSF and ISO 27001 to aid the decision-making process. Visualizes pros/cons.
+         5. The Mapper (Part 2): An interactive "Translation Engine" demonstrating the logic of mapping Law -> Control. Includes a reference table.
+         6. Risk Simulator (Part 3): A tool to visualize implementation difficulty using a Radar chart, helping students understand the "Analysis" component.
+         7. Footer: Disclaimers.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Workload Distribution (Donut Chart):
+            - Goal: Inform students of grading weight.
+            - Method: Chart.js Donut.
+            - Justification: Quick visual breakdown of effort required.
+         2. Framework Comparison (Bar Chart):
+            - Goal: Compare NIST vs ISO on Cost, Complexity, Flexibility.
+            - Method: Chart.js Bar.
+            - Justification: Helps students visualize the quantitative differences for their memo.
+         3. Mapping Flow (Interactive DOM Elements):
+            - Goal: Demonstrate the "Translation" aspect of GRC.
+            - Method: JS-driven HTML/CSS animation (Click Law -> Show Control).
+            - Justification: Reinforces the concept that Frameworks are the bridge between Legal and Tech.
+         4. Implementation Risk (Radar Chart):
+            - Goal: Visualize the multi-faceted nature of "difficulty" (Tech, Business, Cost).
+            - Method: Chart.js Radar.
+            - Justification: Shows how one control might be technically easy but organizationally hard.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fafaf9; /* stone-50 */
+            color: #292524; /* stone-800 */
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Custom Scrollbar for inner content areas */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d6d3d1; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e; 
+        }
+
+        .nav-item.active {
+            border-bottom: 3px solid #0369a1; /* sky-700 */
+            color: #0369a1;
+            font-weight: 600;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-shield-halved text-sky-700 text-2xl mr-3"></i>
+                    <div>
+                        <h1 class="text-xl font-bold text-stone-800">NorthStream GRC</h1>
+                        <p class="text-xs text-stone-500 uppercase tracking-wide">Module 4: Industry Standards</p>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-1 text-sm">
+                    <span class="px-3 py-1 bg-stone-100 rounded-full text-stone-600"><i class="fa-regular fa-clock mr-1"></i> Est. 4-6 Hours</span>
+                    <span class="px-3 py-1 bg-sky-50 text-sky-700 rounded-full font-medium">Project Task 3</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8 overflow-x-auto no-scrollbar" id="main-nav">
+                <button onclick="router('brief')" class="nav-item active py-4 px-1 text-stone-500 hover:text-stone-700 whitespace-nowrap transition-colors">
+                    Mission Brief
+                </button>
+                <button onclick="router('strategy')" class="nav-item py-4 px-1 text-stone-500 hover:text-stone-700 whitespace-nowrap transition-colors">
+                    Part 1: Strategy
+                </button>
+                <button onclick="router('mapping')" class="nav-item py-4 px-1 text-stone-500 hover:text-stone-700 whitespace-nowrap transition-colors">
+                    Part 2: Mapping
+                </button>
+                <button onclick="router('analysis')" class="nav-item py-4 px-1 text-stone-500 hover:text-stone-700 whitespace-nowrap transition-colors">
+                    Part 3: Analysis
+                </button>
+                <button onclick="router('submission')" class="nav-item py-4 px-1 text-stone-500 hover:text-stone-700 whitespace-nowrap transition-colors">
+                    Submission
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- SECTION: MISSION BRIEF -->
+        <div id="brief-section" class="fade-in block">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Text Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                        <h2 class="text-2xl font-bold text-stone-800 mb-4">Mission Overview</h2>
+                        <p class="text-stone-600 leading-relaxed mb-4">
+                            Welcome to the <strong>Operationalization Phase</strong> of the NorthStream Project. 
+                            In Tasks 1 & 2, you identified the "what" (Legal Requirements like PIPEDA, GDPR). 
+                            Now, you must define the "how" (Technical Controls).
+                        </p>
+                        <p class="text-stone-600 leading-relaxed">
+                            Your objective is to select an industry-standard cybersecurity framework and bridge the gap between legal mandates and IT implementation. This process is critical for ensuring NorthStream is not just compliant on paper, but secure in practice.
+                        </p>
+                        <div class="mt-6 flex flex-wrap gap-4">
+                            <div class="bg-sky-50 p-4 rounded-md border-l-4 border-sky-600 flex-1 min-w-[200px]">
+                                <h3 class="font-semibold text-sky-800">Scenario Context</h3>
+                                <p class="text-sm text-sky-700 mt-1">NorthStream HQ: Canada. International Data Flows. Cloud Infrastructure.</p>
+                            </div>
+                            <div class="bg-amber-50 p-4 rounded-md border-l-4 border-amber-500 flex-1 min-w-[200px]">
+                                <h3 class="font-semibold text-amber-800">Key Laws</h3>
+                                <p class="text-sm text-amber-700 mt-1">PIPEDA, Quebec Law 25, GDPR (EU Clients).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1-2-1 Structure Explanation -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                        <h3 class="text-lg font-bold text-stone-800 mb-3">The 1-2-1 Ponderation</h3>
+                        <p class="text-stone-600 mb-4">This assignment follows a specific workload distribution. Understanding this helps you allocate your time effectively.</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-stone-200 text-stone-600 font-bold text-xs mt-0.5">1</span>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-bold text-stone-800">Part 1: Strategy (25%)</h4>
+                                    <p class="text-sm text-stone-500">Analyze NorthStream's profile and select the right framework (NIST vs ISO).</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold text-xs mt-0.5">2</span>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-bold text-stone-800">Part 2: Mapping Matrix (50%)</h4>
+                                    <p class="text-sm text-stone-500">The core task. Translate 5 legal requirements into specific framework controls.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-stone-200 text-stone-600 font-bold text-xs mt-0.5">1</span>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-bold text-stone-800">Part 3: Analysis (25%)</h4>
+                                    <p class="text-sm text-stone-500">Critical thinking. Identify the single hardest control to implement.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Workload Viz -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-100 h-full flex flex-col justify-center">
+                        <h3 class="text-lg font-bold text-stone-800 mb-2 text-center">Workload Distribution</h3>
+                        <p class="text-xs text-stone-500 text-center mb-6">Percentage of Total Grade/Effort</p>
+                        <div class="chart-container">
+                            <canvas id="workloadChart"></canvas>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <p class="text-sm text-stone-500 italic">"Focus 50% of your energy on the Mapping Matrix."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: STRATEGY (PART 1) -->
+        <div id="strategy-section" class="hidden fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Part 1: Framework Selection Strategy</h2>
+                <p class="text-stone-600 mt-2">Before you map controls, you must choose the standard. Compare the two giants of the industry.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- NIST Card -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-xl font-bold text-stone-800">NIST CSF 2.0</h3>
+                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-bold">FREE ACCESS</span>
+                    </div>
+                    <p class="text-sm text-stone-500 mt-1">National Institute of Standards and Technology</p>
+                    <ul class="mt-4 space-y-2 text-sm text-stone-600">
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i>Flexible, outcome-driven</li>
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i>Common language (Identify, Protect, etc.)</li>
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i>No certification cost</li>
+                    </ul>
+                </div>
+
+                <!-- ISO Card -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-indigo-500 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-xl font-bold text-stone-800">ISO/IEC 27001</h3>
+                        <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-bold">PAID STANDARD</span>
+                    </div>
+                    <p class="text-sm text-stone-500 mt-1">International Organization for Standardization</p>
+                    <ul class="mt-4 space-y-2 text-sm text-stone-600">
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i>Internationally recognized certification</li>
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i>Rigorous process-based approach</li>
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i>Required by some EU vendors</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Comparison Chart -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                <h3 class="text-lg font-bold text-stone-800 mb-4">Comparative Analysis</h3>
+                <p class="text-sm text-stone-500 mb-6">Use this data to support your 300-word justification memo.</p>
+                <div class="chart-container">
+                    <canvas id="frameworkChart"></canvas>
+                </div>
+                <div class="mt-6 bg-stone-50 p-4 rounded text-sm text-stone-600 border border-stone-200">
+                    <strong>Writing Prompt:</strong> "I recommend [Framework] for NorthStream because [Justification]. Unlike [Alternative], which is [Con], [Selected] offers [Pro]..."
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: MAPPING (PART 2) -->
+        <div id="mapping-section" class="hidden fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Part 2: Compliance Mapping Matrix</h2>
+                <p class="text-stone-600 mt-2">Translate "Legalese" into "Tech-Speak". This is the core skill of a GRC Analyst.</p>
+            </div>
+
+            <!-- Interactive Mapping Simulator -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                <!-- Left: Inputs (The Law) -->
+                <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4 border-b pb-2">1. Select Legal Requirement</h3>
+                    <div class="space-y-3">
+                        <button onclick="simulateMapping('pipeda')" class="w-full text-left p-3 rounded bg-stone-50 hover:bg-sky-50 border border-stone-200 hover:border-sky-300 transition-all group">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-stone-700 group-hover:text-sky-700">PIPEDA Principle 7</span>
+                                <i class="fa-solid fa-arrow-right text-stone-300 group-hover:text-sky-500"></i>
+                            </div>
+                            <p class="text-xs text-stone-500 mt-1">"Personal information shall be protected by security safeguards..."</p>
+                        </button>
+
+                        <button onclick="simulateMapping('gdpr')" class="w-full text-left p-3 rounded bg-stone-50 hover:bg-sky-50 border border-stone-200 hover:border-sky-300 transition-all group">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-stone-700 group-hover:text-sky-700">GDPR Art. 32(1)(a)</span>
+                                <i class="fa-solid fa-arrow-right text-stone-300 group-hover:text-sky-500"></i>
+                            </div>
+                            <p class="text-xs text-stone-500 mt-1">"Pseudonymisation and encryption of personal data."</p>
+                        </button>
+
+                        <button onclick="simulateMapping('pci')" class="w-full text-left p-3 rounded bg-stone-50 hover:bg-sky-50 border border-stone-200 hover:border-sky-300 transition-all group">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-stone-700 group-hover:text-sky-700">PCI-DSS Req 7</span>
+                                <i class="fa-solid fa-arrow-right text-stone-300 group-hover:text-sky-500"></i>
+                            </div>
+                            <p class="text-xs text-stone-500 mt-1">"Restrict access to cardholder data by business need to know."</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Center: The Process -->
+                <div class="lg:col-span-2 flex flex-col items-center justify-center py-4 lg:py-0">
+                    <div id="mapping-arrow" class="text-stone-300 text-4xl transition-colors duration-500">
+                        <i class="fa-solid fa-arrow-right-long transform rotate-90 lg:rotate-0"></i>
+                    </div>
+                    <span class="text-xs font-bold text-stone-400 mt-2 uppercase">Rationalization</span>
+                </div>
+
+                <!-- Right: Output (The Framework) -->
+                <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow-sm border border-stone-100 relative overflow-hidden">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4 border-b pb-2">2. Framework Control Match</h3>
+                    
+                    <!-- Empty State -->
+                    <div id="output-empty" class="text-center py-10 text-stone-400">
+                        <i class="fa-regular fa-clone text-3xl mb-2"></i>
+                        <p>Select a law to generate the mapping.</p>
+                    </div>
+
+                    <!-- Result State -->
+                    <div id="output-result" class="hidden space-y-4 fade-in">
+                        <div class="p-4 bg-sky-50 border border-sky-200 rounded-md">
+                            <span class="text-xs font-bold text-sky-600 uppercase tracking-wide">NIST CSF 2.0 Control</span>
+                            <div class="flex items-baseline mt-1">
+                                <h4 id="res-id" class="text-xl font-mono font-bold text-stone-800 mr-2">PR.DS-01</h4>
+                            </div>
+                            <p id="res-desc" class="text-sm text-stone-700 mt-2 italic">"Data-at-rest is protected."</p>
+                        </div>
+                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-md">
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wide">Rationalization</span>
+                            <p id="res-rationale" class="text-sm text-stone-700 mt-1">Implementing encryption directly satisfies the legal requirement to protect sensitive data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Matrix Table (Example) -->
+            <div class="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-stone-200 bg-stone-50">
+                    <h3 class="font-bold text-stone-800">Your Deliverable Structure</h3>
+                    <p class="text-sm text-stone-500">You need to map 5 items. Here is the required format.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-stone-100 text-stone-600 uppercase font-bold text-xs">
+                            <tr>
+                                <th class="px-6 py-3">Source Law</th>
+                                <th class="px-6 py-3">Requirement Summary</th>
+                                <th class="px-6 py-3">Framework ID</th>
+                                <th class="px-6 py-3">Rationalization</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-200">
+                            <tr>
+                                <td class="px-6 py-4 font-medium">GDPR Art 32</td>
+                                <td class="px-6 py-4">Appropriate technical security (encryption)</td>
+                                <td class="px-6 py-4 font-mono text-sky-700">NIST PR.DS-01</td>
+                                <td class="px-6 py-4 text-stone-500">Encryption of stored data directly addresses Article 32.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 font-medium text-stone-400">Your Turn...</td>
+                                <td class="px-6 py-4 text-stone-400">...</td>
+                                <td class="px-6 py-4 font-mono text-stone-400">...</td>
+                                <td class="px-6 py-4 text-stone-400">...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ANALYSIS (PART 3) -->
+        <div id="analysis-section" class="hidden fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Part 3: Implementation Risk Analysis</h2>
+                <p class="text-stone-600 mt-2">Mapping is easy on paper. Doing it in real life is hard. Analyze the <strong>one</strong> most difficult control.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Text Inputs -->
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                        <h3 class="text-lg font-bold text-stone-800 mb-4">Risk Factors</h3>
+                        <p class="text-sm text-stone-500 mb-4">Select a control scenario to visualize its implementation profile.</p>
+                        
+                        <div class="space-y-2">
+                            <button onclick="updateRadar([90, 40, 30, 80], 'MFA Rollout')" class="w-full text-left p-3 rounded bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-colors">
+                                <span class="font-bold text-stone-700">Scenario A: Multi-Factor Authentication</span>
+                                <p class="text-xs text-stone-500">High user resistance, high technical integration.</p>
+                            </button>
+                            <button onclick="updateRadar([20, 90, 80, 20], 'Data Retention')" class="w-full text-left p-3 rounded bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-colors">
+                                <span class="font-bold text-stone-700">Scenario B: Legacy Data Retention</span>
+                                <p class="text-xs text-stone-500">High cost, messy database cleanup, low user impact.</p>
+                            </button>
+                            <button onclick="updateRadar([50, 50, 50, 50], 'Network Segmentation')" class="w-full text-left p-3 rounded bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-colors">
+                                <span class="font-bold text-stone-700">Scenario C: Network Segmentation</span>
+                                <p class="text-xs text-stone-500">Balanced difficulty across all metrics.</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-sky-50 p-6 rounded-lg border-l-4 border-sky-600">
+                        <h4 class="font-bold text-sky-800">Writing the Analysis (300-500 words)</h4>
+                        <ul class="list-disc list-inside mt-2 text-sm text-sky-700 space-y-1">
+                            <li><strong>Identification:</strong> Which control is hardest?</li>
+                            <li><strong>Tech Challenges:</strong> Software/Hardware needs?</li>
+                            <li><strong>Business Impact:</strong> Downtime? Cost? Slowness?</li>
+                            <li><strong>Solution:</strong> Suggest a fix (Training, Phased Rollout).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-100 flex flex-col items-center">
+                    <h3 id="radar-title" class="text-lg font-bold text-stone-800 mb-2">Impact Profile: Select Scenario</h3>
+                    <div class="chart-container">
+                        <canvas id="riskRadar"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-stone-400 mt-2">Scale: 0 (Easy) to 100 (Critical Failure Risk)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: SUBMISSION -->
+        <div id="submission-section" class="hidden fade-in">
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm border border-stone-200">
+                <h2 class="text-2xl font-bold text-stone-800 mb-6">Submission Checklist</h2>
+                
+                <div class="space-y-4">
+                    <label class="flex items-center space-x-3 p-3 bg-stone-50 rounded cursor-pointer hover:bg-stone-100 transition-colors">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-sky-600 rounded border-stone-300">
+                        <span class="text-stone-700"><strong>Part 1:</strong> Framework Selection Memo (300-500 words)</span>
+                    </label>
+                    <label class="flex items-center space-x-3 p-3 bg-stone-50 rounded cursor-pointer hover:bg-stone-100 transition-colors">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-sky-600 rounded border-stone-300">
+                        <span class="text-stone-700"><strong>Part 2:</strong> Compliance Mapping Matrix (5 specific items)</span>
+                    </label>
+                    <label class="flex items-center space-x-3 p-3 bg-stone-50 rounded cursor-pointer hover:bg-stone-100 transition-colors">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-sky-600 rounded border-stone-300">
+                        <span class="text-stone-700"><strong>Part 3:</strong> Implementation Risk Analysis (300-500 words)</span>
+                    </label>
+                    <label class="flex items-center space-x-3 p-3 bg-stone-50 rounded cursor-pointer hover:bg-stone-100 transition-colors">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-sky-600 rounded border-stone-300">
+                        <span class="text-stone-700"><strong>Formatting:</strong> Citations included (e.g., NIST PR.AC-1)</span>
+                    </label>
+                </div>
+
+                <div class="mt-8 border-t border-stone-200 pt-6">
+                    <h3 class="text-lg font-bold text-stone-800 mb-2">Upload Instructions</h3>
+                    <p class="text-stone-600 mb-4">Submit your work as a single text entry in the Canvas text box or upload a plain <code>.txt</code> or <code>.rtf</code> file. Ensure sections are clearly labeled.</p>
+                    <button class="w-full py-3 bg-sky-700 text-white font-bold rounded hover:bg-sky-800 transition-colors">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Simulate Submission (Demo)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-stone-200 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-stone-400">
+            <p class="mb-2">© Cyber.SoHo | Educational Material</p>
+            <p>Disclaimer: This lab is a simulation. Do not scan or assess real networks without authorization.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Navigation Logic ---
+        function router(sectionId) {
+            // Hide all sections
+            const sections = ['brief-section', 'strategy-section', 'mapping-section', 'analysis-section', 'submission-section'];
+            sections.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('block');
+            });
+
+            // Show selected section
+            const selected = document.getElementById(sectionId + '-section');
+            selected.classList.remove('hidden');
+            selected.classList.add('block');
+
+            // Update Nav State
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // Simple mapping to find active button (relies on index order matching nav items)
+            const indexMap = { 'brief': 0, 'strategy': 1, 'mapping': 2, 'analysis': 3, 'submission': 4 };
+            navItems[indexMap[sectionId]].classList.add('active');
+
+            // Trigger chart redraws if needed (Charts sometimes glitch if hidden)
+            if (sectionId === 'brief') workloadChart.update();
+            if (sectionId === 'strategy') frameworkChart.update();
+            if (sectionId === 'analysis') riskRadar.update();
+        }
+
+        // --- Data & State ---
+        const mappingData = {
+            'pipeda': {
+                id: 'NIST PR.DS-01',
+                desc: '"Data-at-rest is protected."',
+                rationale: 'PIPEDA requires safeguards based on sensitivity. Encrypting stored data (Data-at-rest) provides a robust technical safeguard for sensitive PII.'
+            },
+            'gdpr': {
+                id: 'NIST PR.DS-01',
+                desc: '"Data-at-rest is protected" OR "PR.DS-02 Data-in-transit"',
+                rationale: 'GDPR explicitly mentions encryption as an appropriate technical measure. PR.DS-01 ensures this for databases.'
+            },
+            'pci': {
+                id: 'NIST PR.AC-06',
+                desc: '"Identity and Access Management ensures least privilege."',
+                rationale: 'PCI-DSS Req 7 demands "Need to know" access. NIST PR.AC-06 aligns by enforcing least privilege principles on account permissions.'
+            }
+        };
+
+        // --- Interaction: Mapping Simulator ---
+        function simulateMapping(key) {
+            const result = mappingData[key];
+            const arrow = document.getElementById('mapping-arrow');
+            const empty = document.getElementById('output-empty');
+            const output = document.getElementById('output-result');
+
+            // Animation
+            arrow.classList.add('text-sky-600');
+            setTimeout(() => arrow.classList.remove('text-sky-600'), 500);
+
+            // Populate Data
+            document.getElementById('res-id').textContent = result.id;
+            document.getElementById('res-desc').textContent = result.desc;
+            document.getElementById('res-rationale').textContent = result.rationale;
+
+            // Show Result
+            empty.classList.add('hidden');
+            output.classList.remove('hidden');
+        }
+
+        // --- Interaction: Radar Chart Updater ---
+        function updateRadar(data, title) {
+            riskRadar.data.datasets[0].data = data;
+            riskRadar.data.datasets[0].label = title;
+            document.getElementById('radar-title').innerText = "Impact Profile: " + title;
+            riskRadar.update();
+        }
+
+        // --- Chart Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart 1: Workload (Donut)
+            const ctxWorkload = document.getElementById('workloadChart').getContext('2d');
+            window.workloadChart = new Chart(ctxWorkload, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Strategy (Part 1)', 'Mapping (Part 2)', 'Analysis (Part 3)'],
+                    datasets: [{
+                        data: [25, 50, 25],
+                        backgroundColor: ['#e7e5e4', '#0369a1', '#e7e5e4'], // stone-200, sky-700, stone-200
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Chart 2: Framework Comparison (Bar)
+            const ctxFrame = document.getElementById('frameworkChart').getContext('2d');
+            window.frameworkChart = new Chart(ctxFrame, {
+                type: 'bar',
+                data: {
+                    labels: ['Cost (Financial)', 'Complexity (Docs)', 'Flexibility'],
+                    datasets: [
+                        {
+                            label: 'NIST CSF',
+                            data: [1, 3, 9], // Low cost, Med complexity, High flex
+                            backgroundColor: '#3b82f6'
+                        },
+                        {
+                            label: 'ISO 27001',
+                            data: [8, 9, 4], // High cost, High complexity, Low flex (rigid)
+                            backgroundColor: '#6366f1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            max: 10,
+                            title: { display: true, text: 'Score (1-10)' } 
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: Risk Radar
+            const ctxRadar = document.getElementById('riskRadar').getContext('2d');
+            window.riskRadar = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['Cultural Resistance', 'Cost ($)', 'Technical Difficulty', 'Business Disruption'],
+                    datasets: [{
+                        label: 'Select a Scenario',
+                        data: [0, 0, 0, 0],
+                        fill: true,
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)', // Amber
+                        borderColor: 'rgb(245, 158, 11)',
+                        pointBackgroundColor: 'rgb(245, 158, 11)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(245, 158, 11)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
