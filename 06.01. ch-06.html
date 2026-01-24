@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6: Policies & Governance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        solar: {
+                            base03: '#002b36',
+                            base02: '#073642',
+                            base01: '#586e75',
+                            base00: '#657b83',
+                            base0: '#839496',
+                            base1: '#93a1a1',
+                            base2: '#eee8d5',
+                            base3: '#fdf6e3',
+                            yellow: '#b58900',
+                            orange: '#cb4b16',
+                            red: '#dc322f',
+                            magenta: '#d33682',
+                            violet: '#6c71c4',
+                            blue: '#268bd2',
+                            cyan: '#2aa198',
+                            green: '#859900',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Solarized Theme Setup */
+        :root {
+            --bg-primary: #fdf6e3; /* base3 */
+            --bg-secondary: #eee8d5; /* base2 */
+            --text-primary: #657b83; /* base00 */
+            --text-secondary: #586e75; /* base01 */
+            --accent: #268bd2; /* blue */
+            --border: #93a1a1; /* base1 */
+        }
+        
+        html.dark {
+            --bg-primary: #002b36; /* base03 */
+            --bg-secondary: #073642; /* base02 */
+            --text-primary: #839496; /* base0 */
+            --text-secondary: #93a1a1; /* base1 */
+            --accent: #268bd2; /* blue */
+            --border: #586e75; /* base01 */
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+        .nav-item.active {
+            background-color: var(--accent);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Flashcard Styles */
+        .flashcard {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: help;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .flashcard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flashcard .definition {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        .flashcard:hover .definition {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        /* Console Styles */
+        .console {
+            background-color: #002b36; /* Always dark for code */
+            color: #839496;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #586e75;
+        }
+        .console-line { margin: 2px 0; }
+        .console-success { color: #859900; }
+        .console-error { color: #dc322f; }
+        .console-info { color: #268bd2; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Main Menu -->
+    <header class="bg-solar-base02 text-solar-base1 shadow-lg z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-solar-magenta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Module 6: Policies & Governance
+            </h1>
+            
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-semibold">Theme:</span>
+                <button id="themeToggle" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none bg-solar-base01" onclick="toggleTheme()">
+                    <span class="sr-only">Toggle Theme</span>
+                    <span id="toggleKnob" class="translate-x-1 inline-block w-4 h-4 transform bg-white rounded-full transition-transform"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Side Menu (Tabs) -->
+        <nav class="w-64 flex-shrink-0 overflow-y-auto bg-solar-base02/10 border-r border-solar-base1/20 p-4 space-y-2 hidden md:block">
+            <div onclick="showTab('intro')" class="nav-item active" id="nav-intro">Introduction</div>
+            <div onclick="showTab('lesson1')" class="nav-item" id="nav-lesson1">Lesson 1: Enforceable Policies</div>
+            <div onclick="showTab('lesson2')" class="nav-item" id="nav-lesson2">Lesson 2: Code of Ethics</div>
+            <div onclick="showTab('lesson3')" class="nav-item" id="nav-lesson3">Lesson 3: Gap Analysis</div>
+            <div onclick="showTab('conclusion')" class="nav-item" id="nav-conclusion">Conclusion & References</div>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 scroll-smooth" id="mainContent">
+            
+            <!-- Intro Tab -->
+            <div id="intro" class="tab-content">
+                <h2 class="text-3xl font-bold mb-4 text-solar-magenta">Introduction</h2>
+                <div class="panel">
+                    <h3 class="text-xl font-semibold mb-2">The Backbone of Cybersecurity</h3>
+                    <p class="mb-4 text-lg">Welcome to <strong>Module 6: Policies & Governance</strong>. You might think cybersecurity is all about hackers in hoodies, but the <em>real</em> work starts with Governance and Policy.</p>
+                    <p class="mb-4">Without rules, tools are useless. Today we cover three critical pillars:</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                        <div class="bg-solar-base2 dark:bg-solar-base02 p-4 rounded text-center border-t-4 border-solar-red">
+                            <h4 class="font-bold text-lg">1. Policies</h4>
+                            <p class="text-sm mt-2">Writing rules people actually follow (AUP, BYOD).</p>
+                        </div>
+                        <div class="bg-solar-base2 dark:bg-solar-base02 p-4 rounded text-center border-t-4 border-solar-blue">
+                            <h4 class="font-bold text-lg">2. Ethics</h4>
+                            <p class="text-sm mt-2">The moral compass of the security professional.</p>
+                        </div>
+                        <div class="bg-solar-base2 dark:bg-solar-base02 p-4 rounded text-center border-t-4 border-solar-green">
+                            <h4 class="font-bold text-lg">3. Gap Analysis</h4>
+                            <p class="text-sm mt-2">Measuring where we are vs. where we want to be.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson 1 Tab -->
+            <div id="lesson1" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-magenta">Lesson 1: Writing Enforceable Policies</h2>
+                
+                <div class="panel">
+                    <p class="mb-4">A policy is only as good as its enforceability. We focus on three key areas:</p>
+                    <ul class="list-disc ml-6 mb-4 space-y-2">
+                        <li><strong>AUP (Acceptable Use Policy):</strong> The company's legal shield. It outlines what you can and cannot do with assets.</li>
+                        <li><strong>BYOD (Bring Your Own Device):</strong> Managing the risk of employees using personal phones for work (NIST SP 800-124).</li>
+                        <li><strong>Access Control:</strong> Defining <em>Who</em> can access <em>What</em>.
+                            <ul class="ml-4 mt-1 text-sm list-circle text-solar-base00">
+                                <li><strong>RBAC (Role-Based):</strong> Access based on your job title (e.g., "Nurse" gets access to "Patient Records").</li>
+                                <li><strong>ABAC (Attribute-Based):</strong> Access based on context (e.g., "Nurse" only during "9 AM - 5 PM").</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Visual 1: RBAC Diagram -->
+                <div class="panel">
+                    <h3 class="text-xl font-semibold mb-4">RBAC Visualization</h3>
+                    <div class="flex flex-col md:flex-row gap-6 items-center">
+                        <div class="flex-1">
+                            <p>In this model, permissions are assigned to <strong>Roles</strong>, not users. Users are simply assigned a Role.</p>
+                            <div class="mt-4 p-2 bg-solar-base3 dark:bg-solar-base03 rounded border border-solar-base1">
+                                <p class="text-xs font-mono">
+                                    User: Alice -> Role: ADMIN<br>
+                                    User: Bob -> Role: GUEST
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex-1 bg-white rounded-lg p-2 shadow-inner flex justify-center">
+                            <svg width="300" height="180" viewBox="0 0 300 180">
+                                <!-- Users -->
+                                <circle cx="40" cy="50" r="15" fill="#268bd2" />
+                                <text x="40" y="80" text-anchor="middle" font-size="10">Alice</text>
+                                <circle cx="40" cy="130" r="15" fill="#b58900" />
+                                <text x="40" y="160" text-anchor="middle" font-size="10">Bob</text>
+                                
+                                <!-- Roles -->
+                                <rect x="110" y="40" width="60" height="30" fill="#eee" stroke="#333" />
+                                <text x="140" y="60" text-anchor="middle" font-size="10">ADMIN</text>
+                                <rect x="110" y="120" width="60" height="30" fill="#eee" stroke="#333" />
+                                <text x="140" y="140" text-anchor="middle" font-size="10">GUEST</text>
+                                
+                                <!-- Resources -->
+                                <rect id="vis1-db" x="220" y="30" width="50" height="40" fill="#dc322f" opacity="0.5" />
+                                <text x="245" y="55" text-anchor="middle" font-size="10" fill="white">Database</text>
+                                <rect id="vis1-web" x="220" y="110" width="50" height="40" fill="#859900" opacity="0.5" />
+                                <text x="245" y="135" text-anchor="middle" font-size="10" fill="white">Public Web</text>
+                                
+                                <!-- Connection Lines (Dynamic) -->
+                                <path id="path-alice" d="M55,50 H110" stroke="#268bd2" stroke-width="2" stroke-dasharray="4" opacity="0.3"/>
+                                <path id="path-bob" d="M55,130 H110" stroke="#b58900" stroke-width="2" stroke-dasharray="4" opacity="0.3"/>
+                                <path id="path-admin-db" d="M170,55 H220" stroke="#333" stroke-width="2" opacity="0.3"/>
+                                <path id="path-admin-web" d="M170,55 L190,55 L190,130 L220,130" stroke="#333" stroke-width="2" opacity="0.3"/>
+                                <path id="path-guest-web" d="M170,135 H220" stroke="#333" stroke-width="2" opacity="0.3"/>
+                                
+                                <!-- Lock Icon -->
+                                <text id="vis1-lock" x="245" y="90" text-anchor="middle" font-size="20">🔒</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Python Sandbox 1 -->
+                <div class="panel border-solar-magenta border-2">
+                    <h3 class="text-lg font-bold text-solar-magenta mb-2">💻 Python Simulation: Access Control (RBAC)</h3>
+                    <p class="text-sm mb-4 italic">Task Definition: This script simulates an RBAC decision engine. It checks if a user has the appropriate role to access a sensitive resource.</p>
+                    
+                    <div class="bg-gray-900 rounded-t p-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-400">rbac_checker.py</span>
+                        <div>
+                            <button onclick="runRBACCode()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition">RUN ▶</button>
+                            <button onclick="clearConsole('console1')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition ml-2">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-4 font-mono text-sm overflow-x-auto text-gray-300">
+                        <div class="text-green-400 mb-2"># User database with assigned Roles</div>
+                        <div>users = {"Alice": "ADMIN", "Bob": "GUEST"}</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Permissions Table</div>
+                        <div>permissions = {</div>
+                        <div class="pl-4">"ADMIN": ["read_db", "write_db", "view_web"],</div>
+                        <div class="pl-4">"GUEST": ["view_web"]</div>
+                        <div>}</div>
+                        <br>
+                        <div>def check_access(user, resource):</div>
+                        <div class="pl-4">role = users.get(user)</div>
+                        <div class="pl-4">allowed = permissions.get(role, [])</div>
+                        <div class="pl-4">print(f"User: {user} | Role: {role} | Request: {resource}")</div>
+                        <br>
+                        <div class="pl-4">if resource in allowed:</div>
+                        <div class="pl-8">print(f" -> ACCESS GRANTED")</div>
+                        <div class="pl-8">return True</div>
+                        <div class="pl-4">else:</div>
+                        <div class="pl-8">print(f" -> ACCESS DENIED")</div>
+                        <div class="pl-8">return False</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Execution</div>
+                        <div>check_access("Alice", "write_db")</div>
+                        <div>check_access("Bob", "write_db")</div>
+                    </div>
+                    <div id="console1" class="console mt-2">
+                        <div class="console-line">> Ready to execute...</div>
+                    </div>
+                </div>
+
+                <!-- Quiz 1 -->
+                <div class="panel border-solar-violet border-l-8">
+                    <h3 class="text-xl font-bold text-solar-violet mb-4">📝 Lesson 1 Quiz</h3>
+                    <div id="quiz1-container">
+                        <!-- Q1 -->
+                        <div class="mb-4">
+                            <p class="font-bold">1. Which document protects the organization from liability if an employee commits cybercrime?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="a"> A) BYOD Policy</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="b"> B) Acceptable Use Policy (AUP)</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="c"> C) RBAC Diagram</label>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="mb-4">
+                            <p class="font-bold">2. In RBAC, permissions are assigned to:</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="a"> A) Individual Users</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="b"> B) Roles</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="c"> C) The CEO only</label>
+                        </div>
+                        <!-- Q3 MSQ -->
+                        <div class="mb-4">
+                            <p class="font-bold">3. Which factors might be used in Attribute-Based Access Control (ABAC)? (Select all that apply)</p>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3" value="a"> A) Time of Day</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3" value="b"> B) User Location (GPS)</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3" value="c"> C) User Role</label>
+                        </div>
+                        <button onclick="checkQuiz1()" class="bg-solar-violet text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition">Submit Answers</button>
+                        <button onclick="resetQuiz1()" class="ml-2 text-solar-violet underline hover:text-purple-700">Reset</button>
+                    </div>
+                    <div id="quiz1-feedback" class="hidden mt-4 bg-solar-base2 dark:bg-solar-base02 p-4 rounded"></div>
+                </div>
+
+                <!-- Terms 1 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="flashcard">
+                        <strong>AUP</strong>
+                        <div class="definition">Acceptable Use Policy. Defines what behavior is permitted on company systems.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>BYOD</strong>
+                        <div class="definition">Bring Your Own Device. Policy for personal devices connecting to corporate networks.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>RBAC</strong>
+                        <div class="definition">Role-Based Access Control. Assigns permissions to roles, not direct users.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>ABAC</strong>
+                        <div class="definition">Attribute-Based Access Control. Uses context (time, location) for decisions.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson 2 Tab -->
+            <div id="lesson2" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-blue">Lesson 2: Code of Ethics</h2>
+                
+                <div class="panel">
+                    <p class="mb-4">Just because you <em>can</em> do something, doesn't mean you <em>should</em>. Security professionals hold the "Keys to the Kingdom."</p>
+                    <p class="mb-4">We follow guidelines from major organizations:</p>
+                    <ul class="list-disc ml-6 space-y-2">
+                        <li><strong>ISC2 Code of Ethics:</strong> "Protect society, the common good... and the infrastructure."</li>
+                        <li><strong>ISACA:</strong> Focuses on professional competence and due diligence.</li>
+                    </ul>
+                    <div class="bg-solar-yellow/10 border-l-4 border-solar-yellow p-4 my-4">
+                        <p class="font-bold">The Golden Rule of Cyber Ethics</p>
+                        <p>Never test a system you do not own without written permission. Even "Good Intentions" can result in jail time.</p>
+                    </div>
+                </div>
+
+                <!-- Visual 2: Ethics Scales -->
+                <div class="panel">
+                    <h3 class="text-xl font-semibold mb-4">Ethical Decision Logic</h3>
+                    <div class="flex justify-center bg-white rounded p-4">
+                        <svg width="400" height="200" viewBox="0 0 400 200">
+                            <!-- Paths -->
+                            <line x1="200" y1="20" x2="100" y2="80" stroke="#999" stroke-width="2"/>
+                            <line x1="200" y1="20" x2="300" y2="80" stroke="#999" stroke-width="2"/>
+                            
+                            <!-- Nodes -->
+                            <rect x="150" y="5" width="100" height="30" rx="5" fill="#268bd2" />
+                            <text x="200" y="25" text-anchor="middle" fill="white" font-size="12">Vulnerability Found</text>
+
+                            <!-- Decision 1 -->
+                            <circle cx="100" cy="80" r="30" fill="#eee" stroke="#333" id="vis2-unauth"/>
+                            <text x="100" y="85" text-anchor="middle" font-size="10">Unauthorized?</text>
+
+                            <circle cx="300" cy="80" r="30" fill="#eee" stroke="#333" id="vis2-auth"/>
+                            <text x="300" y="85" text-anchor="middle" font-size="10">Authorized?</text>
+                            
+                            <!-- Outcome Lines -->
+                            <line x1="100" y1="110" x2="100" y2="160" stroke="#999" stroke-width="2"/>
+                            <line x1="300" y1="110" x2="300" y2="160" stroke="#999" stroke-width="2"/>
+
+                            <!-- Outcomes -->
+                            <rect id="vis2-jail" x="50" y="160" width="100" height="30" rx="5" fill="#dc322f" opacity="0.3"/>
+                            <text x="100" y="180" text-anchor="middle" fill="white" font-size="12">Illegal / Jail</text>
+
+                            <rect id="vis2-report" x="250" y="160" width="100" height="30" rx="5" fill="#859900" opacity="0.3"/>
+                            <text x="300" y="180" text-anchor="middle" fill="white" font-size="12">Report / Fix</text>
+                            
+                            <!-- Animation Ball -->
+                            <circle id="vis2-ball" cx="200" cy="20" r="5" fill="#d33682" opacity="0"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Python Sandbox 2 -->
+                <div class="panel border-solar-blue border-2">
+                    <h3 class="text-lg font-bold text-solar-blue mb-2">💻 Python Simulation: Ethics Compliance Check</h3>
+                    <p class="text-sm mb-4 italic">Task Definition: This script evaluates a user's action against the "Written Permission" rule. It simulates the legal distinction between "White Hat" and "Black Hat".</p>
+                    
+                    <div class="bg-gray-900 rounded-t p-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-400">ethics_bot.py</span>
+                        <div>
+                            <button onclick="runEthicsCode()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition">RUN ▶</button>
+                            <button onclick="clearConsole('console2')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition ml-2">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-4 font-mono text-sm overflow-x-auto text-gray-300">
+                        <div>def ethics_check(action, has_permission):</div>
+                        <div class="pl-4">print(f"Action: {action}")</div>
+                        <br>
+                        <div class="pl-4">if has_permission:</div>
+                        <div class="pl-8">print(" -> STATUS: Ethical & Legal.")</div>
+                        <div class="pl-8">print(" -> RESULT: Generate Report.")</div>
+                        <div class="pl-8">return "SAFE"</div>
+                        <div class="pl-4">else:</div>
+                        <div class="pl-8">print(" -> STATUS: Unethical & Illegal!")</div>
+                        <div class="pl-8">print(" -> RESULT: Cease & Desist immediately.")</div>
+                        <div class="pl-8">return "DANGER"</div>
+                        <br>
+                        <div class="text-green-400 mb-2"># Execution</div>
+                        <div>ethics_check("PenTest Bank Server", False)</div>
+                        <div>ethics_check("Scan Localhost", True)</div>
+                    </div>
+                    <div id="console2" class="console mt-2">
+                        <div class="console-line">> Ready to execute...</div>
+                    </div>
+                </div>
+
+                <!-- Quiz 2 -->
+                <div class="panel border-solar-violet border-l-8">
+                    <h3 class="text-xl font-bold text-solar-violet mb-4">📝 Lesson 2 Quiz</h3>
+                    <div id="quiz2-container">
+                        <!-- Q1 -->
+                        <div class="mb-4">
+                            <p class="font-bold">1. What is the primary difference between a "White Hat" and a "Black Hat" hacker?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_1" value="a"> A) Skill level</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_1" value="b"> B) Authorization (Permission)</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_1" value="c"> C) Operating System used</label>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="mb-4">
+                            <p class="font-bold">2. According to ISC2, what is the highest canon of ethics?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_2" value="a"> A) Protect the reputation of the profession</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_2" value="b"> B) Protect society, the common good, and infrastructure</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2_2" value="c"> C) Make money for the client</label>
+                        </div>
+                        <!-- Q3 MSQ -->
+                        <div class="mb-4">
+                            <p class="font-bold">3. If you find a vulnerability in a website you do not own, what should you do? (Select all that apply)</p>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q2_3" value="a"> A) Exploit it to prove it exists.</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q2_3" value="b"> B) Report it via a Bug Bounty program or responsible disclosure.</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q2_3" value="c"> C) Do nothing / Do not touch it further.</label>
+                        </div>
+                        <button onclick="checkQuiz2()" class="bg-solar-violet text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition">Submit Answers</button>
+                        <button onclick="resetQuiz2()" class="ml-2 text-solar-violet underline hover:text-purple-700">Reset</button>
+                    </div>
+                    <div id="quiz2-feedback" class="hidden mt-4 bg-solar-base2 dark:bg-solar-base02 p-4 rounded"></div>
+                </div>
+
+                <!-- Terms 2 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="flashcard">
+                        <strong>ISC2</strong>
+                        <div class="definition">Intl. Info. System Security Certification Consortium. Manages CISSP and its ethics code.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Due Diligence</strong>
+                        <div class="definition">The care that a reasonable person exercises to avoid harm to other persons or their property.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Authorization</strong>
+                        <div class="definition">The explicit, written permission to access or test a specific system.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson 3 Tab -->
+            <div id="lesson3" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-green">Lesson 3: Gap Analysis</h2>
+                
+                <div class="panel">
+                    <p class="mb-4">A Gap Analysis answers two questions: <strong>"Where are we?"</strong> (Current State) and <strong>"Where do we want to be?"</strong> (Desired State).</p>
+                    <p class="mb-4">We often use the <strong>NIST Cybersecurity Framework (CSF)</strong> to measure this gaps across 5 functions:</p>
+                    <ul class="list-disc ml-6 space-y-1 mb-4">
+                        <li class="text-blue-600">Identify</li>
+                        <li class="text-purple-600">Protect</li>
+                        <li class="text-yellow-600">Detect</li>
+                        <li class="text-red-600">Respond</li>
+                        <li class="text-green-600">Recover</li>
+                    </ul>
+                </div>
+
+                 <!-- Visual 3: Gap Analysis Chart -->
+                 <div class="panel bg-white dark:bg-gray-800 text-center">
+                    <h3 class="text-lg font-semibold mb-2">NIST CSF Gap Visualization</h3>
+                    <div class="flex justify-center">
+                        <svg width="400" height="200" viewBox="0 0 400 200">
+                            <!-- Axes -->
+                            <line x1="50" y1="180" x2="350" y2="180" stroke="#555" stroke-width="2"/>
+                            <line x1="50" y1="180" x2="50" y2="20" stroke="#555" stroke-width="2"/>
+                            
+                            <!-- Labels -->
+                            <text x="80" y="195" font-size="10">ID</text>
+                            <text x="140" y="195" font-size="10">PR</text>
+                            <text x="200" y="195" font-size="10">DE</text>
+                            <text x="260" y="195" font-size="10">RS</text>
+                            <text x="320" y="195" font-size="10">RC</text>
+
+                            <!-- Target Bars (Static Background) -->
+                            <rect x="70" y="50" width="20" height="130" fill="#eee" stroke="#999" stroke-dasharray="2,2"/>
+                            <rect x="130" y="50" width="20" height="130" fill="#eee" stroke="#999" stroke-dasharray="2,2"/>
+                            <rect x="190" y="50" width="20" height="130" fill="#eee" stroke="#999" stroke-dasharray="2,2"/>
+                            <rect x="250" y="50" width="20" height="130" fill="#eee" stroke="#999" stroke-dasharray="2,2"/>
+                            <rect x="310" y="50" width="20" height="130" fill="#eee" stroke="#999" stroke-dasharray="2,2"/>
+
+                            <!-- Current State Bars (Dynamic) -->
+                            <rect id="bar-id" x="70" y="180" width="20" height="0" fill="#268bd2"/>
+                            <rect id="bar-pr" x="130" y="180" width="20" height="0" fill="#6c71c4"/>
+                            <rect id="bar-de" x="190" y="180" width="20" height="0" fill="#b58900"/>
+                            <rect id="bar-rs" x="250" y="180" width="20" height="0" fill="#dc322f"/>
+                            <rect id="bar-rc" x="310" y="180" width="20" height="0" fill="#859900"/>
+
+                            <text x="360" y="55" font-size="10" fill="#999">Target (5.0)</text>
+                        </svg>
+                    </div>
+                 </div>
+
+                <!-- Python Sandbox 3 -->
+                <div class="panel border-solar-green border-2">
+                    <h3 class="text-lg font-bold text-solar-green mb-2">💻 Python Simulation: Gap Calculator</h3>
+                    <p class="text-sm mb-4 italic">Task Definition: This script takes current maturity scores for NIST functions and calculates the "Gap" required to reach the target state (5.0).</p>
+                    
+                    <div class="bg-gray-900 rounded-t p-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-400">gap_analysis.py</span>
+                        <div>
+                            <button onclick="runGapCode()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition">RUN ▶</button>
+                            <button onclick="clearConsole('console3')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition ml-2">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-4 font-mono text-sm overflow-x-auto text-gray-300">
+                        <div>target_score = 5.0</div>
+                        <div>current_scores = {</div>
+                        <div class="pl-4">"Identify": 2.5,</div>
+                        <div class="pl-4">"Protect": 3.0,</div>
+                        <div class="pl-4">"Detect": 1.5,</div>
+                        <div class="pl-4">"Respond": 4.0,</div>
+                        <div class="pl-4">"Recover": 2.0</div>
+                        <div>}</div>
+                        <br>
+                        <div>print(f"Target Maturity: {target_score}")</div>
+                        <div>print("-" * 30)</div>
+                        <br>
+                        <div>for func, score in current_scores.items():</div>
+                        <div class="pl-4">gap = target_score - score</div>
+                        <div class="pl-4">print(f"{func}: Current={score} | GAP={gap}")</div>
+                        <div class="pl-4">if gap > 2.0:</div>
+                        <div class="pl-8">print(f" -> CRITICAL DEFICIENCY")</div>
+                    </div>
+                    <div id="console3" class="console mt-2">
+                        <div class="console-line">> Ready to execute...</div>
+                    </div>
+                </div>
+
+                <!-- Quiz 3 -->
+                <div class="panel border-solar-violet border-l-8">
+                    <h3 class="text-xl font-bold text-solar-violet mb-4">📝 Lesson 3 Quiz</h3>
+                    <div id="quiz3-container">
+                        <!-- Q1 -->
+                        <div class="mb-4">
+                            <p class="font-bold">1. What is the purpose of a Gap Analysis?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_1" value="a"> A) To find who to fire.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_1" value="b"> B) To measure the difference between current state and desired state.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_1" value="c"> C) To calculate the budget for the Christmas party.</label>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="mb-4">
+                            <p class="font-bold">2. Which NIST Function deals with "backups" and "restoring systems"?</p>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_2" value="a"> A) Identify</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_2" value="b"> B) Detect</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3_2" value="c"> C) Recover</label>
+                        </div>
+                        <!-- Q3 MSQ -->
+                        <div class="mb-4">
+                            <p class="font-bold">3. Which of the following are Functions in the NIST CSF? (Select all that apply)</p>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3_3" value="a"> A) Identify</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3_3" value="b"> B) Attack</label>
+                            <label class="block cursor-pointer"><input type="checkbox" name="q3_3" value="c"> C) Protect</label>
+                        </div>
+                        <button onclick="checkQuiz3()" class="bg-solar-violet text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition">Submit Answers</button>
+                        <button onclick="resetQuiz3()" class="ml-2 text-solar-violet underline hover:text-purple-700">Reset</button>
+                    </div>
+                    <div id="quiz3-feedback" class="hidden mt-4 bg-solar-base2 dark:bg-solar-base02 p-4 rounded"></div>
+                </div>
+
+                <!-- Terms 3 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="flashcard">
+                        <strong>Gap Analysis</strong>
+                        <div class="definition">Comparing actual performance with potential or desired performance.</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>NIST CSF</strong>
+                        <div class="definition">Cybersecurity Framework. Voluntary guidance based on existing standards (Identify, Protect, Detect, Respond, Recover).</div>
+                    </div>
+                    <div class="flashcard">
+                        <strong>Maturity Model</strong>
+                        <div class="definition">A method for measuring an organization's ability for continuous improvement.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusion Tab -->
+            <div id="conclusion" class="tab-content hidden">
+                <h2 class="text-3xl font-bold mb-4 text-solar-magenta">Conclusion & References</h2>
+                <div class="panel">
+                    <h3 class="text-xl font-bold mb-2">Wrap Up</h3>
+                    <ul class="list-disc ml-6 space-y-2 mb-6">
+                        <li><strong>Policies</strong> like AUP and RBAC are the law of the land inside an organization.</li>
+                        <li><strong>Ethics</strong> are your personal law. Always get authorization.</li>
+                        <li><strong>Gap Analysis</strong> provides the roadmap for where security needs to improve.</li>
+                    </ul>
+                </div>
+
+                <div class="panel border-t-4 border-solar-cyan">
+                    <h3 class="text-xl font-bold mb-2">References & Hyperlinks</h3>
+                    <p class="text-sm mb-4 text-solar-red font-bold">⚠️ Security Warning: Use VirusTotal to scan links before clicking.</p>
+                    <ul class="space-y-3">
+                        <li>
+                            <a href="https://www.sans.org/information-security-policy/" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 SANS Policy Templates
+                                <span class="text-xs text-solar-base1 no-underline">(AUP Examples)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://csrc.nist.gov/publications/detail/sp/800-124/rev-2/final" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 NIST SP 800-124 (BYOD)
+                                <span class="text-xs text-solar-base1 no-underline">(Mobile Security)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.isc2.org/Ethics" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 ISC2 Code of Ethics
+                                <span class="text-xs text-solar-base1 no-underline">(CISSP Standards)</span>
+                            </a>
+                        </li>
+                         <li>
+                            <a href="https://www.nist.gov/cyberframework" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🔗 NIST Cybersecurity Framework
+                                <span class="text-xs text-solar-base1 no-underline">(CSF)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.virustotal.com/" target="_blank" class="text-solar-blue underline hover:text-solar-violet flex items-center gap-2">
+                                🛡️ VirusTotal URL Scanner
+                                <span class="text-xs text-solar-base1 no-underline">(Malware Safety Tool)</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="text-xs text-solar-base1 mt-8">
+                    <h4 class="font-bold uppercase mb-1">Disclaimer</h4>
+                    <p class="mb-2"><strong>Intellectual Property:</strong> This material is the property of Cyber.SoHo. All rights reserved.</p>
+                    <p class="mb-2"><strong>Liability & Ethics:</strong> The code examples provided are for educational simulation purposes only. Executing these scripts against networks or systems without explicit written permission is illegal. Cyber.SoHo accepts no liability for misuse.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="bg-stone-900 text-stone-400 py-6 mt-8 border-t border-stone-700 bg-solar-base03 text-solar-base1">
+                <div class="container mx-auto text-center text-sm">
+                    <p style="display:flex; justify-content:center; align-items:center; gap:8px; margin:0;">
+                        <img src="cyber_soho.png" alt="Cyber Soho" style="height:32px;" onerror="this.style.display='none'; this.nextElementSibling.innerText = '[Cyber.SoHo Logo Missing] ' + this.nextElementSibling.innerText">
+                        <span>&copy; 2025 Cybersecurity Compliance Assessments Program. Educational Use Only.</span>
+                    </p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Navigation ---
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Show selected
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById('nav-' + tabId).classList.add('active');
+        }
+
+        // --- Theme Toggle ---
+        function toggleTheme() {
+            const html = document.querySelector('html');
+            const knob = document.getElementById('toggleKnob');
+            
+            if (html.classList.contains('light')) {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                knob.classList.add('translate-x-6');
+                knob.classList.remove('translate-x-1');
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                knob.classList.remove('translate-x-6');
+                knob.classList.add('translate-x-1');
+            }
+        }
+
+        // --- Utils ---
+        function log(consoleId, text, type="text-gray-300") {
+            const consoleEl = document.getElementById(consoleId);
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = text;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearConsole(consoleId) {
+            const consoleEl = document.getElementById(consoleId);
+            consoleEl.innerHTML = '<div class="console-line">> Console cleared. Ready...</div>';
+            
+            // Reset visuals if needed
+            if(consoleId === 'console1') {
+                ['path-admin-db', 'path-admin-web', 'path-guest-web', 'vis1-db', 'vis1-web', 'vis1-lock'].forEach(id => {
+                   document.getElementById(id).setAttribute('opacity', id.includes('vis1') ? '0.5' : '0.3');
+                   document.getElementById(id).setAttribute('stroke', id.includes('lock') ? 'black' : '#333');
+                   if(id.includes('lock')) document.getElementById(id).textContent = "🔒";
+                });
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // --- Lesson 1: RBAC Code & Visualization ---
+        async function runRBACCode() {
+            const c = 'console1';
+            clearConsole(c);
+            
+            const checks = [
+                {user: "Alice", role: "ADMIN", req: "write_db", path: "path-admin-db", target: "vis1-db"},
+                {user: "Bob", role: "GUEST", req: "write_db", path: null, target: "vis1-db"} // Fail case
+            ];
+
+            for (let check of checks) {
+                log(c, `Checking: ${check.user} (${check.role}) -> ${check.req}...`, "text-white");
+                
+                // Animate User Line
+                const userLine = document.getElementById(`path-${check.user.toLowerCase()}`);
+                userLine.setAttribute('opacity', '1');
+                userLine.setAttribute('stroke-width', '4');
+                await sleep(500);
+                
+                // Permission Check
+                if (check.role === "ADMIN" && check.req === "write_db") {
+                    log(c, " -> ACCESS GRANTED", "console-success");
+                    document.getElementById(check.path).setAttribute('opacity', '1');
+                    document.getElementById(check.path).setAttribute('stroke', '#859900');
+                    document.getElementById('vis1-lock').textContent = "🔓";
+                } else {
+                     log(c, " -> ACCESS DENIED (Insufficient Permissions)", "console-error");
+                     document.getElementById('vis1-lock').textContent = "🔒";
+                     // Flash red
+                     const t = document.getElementById(check.target);
+                     const originalFill = t.getAttribute('fill');
+                     t.setAttribute('fill', 'white');
+                     await sleep(100);
+                     t.setAttribute('fill', originalFill);
+                }
+                
+                await sleep(1000);
+                // Reset lines slightly
+                userLine.setAttribute('opacity', '0.3');
+                userLine.setAttribute('stroke-width', '2');
+                if(check.path) document.getElementById(check.path).setAttribute('opacity', '0.3');
+                document.getElementById('vis1-lock').textContent = "🔒";
+            }
+        }
+
+        // --- Lesson 2: Ethics Code & Visualization ---
+        async function runEthicsCode() {
+            const c = 'console2';
+            clearConsole(c);
+            
+            const scenarios = [
+                {action: "PenTest Bank Server", auth: false},
+                {action: "Scan Localhost", auth: true}
+            ];
+
+            const ball = document.getElementById('vis2-ball');
+            const unauthNode = document.getElementById('vis2-unauth');
+            const authNode = document.getElementById('vis2-auth');
+            const jailBox = document.getElementById('vis2-jail');
+            const reportBox = document.getElementById('vis2-report');
+
+            for (let s of scenarios) {
+                // Reset
+                ball.setAttribute('opacity', '1');
+                ball.setAttribute('cx', '200'); ball.setAttribute('cy', '20');
+                jailBox.setAttribute('opacity', '0.3');
+                reportBox.setAttribute('opacity', '0.3');
+
+                log(c, `Evaluating Action: "${s.action}"...`, "text-white");
+                await sleep(500);
+
+                // Animate Decision
+                if (s.auth) {
+                    ball.setAttribute('cx', '300'); ball.setAttribute('cy', '80');
+                    await sleep(500);
+                    ball.setAttribute('cy', '160');
+                    reportBox.setAttribute('opacity', '1');
+                    log(c, " -> Has Permission: YES", "console-info");
+                    log(c, " -> STATUS: Ethical & Legal. Proceed.", "console-success");
+                } else {
+                    ball.setAttribute('cx', '100'); ball.setAttribute('cy', '80');
+                    await sleep(500);
+                    ball.setAttribute('cy', '160');
+                    jailBox.setAttribute('opacity', '1');
+                    log(c, " -> Has Permission: NO", "console-error");
+                    log(c, " -> STATUS: ILLEGAL. STOP IMMEDIATELY.", "console-error");
+                }
+                await sleep(1500);
+            }
+            ball.setAttribute('opacity', '0');
+        }
+
+        // --- Lesson 3: Gap Analysis Code & Visualization ---
+        async function runGapCode() {
+            const c = 'console3';
+            clearConsole(c);
+            
+            const scores = {
+                'Identify': 2.5, 'Protect': 3.0, 'Detect': 1.5, 'Respond': 4.0, 'Recover': 2.0
+            };
+            const map = {'Identify':'id', 'Protect':'pr', 'Detect':'de', 'Respond':'rs', 'Recover':'rc'};
+
+            log(c, "Starting Gap Analysis (Target: 5.0)...", "text-white");
+            await sleep(500);
+
+            for (const [func, score] of Object.entries(scores)) {
+                const gap = 5.0 - score;
+                log(c, `Analyzing ${func}: Current=${score} | Gap=${gap.toFixed(1)}`);
+                
+                // Animate Bar
+                const barId = `bar-${map[func]}`;
+                const bar = document.getElementById(barId);
+                // Max height (130) = score 5.0. 
+                // score X = (130/5)*X
+                const height = (130/5) * score;
+                const y = 180 - height;
+                
+                bar.setAttribute('y', y);
+                bar.setAttribute('height', height);
+                
+                await sleep(300);
+
+                if (gap > 2.0) {
+                    log(c, " -> CRITICAL DEFICIENCY", "console-error");
+                    // Flash bar
+                    bar.setAttribute('fill', 'red');
+                } else {
+                    log(c, " -> Acceptable Risk", "console-success");
+                }
+                await sleep(500);
+            }
+        }
+
+        // --- Quiz Logic ---
+        function checkQuiz1() {
+            let score = 0;
+            const feedback = [];
+            
+            // Q1
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            if (q1 && q1.value === 'b') { score++; feedback.push("Q1: Correct! AUP outlines acceptable behavior."); }
+            else feedback.push("Q1: Incorrect. AUP is the correct policy.");
+
+            // Q2
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            if (q2 && q2.value === 'b') { score++; feedback.push("Q2: Correct! RBAC assigns permissions to Roles."); }
+            else feedback.push("Q2: Incorrect. Users get Roles, Roles get Permissions.");
+
+            // Q3 (MSQ)
+            const q3a = document.querySelector('input[name="q3"][value="a"]').checked;
+            const q3b = document.querySelector('input[name="q3"][value="b"]').checked;
+            const q3c = document.querySelector('input[name="q3"][value="c"]').checked;
+            
+            if (q3a && q3b && !q3c) { score++; feedback.push("Q3: Correct! ABAC uses context like Time and Location."); }
+            else feedback.push("Q3: Incorrect. Role is RBAC. Time/Location are ABAC attributes.");
+
+            displayFeedback('quiz1-feedback', score, 3, feedback);
+        }
+
+        function resetQuiz1() {
+            document.querySelectorAll('#quiz1-container input').forEach(i => i.checked = false);
+            document.getElementById('quiz1-feedback').classList.add('hidden');
+        }
+
+        function checkQuiz2() {
+            let score = 0;
+            const feedback = [];
+            
+            // Q1
+            const q1 = document.querySelector('input[name="q2_1"]:checked');
+            if (q1 && q1.value === 'b') { score++; feedback.push("Q1: Correct! Authorization is the key legal difference."); }
+            else feedback.push("Q1: Incorrect. Skill or OS doesn't determine legality.");
+
+            // Q2
+            const q2 = document.querySelector('input[name="q2_2"]:checked');
+            if (q2 && q2.value === 'b') { score++; feedback.push("Q2: Correct! Protecting society is the top priority."); }
+            else feedback.push("Q2: Incorrect. Society/Infrastructure comes first.");
+
+            // Q3 (MSQ)
+            const q3a = document.querySelector('input[name="q2_3"][value="a"]').checked;
+            const q3b = document.querySelector('input[name="q2_3"][value="b"]').checked;
+            const q3c = document.querySelector('input[name="q2_3"][value="c"]').checked;
+
+            if (q3b && q3c && !q3a) { score++; feedback.push("Q3: Correct! Report it or walk away. Never exploit it."); }
+            else feedback.push("Q3: Incorrect. Exploiting (A) is illegal without permission.");
+
+            displayFeedback('quiz2-feedback', score, 3, feedback);
+        }
+        function resetQuiz2() {
+            document.querySelectorAll('#quiz2-container input').forEach(i => i.checked = false);
+            document.getElementById('quiz2-feedback').classList.add('hidden');
+        }
+
+        function checkQuiz3() {
+            let score = 0;
+            const feedback = [];
+            
+            // Q1
+            const q1 = document.querySelector('input[name="q3_1"]:checked');
+            if (q1 && q1.value === 'b') { score++; feedback.push("Q1: Correct! Measuring the gap between current and desired state."); }
+            else feedback.push("Q1: Incorrect. It is about maturity measurement.");
+
+            // Q2
+            const q2 = document.querySelector('input[name="q3_2"]:checked');
+            if (q2 && q2.value === 'c') { score++; feedback.push("Q2: Correct! Recover deals with backups and restoration."); }
+            else feedback.push("Q2: Incorrect. Recover is the correct function.");
+
+            // Q3 (MSQ)
+            const q3a = document.querySelector('input[name="q3_3"][value="a"]').checked;
+            const q3b = document.querySelector('input[name="q3_3"][value="b"]').checked;
+            const q3c = document.querySelector('input[name="q3_3"][value="c"]').checked;
+
+            if (q3a && q3c && !q3b) { score++; feedback.push("Q3: Correct! Identify and Protect are core NIST Functions."); }
+            else feedback.push("Q3: Incorrect. 'Attack' is not a NIST function.");
+
+            displayFeedback('quiz3-feedback', score, 3, feedback);
+        }
+        function resetQuiz3() {
+            document.querySelectorAll('#quiz3-container input').forEach(i => i.checked = false);
+            document.getElementById('quiz3-feedback').classList.add('hidden');
+        }
+
+        function displayFeedback(id, score, max, details) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            let html = `<h4 class="font-bold mb-2">Score: ${score}/${max}</h4>`;
+            html += '<ul class="list-disc ml-4 text-sm space-y-1">';
+            details.forEach(d => html += `<li>${d}</li>`);
+            html += '</ul>';
+            el.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
+
+
+
+

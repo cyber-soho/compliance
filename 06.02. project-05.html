@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Policy Gap Analysis Toolkit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fafaf9; color: #1c1917; }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 500px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 300px; 
+            max-height: 300px; 
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e7e5e4;
+        }
+        .nav-btn.active {
+            background-color: #44403c;
+            color: white;
+        }
+        .risk-cell {
+            transition: all 0.2s;
+        }
+        .risk-cell.active-risk {
+            transform: scale(1.1);
+            box-shadow: inset 0 0 0 2px #1c1917;
+        }
+    </style>
+    <!-- Chosen Palette: Stone/Warm Neutral (Background: #fafaf9, Text: #1c1917, Accents: #44403c (Dark Stone), #f59e0b (Amber/Warning), #10b981 (Emerald/Success)) -->
+    <!-- Application Structure Plan: 
+         1. Header & Ethics: Immediate context setting and mandatory ethics acceptance (interactive gate).
+         2. Strategic Dashboard: High-level view of time allocation and grading (Charts) to help students plan.
+         3. Workflow Stages (Tabs): The core interaction. Users switch between Part 1 (Mapping), Part 2 (Analysis), and Part 3 (Remediation).
+            - Part 1: Interactive Framework Selector to see specific scope requirements.
+            - Part 2: Interactive Risk Matrix to simulate the analysis process.
+            - Part 3: Remediation Builder preview to understand the required output structure.
+         4. Footer: References and Resources.
+         This structure transforms a static text assignment into a process-driven workflow tool. -->
+    <!-- Visualization & Content Choices:
+         - Time Allocation: Donut Chart. Goal: Inform planning. Interaction: Tooltip details.
+         - Grading Scheme: Bar Chart. Goal: Prioritize effort. Interaction: Tooltip breakdown.
+         - Risk Matrix: HTML Grid + JS. Goal: Visualize the "Risk Analysis" concept. Interaction: Click to select severity/likelihood.
+         - Framework Scope: Dynamic Text. Goal: Clarify varied requirements. Interaction: Tab selection updates content.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-stone-800 antialiased selection:bg-stone-200">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-stone-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🛡️</span>
+                    <span class="font-bold text-xl tracking-tight text-stone-900">Module 6: Policy Gap Analysis</span>
+                </div>
+                <div class="hidden md:flex space-x-4">
+                    <button onclick="scrollToSection('context')" class="text-sm font-medium hover:text-stone-600 transition">Context</button>
+                    <button onclick="scrollToSection('planning')" class="text-sm font-medium hover:text-stone-600 transition">Planning</button>
+                    <button onclick="scrollToSection('execution')" class="text-sm font-medium hover:text-stone-600 transition">Execution</button>
+                    <button onclick="scrollToSection('resources')" class="text-sm font-medium hover:text-stone-600 transition">Resources</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+
+        <!-- Critical Alert: Ethics -->
+        <div id="ethics-banner" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r shadow-sm">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 text-red-500 text-xl">⚠️</div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-bold text-red-800 uppercase tracking-wide">Academic Integrity & Ethical Use</h3>
+                    <div class="mt-2 text-sm text-red-700 space-y-1">
+                        <p>These assessment techniques are for educational purposes ONLY within the NorthStream mock scenario.</p>
+                        <ul class="list-disc pl-5">
+                            <li>Apply ONLY to mock documentation.</li>
+                            <li>NEVER conduct unauthorized assessments against real organizations.</li>
+                            <li>Unauthorized security evaluations may violate Canadian criminal statutes.</li>
+                        </ul>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="acknowledgeEthics()" id="ethics-btn" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-4 rounded transition">
+                            I Acknowledge & Accept Responsibility
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Context & Overview -->
+        <section id="context" class="section-card relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl">🏢</div>
+            <h2 class="text-2xl font-bold mb-4 border-b border-stone-200 pb-2">Project Context: NorthStream Technologies</h2>
+            <p class="text-stone-600 mb-6 max-w-3xl">
+                This is <strong>Task 5</strong> of your comprehensive compliance assessment. You act as a consultant performing a systematic 
+                <strong>Policy Gap Analysis</strong>. Your goal is to compare NorthStream's existing mock policies against your chosen framework 
+                (NIST CSF, ISO 27001, or CIS Controls) to identify vulnerabilities.
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-stone-100 p-4 rounded text-center">
+                    <div class="text-3xl mb-2">⏳</div>
+                    <div class="font-semibold">Est. Time</div>
+                    <div class="text-stone-500">4 Hours</div>
+                </div>
+                <div class="bg-stone-100 p-4 rounded text-center">
+                    <div class="text-3xl mb-2">📄</div>
+                    <div class="font-semibold">Deliverable</div>
+                    <div class="text-stone-500">Max 4 Pages (PDF)</div>
+                </div>
+                <div class="bg-stone-100 p-4 rounded text-center">
+                    <div class="text-3xl mb-2">⚖️</div>
+                    <div class="font-semibold">Weighting</div>
+                    <div class="text-stone-500">1-2-1 (Total 4 Marks)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Planning Dashboard -->
+        <section id="planning" class="section-card">
+            <h2 class="text-2xl font-bold mb-2">Strategy & Planning</h2>
+            <p class="text-stone-500 mb-6">Analyze the workload distribution and grading criteria to optimize your 4-hour window.</p>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <!-- Time Allocation Chart -->
+                <div class="flex flex-col items-center">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Time Allocation (Minutes)</h3>
+                    <div class="chart-container">
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                    <p class="text-xs text-stone-400 mt-2 text-center">Total: 4 hrs 20 mins</p>
+                </div>
+
+                <!-- Grading Breakdown Chart -->
+                <div class="flex flex-col items-center">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Grading Weight Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="gradeChart"></canvas>
+                    </div>
+                    <p class="text-xs text-stone-400 mt-2 text-center">Focus 50% of effort on Critical Gap Analysis</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Execution Workflow (Tabs) -->
+        <section id="execution" class="section-card">
+            <div class="flex flex-col md:flex-row justify-between items-baseline border-b border-stone-200 pb-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold">Execution Workflow</h2>
+                    <p class="text-stone-500 text-sm mt-1">Navigate through the three critical phases of the assessment.</p>
+                </div>
+                <div class="flex space-x-2 mt-4 md:mt-0 bg-stone-100 p-1 rounded-lg">
+                    <button onclick="switchTab('part1')" id="tab-part1" class="nav-btn active px-4 py-2 rounded-md text-sm font-medium transition">Part 1: Mapping</button>
+                    <button onclick="switchTab('part2')" id="tab-part2" class="nav-btn text-stone-600 px-4 py-2 rounded-md text-sm font-medium transition">Part 2: Gaps</button>
+                    <button onclick="switchTab('part3')" id="tab-part3" class="nav-btn text-stone-600 px-4 py-2 rounded-md text-sm font-medium transition">Part 3: Remediation</button>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: PART 1 -->
+            <div id="content-part1" class="tab-content block animate-fade-in">
+                <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-blue-900 mb-2">Phase Objective: Framework Mapping (1 Mark)</h3>
+                    <p class="text-sm text-blue-800">Create a concise table comparing NorthStream's policies (InfoSec, AUP, Access Control, Incident Response, Data Class, BCP) to your framework.</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Framework Selector -->
+                    <div class="md:col-span-1 space-y-4">
+                        <label class="block text-sm font-medium text-stone-700">Select Your Framework Scope:</label>
+                        <select id="framework-select" onchange="updateFrameworkScope()" class="w-full p-2 border border-stone-300 rounded shadow-sm focus:ring-2 focus:ring-stone-500 focus:outline-none">
+                            <option value="nist">NIST CSF 2.0</option>
+                            <option value="iso">ISO/IEC 27001</option>
+                            <option value="cis">CIS Controls v8</option>
+                        </select>
+                        
+                        <div id="scope-display" class="bg-stone-800 text-stone-100 p-4 rounded-md text-sm shadow-inner">
+                            <!-- Dynamic Content Inserted Here -->
+                        </div>
+                    </div>
+
+                    <!-- Table Preview -->
+                    <div class="md:col-span-2">
+                        <h4 class="font-semibold mb-2 text-sm text-stone-600">Required Table Structure (0.75 Pages Max)</h4>
+                        <div class="overflow-x-auto border border-stone-200 rounded-lg">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="bg-stone-100 text-stone-600 font-medium">
+                                    <tr>
+                                        <th class="px-4 py-2">Ref</th>
+                                        <th class="px-4 py-2">Requirement</th>
+                                        <th class="px-4 py-2">NS Policy</th>
+                                        <th class="px-4 py-2">Coverage</th>
+                                        <th class="px-4 py-2">Evidence/Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-stone-100">
+                                    <tr class="bg-white">
+                                        <td class="px-4 py-2 font-mono text-xs">GV.PO-01</td>
+                                        <td class="px-4 py-2">Policy Establishment</td>
+                                        <td class="px-4 py-2">Info Sec Policy</td>
+                                        <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs">Partial</span></td>
+                                        <td class="px-4 py-2 text-stone-500 italic">Section 2.1 addresses creation but misses annual review...</td>
+                                    </tr>
+                                    <tr class="bg-stone-50/50">
+                                        <td class="px-4 py-2 font-mono text-xs text-stone-400">[Ref]</td>
+                                        <td class="px-4 py-2 text-stone-400">[Summary]</td>
+                                        <td class="px-4 py-2 text-stone-400">[Policy Name]</td>
+                                        <td class="px-4 py-2 text-stone-400">---</td>
+                                        <td class="px-4 py-2 text-stone-400">[Specific Gap/Link]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: PART 2 -->
+            <div id="content-part2" class="tab-content hidden animate-fade-in">
+                <div class="bg-orange-50 border border-orange-100 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-orange-900 mb-2">Phase Objective: Critical Gap Analysis (2 Marks)</h3>
+                    <p class="text-sm text-orange-800">Identify exactly <strong>THREE</strong> critical missing elements. Minor administrative gaps do not count. Focus on genuine vulnerabilities.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Risk Simulator -->
+                    <div>
+                        <h4 class="font-semibold mb-3 text-sm text-stone-600">Risk Analysis Matrix Simulator</h4>
+                        <p class="text-xs text-stone-500 mb-4">Click cells to estimate risk rating for your identified gap. Required for section B.</p>
+                        
+                        <div class="grid grid-cols-4 gap-1 text-center text-xs font-medium select-none" id="risk-matrix">
+                            <!-- Headers -->
+                            <div class="col-span-1"></div>
+                            <div class="text-stone-400">Low Impact</div>
+                            <div class="text-stone-400">Med Impact</div>
+                            <div class="text-stone-400">High Impact</div>
+                            
+                            <!-- Row 1 -->
+                            <div class="text-stone-400 flex items-center justify-end pr-2">High Prob</div>
+                            <div onclick="selectRisk(this, 'Medium')" class="risk-cell bg-yellow-200 p-4 cursor-pointer hover:opacity-80 rounded">Med</div>
+                            <div onclick="selectRisk(this, 'High')" class="risk-cell bg-orange-300 p-4 cursor-pointer hover:opacity-80 rounded">High</div>
+                            <div onclick="selectRisk(this, 'Critical')" class="risk-cell bg-red-400 p-4 cursor-pointer hover:opacity-80 text-white rounded">Crit</div>
+
+                            <!-- Row 2 -->
+                            <div class="text-stone-400 flex items-center justify-end pr-2">Med Prob</div>
+                            <div onclick="selectRisk(this, 'Low')" class="risk-cell bg-green-200 p-4 cursor-pointer hover:opacity-80 rounded">Low</div>
+                            <div onclick="selectRisk(this, 'Medium')" class="risk-cell bg-yellow-200 p-4 cursor-pointer hover:opacity-80 rounded">Med</div>
+                            <div onclick="selectRisk(this, 'High')" class="risk-cell bg-orange-300 p-4 cursor-pointer hover:opacity-80 rounded">High</div>
+
+                            <!-- Row 3 -->
+                            <div class="text-stone-400 flex items-center justify-end pr-2">Low Prob</div>
+                            <div onclick="selectRisk(this, 'Low')" class="risk-cell bg-green-200 p-4 cursor-pointer hover:opacity-80 rounded">Low</div>
+                            <div onclick="selectRisk(this, 'Low')" class="risk-cell bg-green-200 p-4 cursor-pointer hover:opacity-80 rounded">Low</div>
+                            <div onclick="selectRisk(this, 'Medium')" class="risk-cell bg-yellow-200 p-4 cursor-pointer hover:opacity-80 rounded">Med</div>
+                        </div>
+                        <div id="risk-result" class="mt-4 text-center font-bold h-6 text-stone-700">Select a cell above...</div>
+                    </div>
+
+                    <!-- Structure Guide -->
+                    <div class="bg-white border border-stone-200 p-6 rounded-lg shadow-sm">
+                        <h4 class="font-semibold mb-3 text-stone-800 border-b pb-2">Gap Analysis Structure (x3)</h4>
+                        <ul class="space-y-4 text-sm">
+                            <li class="flex gap-3">
+                                <span class="bg-stone-800 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs">A</span>
+                                <div>
+                                    <strong>Description & Context:</strong> State what is missing and the specific framework violation (Ref #).
+                                </div>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="bg-stone-800 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs">B</span>
+                                <div>
+                                    <strong>Risk Analysis:</strong>
+                                    <ul class="list-disc ml-4 mt-1 text-stone-500 text-xs">
+                                        <li>Cyber Risk (Attack vectors)</li>
+                                        <li>Compliance Risk (PIPEDA/Privacy Laws)</li>
+                                        <li>Business Impact & Risk Rating</li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="bg-stone-800 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs">C</span>
+                                <div>
+                                    <strong>Real-World Example:</strong> Concrete example of an incident/fine where this gap materialized (Cite source).
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: PART 3 -->
+            <div id="content-part3" class="tab-content hidden animate-fade-in">
+                <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-6">
+                    <h3 class="font-bold text-emerald-900 mb-2">Phase Objective: Remediation (1 Mark)</h3>
+                    <p class="text-sm text-emerald-800">Draft actionable policy language and implementation plans for each of the 3 identified gaps.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Example Recommendation Card -->
+                    <div class="bg-white border-l-4 border-emerald-500 shadow-sm p-4 rounded-r-lg">
+                        <h4 class="font-bold text-stone-800 mb-2">Component A: Policy Language</h4>
+                        <p class="text-sm text-stone-600 italic bg-stone-50 p-3 rounded border border-stone-100 mb-2">
+                            "All vendors with access to Confidential or higher classified data must complete security assessment prior to contract execution. Assessments include SOC 2 Type II review..."
+                        </p>
+                        <p class="text-xs text-stone-400">Must be professional, clear, and ready for inclusion in the document.</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white border-l-4 border-emerald-500 shadow-sm p-4 rounded-r-lg">
+                            <h4 class="font-bold text-stone-800 mb-2">Component B: Implementation</h4>
+                            <ul class="text-sm text-stone-600 list-disc pl-5 space-y-1">
+                                <li><strong>Owner:</strong> Role/Department responsible?</li>
+                                <li><strong>Challenges:</strong> What makes this hard?</li>
+                                <li><strong>Verification:</strong> Audit? Auto-scan?</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white border-l-4 border-emerald-500 shadow-sm p-4 rounded-r-lg">
+                            <h4 class="font-bold text-stone-800 mb-2">Component C: Legal Alignment</h4>
+                            <p class="text-sm text-stone-600">
+                                Explicitly connect to Canadian Law (PIPEDA Principle 4.7, Breach Notification, etc.) from your Legal Register.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Resources -->
+        <section id="resources" class="section-card bg-stone-800 text-stone-200 border-none">
+            <h2 class="text-xl font-bold mb-4">Authorized Tools & References</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="font-semibold text-white mb-2 text-sm uppercase tracking-wider">Methodology Tools</h3>
+                    <ul class="space-y-2 text-sm text-stone-400">
+                        <li>• Spreadsheet software (Excel, Sheets)</li>
+                        <li>• Document comparison tools (Beyond Compare, Diff)</li>
+                        <li>• Text analysis scripts (Python, Grep)</li>
+                        <li>• Custom compliance databases</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-white mb-2 text-sm uppercase tracking-wider">Key Reference Links</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition underline decoration-stone-600">NIST Cybersecurity Framework</a></li>
+                        <li><a href="#" class="hover:text-white transition underline decoration-stone-600">ISO/IEC 27001 Standards</a></li>
+                        <li><a href="#" class="hover:text-white transition underline decoration-stone-600">CIS Controls v8</a></li>
+                        <li><a href="#" class="hover:text-white transition underline decoration-stone-600">Office of the Privacy Commissioner (PIPEDA)</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 pt-4 border-t border-stone-700 text-xs text-stone-500 flex justify-between">
+                <span>NorthStream Mock Scenario</span>
+                <span>Module 6 Task 5</span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            currentFramework: 'nist',
+            ethicsAcknowledged: false
+        };
+
+        // --- Data Storage ---
+        const frameworkScopes = {
+            nist: {
+                title: "NIST CSF 2.0 Scope",
+                content: "Map the entire <strong>GOVERN (GV)</strong> Function (6 Categories). Focus on governance, strategy, and policy management."
+            },
+            iso: {
+                title: "ISO 27001 Scope",
+                content: "Map <strong>Clause 5 (Leadership)</strong> + <strong>Clause 6 (Planning)</strong> + <strong>3 Annex A controls</strong>."
+            },
+            cis: {
+                title: "CIS Controls v8 Scope",
+                content: "Map <strong>Controls 1, 2, 5</strong>, and <strong>2 additional relevant controls</strong> of your choice."
+            }
+        };
+
+        // --- Chart Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initTimeChart();
+            initGradeChart();
+            updateFrameworkScope(); // Set initial text
+        });
+
+        function initTimeChart() {
+            const ctx = document.getElementById('timeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Map (60m)', 'Review/Gap ID (75m)', 'Risk Analysis (60m)', 'Remediation (60m)', 'Format (25m)'],
+                    datasets: [{
+                        data: [60, 75, 60, 60, 25],
+                        backgroundColor: ['#d6d3d1', '#a8a29e', '#78716c', '#57534e', '#292524'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function initGradeChart() {
+            const ctx = document.getElementById('gradeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mapping', 'Crit. Gaps', 'Remediation'],
+                    datasets: [{
+                        label: 'Marks',
+                        data: [1, 2, 1],
+                        backgroundColor: ['#d6d3d1', '#f59e0b', '#d6d3d1'], // Highlight Gaps
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 2.5 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = [
+                                        '25% - Accuracy & Completeness',
+                                        '50% - Depth of Risk Analysis',
+                                        '25% - Actionability & Legal Align'
+                                    ];
+                                    return labels[context.dataIndex];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Interactive Logic ---
+
+        function acknowledgeEthics() {
+            const banner = document.getElementById('ethics-banner');
+            const btn = document.getElementById('ethics-btn');
+            
+            state.ethicsAcknowledged = true;
+            
+            // Visual transition
+            btn.innerHTML = "Access Granted";
+            btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            btn.classList.add('bg-green-600', 'cursor-default');
+            
+            setTimeout(() => {
+                banner.classList.add('opacity-50', 'pointer-events-none');
+            }, 500);
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function switchTab(tabId) {
+            // Update Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-white', 'bg-stone-700');
+                btn.classList.add('text-stone-600');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('text-stone-600');
+
+            // Update Content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        }
+
+        function updateFrameworkScope() {
+            const select = document.getElementById('framework-select');
+            const display = document.getElementById('scope-display');
+            const val = select.value;
+            
+            state.currentFramework = val;
+            
+            display.innerHTML = `
+                <div class="font-bold text-amber-400 mb-1">${frameworkScopes[val].title}</div>
+                <div class="text-stone-300">${frameworkScopes[val].content}</div>
+            `;
+        }
+
+        function selectRisk(element, rating) {
+            // Reset styles
+            document.querySelectorAll('.risk-cell').forEach(cell => {
+                cell.classList.remove('active-risk');
+                cell.style.opacity = '1';
+            });
+            
+            // Apply Active Style
+            element.classList.add('active-risk');
+            
+            // Dim others slightly
+            document.querySelectorAll('.risk-cell:not(.active-risk)').forEach(cell => {
+                cell.style.opacity = '0.6';
+            });
+
+            // Update Text
+            const resultDisplay = document.getElementById('risk-result');
+            let colorClass = "text-stone-700";
+            if(rating === "Critical" || rating === "High") colorClass = "text-red-600";
+            if(rating === "Medium") colorClass = "text-yellow-600";
+            if(rating === "Low") colorClass = "text-green-600";
+            
+            resultDisplay.className = `mt-4 text-center font-bold h-6 ${colorClass}`;
+            resultDisplay.textContent = `Risk Rating: ${rating}`;
+        }
+    </script>
+</body>
+</html>
+
+
+

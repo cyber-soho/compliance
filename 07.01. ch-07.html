@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 7: Technical Compliance - Cyber.SoHo</title>
+    <style>
+        /* --- SOLARIZED THEME VARIABLES --- */
+        :root {
+            /* Solarized Light (Default) */
+            --base03: #002b36;
+            --base02: #073642;
+            --base01: #586e75;
+            --base00: #657b83;
+            --base0: #839496;
+            --base1: #93a1a1;
+            --base2: #eee8d5;
+            --base3: #fdf6e3;
+            --yellow: #b58900;
+            --orange: #cb4b16;
+            --red: #dc322f;
+            --magenta: #d33682;
+            --violet: #6c71c4;
+            --blue: #268bd2;
+            --cyan: #2aa198;
+            --green: #859900;
+
+            --bg-color: var(--base3);
+            --text-color: var(--base00);
+            --sidebar-bg: var(--base2);
+            --header-bg: var(--base2);
+            --card-bg: #fff;
+            --border-color: var(--base1);
+            --code-bg: var(--base2);
+            --highlight: var(--yellow);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: var(--base03);
+            --text-color: var(--base0);
+            --sidebar-bg: var(--base02);
+            --header-bg: var(--base02);
+            --card-bg: var(--base02);
+            --border-color: var(--base01);
+            --code-bg: var(--base02); /* Slightly lighter than bg */
+        }
+
+        /* --- GLOBAL RESET & TYPOGRAPHY --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        h1, h2, h3, h4 { color: var(--blue); margin-bottom: 0.5rem; }
+        p { line-height: 1.6; margin-bottom: 1rem; }
+        a { color: var(--blue); text-decoration: none; border-bottom: 1px dotted var(--blue); }
+        a:hover { color: var(--orange); }
+        ul, ol { margin-left: 2rem; margin-bottom: 1rem; }
+        strong { color: var(--orange); }
+
+        /* --- LAYOUT --- */
+        header {
+            height: 60px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        aside {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+            padding: 20px 0;
+        }
+
+        main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- NAVIGATION --- */
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+            color: var(--text-color);
+            font-weight: 600;
+            display: block;
+        }
+        .nav-item:hover { background-color: rgba(0,0,0,0.05); }
+        .nav-item.active {
+            border-left-color: var(--blue);
+            background-color: rgba(38, 139, 210, 0.1);
+            color: var(--blue);
+        }
+
+        /* --- TOGGLE SWITCH --- */
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch { display: inline-block; height: 24px; position: relative; width: 50px; }
+        .theme-switch input { display: none; }
+        .slider { background-color: var(--base1); bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 34px; }
+        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 16px; left: 4px; position: absolute; transition: .4s; width: 16px; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--yellow); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* --- CONTENT SECTIONS --- */
+        .lesson-section { display: none; max-width: 900px; margin: 0 auto; padding-bottom: 100px; }
+        .lesson-section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CODE BOXES --- */
+        .code-container {
+            background-color: var(--base02); /* Always dark for code usually, but adapted */
+            color: var(--base1);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .code-container { background-color: #002b36; color: #839496; } /* Invert logic for contrast */
+        
+        .code-header {
+            background-color: var(--base03);
+            padding: 10px 15px;
+            font-size: 0.9em;
+            color: var(--base1);
+            border-bottom: 1px solid #073642;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-task { font-weight: bold; color: var(--cyan); }
+        
+        .code-editor {
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .comment { color: var(--base01); font-style: italic; }
+        .keyword { color: var(--green); font-weight: bold; }
+        .command { color: var(--blue); }
+        .string { color: var(--cyan); }
+        
+        .code-controls {
+            padding: 10px;
+            background-color: var(--base02);
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #073642;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .btn-run { background-color: var(--green); color: white; }
+        .btn-run:hover { background-color: #718200; transform: translateY(-1px); }
+        .btn-clear { background-color: var(--red); color: white; }
+        .btn-clear:hover { background-color: #bd2c29; }
+
+        .console-output {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #333;
+            font-size: 13px;
+            display: none; /* Hidden until run */
+        }
+        .console-line { margin-bottom: 5px; opacity: 0; animation: typeLine 0.1s forwards; }
+        @keyframes typeLine { to { opacity: 1; } }
+
+        /* --- VISUALIZATIONS (SVG) --- */
+        .viz-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        svg { max-width: 100%; height: auto; }
+        
+        /* Lesson 1 Viz */
+        #l1-shield { opacity: 0; transition: opacity 1s; }
+        .l1-lock { fill: var(--red); transition: fill 1s; }
+        .l1-lock.secured { fill: var(--green); }
+        
+        /* Lesson 2 Viz */
+        #l2-scanner-beam { display: none; transform-origin: center; animation: scan 2s linear infinite; }
+        @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .vuln-spot { fill: transparent; transition: fill 0.3s; }
+        .vuln-spot.detected { fill: var(--red); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Lesson 3 Viz */
+        .config-packet { opacity: 0; }
+        .server-rect { fill: var(--base1); transition: fill 1s; }
+        .server-rect.updated { fill: var(--blue); }
+        @keyframes flyPacket {
+            0% { opacity: 1; transform: translate(0, 0); }
+            100% { opacity: 0; transform: translate(150px, 50px); }
+        }
+
+        /* --- QUIZZES --- */
+        .quiz-container {
+            background-color: var(--card-bg);
+            border-left: 5px solid var(--violet);
+            padding: 20px;
+            margin-top: 40px;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .quiz-q { margin-bottom: 15px; }
+        .quiz-options label { display: block; margin-bottom: 8px; cursor: pointer; padding: 5px; border-radius: 3px; }
+        .quiz-options label:hover { background-color: rgba(0,0,0,0.03); }
+        .quiz-feedback { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; }
+        .quiz-feedback.correct { background-color: rgba(133, 153, 0, 0.2); color: var(--green); border: 1px solid var(--green); }
+        .quiz-feedback.incorrect { background-color: rgba(220, 50, 47, 0.2); color: var(--red); border: 1px solid var(--red); }
+
+        /* --- FLASHCARDS --- */
+        .flashcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .flashcard {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            height: 150px;
+            perspective: 1000px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flashcard:hover .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .flashcard-front { background-color: var(--base2); color: var(--blue); font-weight: bold; font-size: 1.2em; }
+        .flashcard-back { background-color: var(--blue); color: white; transform: rotateY(180deg); font-size: 0.9em; }
+
+        /* --- FOOTER --- */
+        footer {
+            background-color: #002b36;
+            color: #839496;
+            padding: 30px;
+            font-size: 0.8em;
+            border-top: 4px solid var(--orange);
+        }
+        .footer-content { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+        .logo-svg { width: 150px; height: auto; }
+        .disclaimer { max-width: 600px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            aside { width: 100%; height: auto; overflow-x: auto; display: flex; border-right: none; border-bottom: 1px solid var(--border-color); }
+            .nav-item { white-space: nowrap; }
+            .footer-content { flex-direction: column; text-align: center; gap: 20px; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- TOP HEADER -->
+    <header>
+        <div style="font-weight: bold; font-size: 1.2rem; color: var(--blue);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 10px;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            MODULE 7: TECHNICAL COMPLIANCE
+        </div>
+        <div class="theme-switch-wrapper">
+            <span style="margin-right: 10px; font-size: 0.8rem;">☀ / ☾</span>
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" onclick="toggleTheme()">
+                <div class="slider"></div>
+            </label>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- SIDE NAVIGATION -->
+        <aside>
+            <div class="nav-item active" onclick="showTab('intro')">Intro & Concepts</div>
+            <div class="nav-item" onclick="showTab('lesson1')">Lesson 1: CIS Benchmarks</div>
+            <div class="nav-item" onclick="showTab('lesson2')">Lesson 2: Vulnerability Scanning</div>
+            <div class="nav-item" onclick="showTab('lesson3')">Lesson 3: Automated Compliance</div>
+            <div class="nav-item" onclick="showTab('glossary')">Glossary & Flashcards</div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main>
+            
+            <!-- INTRO TAB -->
+            <section id="intro" class="lesson-section active">
+                <h1>Welcome to Technical Compliance!</h1>
+                <p><strong>Date:</strong> January 21, 2026 | <strong>Duration:</strong> 60 minutes | <strong>Level:</strong> Beginner</p>
+                <hr style="border:0; border-top:1px solid var(--border-color); margin: 20px 0;">
+                
+                <p>Good evening, everyone! Today we're diving into Module 7: Technical Compliance. Before you start thinking this sounds like reading a dictionary backwards while watching paint dry, let me stop you right there. Technical Compliance is actually where cybersecurity gets <strong>REAL</strong>. This is where we stop talking about theories and start actually hardening systems, locking down configurations, and making sure attackers have a really bad day trying to break into our networks.</p>
+                
+                <p>Think of Technical Compliance as the difference between saying "I should probably lock my front door" and actually installing a deadbolt, security camera, and motion-sensor lights. We're moving from good intentions to concrete actions.</p>
+                
+                <h3>Today's Agenda</h3>
+                <ul>
+                    <li><strong>Lesson 1:</strong> CIS Benchmarks & STIGs: Hardening Operating Systems and Databases</li>
+                    <li><strong>Lesson 2:</strong> Vulnerability Scanning: Identifying Weaknesses (Nessus/OpenVAS)</li>
+                    <li><strong>Lesson 3:</strong> Automated Compliance Checking: Using Tools like Ansible</li>
+                </ul>
+            </section>
+
+            <!-- LESSON 1 TAB -->
+            <section id="lesson1" class="lesson-section">
+                <h2>Lesson 1: CIS Benchmarks & STIGs</h2>
+                <h3>Hardening Operating Systems and Databases</h3>
+                
+                <p><strong>What Are CIS Benchmarks?</strong><br>
+                CIS (Center for Internet Security) Benchmarks are globally recognized, consensus-driven security configuration guides developed by cybersecurity experts worldwide. Think of them as the "Gold Standard" for setting up your systems securely. They provide detailed, step-by-step instructions on how to configure operating systems (like Windows, Linux), databases, browsers, and mobile devices to be secure by default.</p>
+
+                <p><strong>What Are STIGs?</strong><br>
+                STIGs (Security Technical Implementation Guides) are similar to CIS Benchmarks but are developed by the Defense Information Systems Agency (DISA) for the US Department of Defense (DoD). They are generally more rigid and strict. If you work in government or defense, STIGs are your bible.</p>
+
+                <h4>Interactive Visualization: System Hardening</h4>
+                <div class="viz-container">
+                    <svg width="300" height="200" viewBox="0 0 300 200">
+                        <!-- Server Base -->
+                        <rect x="100" y="50" width="100" height="120" rx="5" fill="#586e75" />
+                        <rect x="110" y="60" width="80" height="10" rx="2" fill="#93a1a1" />
+                        <rect x="110" y="80" width="80" height="10" rx="2" fill="#93a1a1" />
+                        <rect x="110" y="100" width="80" height="10" rx="2" fill="#93a1a1" />
+                        
+                        <!-- Locks (Initially Red) -->
+                        <circle cx="210" cy="65" r="5" class="l1-lock" />
+                        <circle cx="210" cy="85" r="5" class="l1-lock" />
+                        <circle cx="210" cy="105" r="5" class="l1-lock" />
+
+                        <!-- Shield Overlay (Hidden initially) -->
+                        <path id="l1-shield" d="M150 40 L220 70 V120 C220 160 150 190 150 190 C150 190 80 160 80 120 V70 Z" 
+                              fill="rgba(133, 153, 0, 0.4)" stroke="#859900" stroke-width="3" />
+                        
+                        <text x="150" y="185" text-anchor="middle" fill="#fff" font-size="12">Server 01</text>
+                    </svg>
+                    <p style="font-size: 0.9em; margin-top: 10px;">Click "Run Code" to apply CIS Benchmarks and harden the server.</p>
+                </div>
+
+                <h4>Bash Script Example: Applying a Security Control</h4>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-task">Task: Disable Unused Network Protocols (IPv6)</span>
+                        <span>Bash (Linux)</span>
+                    </div>
+                    <div class="code-editor" id="code-l1">
+<span class="comment"># This script applies a CIS Benchmark control to disable IPv6 if not needed</span>
+<span class="comment"># Goal: Reduce the attack surface by turning off unused features</span>
+
+<span class="keyword">echo</span> <span class="string">"Starting CIS Hardening Check..."</span>
+
+<span class="comment"># 1. Check current status of IPv6</span>
+<span class="keyword">echo</span> <span class="string">"[INFO] Checking IPv6 status..."</span>
+<span class="command">sysctl</span> net.ipv6.conf.all.disable_ipv6
+
+<span class="comment"># 2. Apply the hardening rule (Simulated write to sysctl.conf)</span>
+<span class="keyword">echo</span> <span class="string">"[ACTION] Disabling IPv6 to prevent tunneling attacks..."</span>
+<span class="command">echo</span> <span class="string">"net.ipv6.conf.all.disable_ipv6 = 1"</span> >> /etc/sysctl.conf
+
+<span class="comment"># 3. Reload networking configuration</span>
+<span class="keyword">echo</span> <span class="string">"[INFO] Reloading configuration..."</span>
+<span class="command">sysctl</span> -p
+
+<span class="keyword">echo</span> <span class="string">"[SUCCESS] System Hardened: IPv6 Disabled."</span>
+</div>
+                    <div class="console-output" id="console-l1"></div>
+                    <div class="code-controls">
+                        <button class="btn btn-run" onclick="runLesson1()">Run Code</button>
+                        <button class="btn btn-clear" onclick="clearConsole('console-l1', 'l1')">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Quiz L1 -->
+                <div class="quiz-container">
+                    <h3>Check Your Knowledge: CIS & STIGs</h3>
+                    <form id="quiz-l1">
+                        <div class="quiz-q">
+                            <p><strong>1. What is the primary purpose of a CIS Benchmark?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="radio" name="q1" value="a"> A) To slow down computer performance.</label>
+                                <label><input type="radio" name="q1" value="b"> B) To provide a consensus-based guide for secure configuration.</label>
+                                <label><input type="radio" name="q1" value="c"> C) To hack into foreign governments.</label>
+                            </div>
+                        </div>
+                        <div class="quiz-q">
+                            <p><strong>2. Who primarily uses STIGs?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="radio" name="q2" value="a"> A) Small coffee shops.</label>
+                                <label><input type="radio" name="q2" value="b"> B) US Department of Defense (DoD) systems.</label>
+                                <label><input type="radio" name="q2" value="c"> C) Open source hobbyists.</label>
+                            </div>
+                        </div>
+                        <div class="quiz-q">
+                            <p><strong>3. (Select Multiple) Why is hardening important?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="checkbox" name="q3" value="a"> A) Reduces attack surface.</label>
+                                <label><input type="checkbox" name="q3" value="b"> B) Ensures default passwords are changed.</label>
+                                <label><input type="checkbox" name="q3" value="c"> C) Makes the colors on the screen brighter.</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-run" onclick="checkQuiz1()">Submit Answers</button>
+                        <button type="button" class="btn btn-clear" onclick="resetQuiz('quiz-l1', 'feedback-l1')">Reset</button>
+                    </form>
+                    <div id="feedback-l1" class="quiz-feedback"></div>
+                </div>
+            </section>
+
+            <!-- LESSON 2 TAB -->
+            <section id="lesson2" class="lesson-section">
+                <h2>Lesson 2: Vulnerability Scanning</h2>
+                <h3>Identifying Weaknesses (Nessus/OpenVAS)</h3>
+                
+                <p><strong>What is Vulnerability Scanning?</strong><br>
+                This is the automated process of inspecting your systems, networks, and applications for known security weaknesses. Think of it like a mechanic running a diagnostic on your car—they plug in a computer to see if any sensors are failing, but they don't necessarily fix it right then. They just identify the problem.</p>
+
+                <p><strong>Common Tools:</strong>
+                <ul>
+                    <li><strong>Nessus:</strong> The industry standard. Very comprehensive.</li>
+                    <li><strong>OpenVAS:</strong> The open-source alternative (free).</li>
+                    <li><strong>Qualys:</strong> Cloud-based scanning.</li>
+                </ul>
+                </p>
+
+                <h4>Interactive Visualization: Network Scan</h4>
+                <div class="viz-container">
+                    <svg width="400" height="200" viewBox="0 0 400 200">
+                        <!-- Scanner Center -->
+                        <circle cx="200" cy="100" r="10" fill="#268bd2" />
+                        <text x="200" y="125" text-anchor="middle" font-size="10" fill="#268bd2">Scanner</text>
+                        
+                        <!-- Radar Beam -->
+                        <path id="l2-scanner-beam" d="M200 100 L200 20 A80 80 0 0 1 280 100 Z" fill="rgba(38, 139, 210, 0.3)" />
+                        
+                        <!-- Target Nodes -->
+                        <circle cx="100" cy="60" r="8" fill="#93a1a1" class="vuln-spot" id="node1"/>
+                        <circle cx="300" cy="60" r="8" fill="#93a1a1" class="vuln-spot" id="node2"/>
+                        <circle cx="150" cy="150" r="8" fill="#93a1a1" class="vuln-spot" id="node3"/>
+                        <circle cx="250" cy="150" r="8" fill="#93a1a1" class="vuln-spot" id="node4"/>
+
+                        <text x="100" y="80" text-anchor="middle" font-size="8">Host A</text>
+                        <text x="300" y="80" text-anchor="middle" font-size="8">Host B</text>
+                    </svg>
+                    <p style="font-size: 0.9em; margin-top: 10px;">Run the scanner to identify vulnerable hosts (Red).</p>
+                </div>
+
+                <h4>Python Example: Simple Port Scanner</h4>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-task">Task: Identify Open Ports (Simulated)</span>
+                        <span>Python 3</span>
+                    </div>
+                    <div class="code-editor" id="code-l2">
+<span class="comment"># A simplified script to check for open ports on a target</span>
+<span class="comment"># NOTE: Unauthorized scanning is illegal. Use only in authorized labs.</span>
+
+<span class="keyword">import</span> socket
+<span class="keyword">import</span> sys
+
+target = <span class="string">"192.168.1.10"</span>
+ports_to_scan = [21, 22, 80, 443]
+
+<span class="keyword">print</span>(<span class="string">f"[*] Starting Scan on target: {target}"</span>)
+
+<span class="keyword">for</span> port <span class="keyword">in</span> ports_to_scan:
+    <span class="comment"># Create a socket object</span>
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket.setdefaulttimeout(1)
+    
+    <span class="comment"># Attempt connection (0 means success)</span>
+    result = sock.connect_ex((target, port))
+    
+    <span class="keyword">if</span> result == 0:
+        <span class="keyword">print</span>(<span class="string">f"[!] Port {port} is OPEN (Potential Vulnerability)"</span>)
+    <span class="keyword">else</span>:
+        <span class="keyword">print</span>(<span class="string">f"[-] Port {port} is closed"</span>)
+        
+    sock.close()
+
+<span class="keyword">print</span>(<span class="string">"[*] Scan Complete."</span>)
+</div>
+                    <div class="console-output" id="console-l2"></div>
+                    <div class="code-controls">
+                        <button class="btn btn-run" onclick="runLesson2()">Run Code</button>
+                        <button class="btn btn-clear" onclick="clearConsole('console-l2', 'l2')">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Quiz L2 -->
+                <div class="quiz-container">
+                    <h3>Check Your Knowledge: Vulnerability Scanning</h3>
+                    <form id="quiz-l2">
+                        <div class="quiz-q">
+                            <p><strong>1. Which tool is widely considered the industry standard for vulnerability scanning?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="radio" name="q1" value="a"> A) Photoshop.</label>
+                                <label><input type="radio" name="q1" value="b"> B) Nessus.</label>
+                                <label><input type="radio" name="q1" value="c"> C) Wordpad.</label>
+                            </div>
+                        </div>
+                        <div class="quiz-q">
+                            <p><strong>2. Does a vulnerability scan automatically fix the problems it finds?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="radio" name="q2" value="a"> A) Yes, always.</label>
+                                <label><input type="radio" name="q2" value="b"> B) No, it only identifies them.</label>
+                            </div>
+                        </div>
+                        <div class="quiz-q">
+                            <p><strong>3. (Select Multiple) What can a scan reveal?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="checkbox" name="q3" value="a"> A) Unpatched software versions.</label>
+                                <label><input type="checkbox" name="q3" value="b"> B) Default passwords.</label>
+                                <label><input type="checkbox" name="q3" value="c"> C) The user's favorite color.</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-run" onclick="checkQuiz2()">Submit Answers</button>
+                        <button type="button" class="btn btn-clear" onclick="resetQuiz('quiz-l2', 'feedback-l2')">Reset</button>
+                    </form>
+                    <div id="feedback-l2" class="quiz-feedback"></div>
+                </div>
+            </section>
+
+            <!-- LESSON 3 TAB -->
+            <section id="lesson3" class="lesson-section">
+                <h2>Lesson 3: Automated Compliance</h2>
+                <h3>Infrastructure as Code (Ansible/Chef/Puppet)</h3>
+                
+                <p><strong>The Problem with Manual Configuration:</strong><br>
+                Configuring 100 servers manually takes forever and leads to "Configuration Drift" (where servers start differing from each other due to human error).</p>
+
+                <p><strong>The Solution: Automation (IaC)</strong><br>
+                Tools like Ansible, Chef, and Puppet allow us to write our security configuration as code. We write a script (called a Playbook in Ansible) that says "Ensure the firewall is ON and Port 22 is only open to the Admin IP." We run this script, and it enforces that rule on 1, 100, or 10,000 servers instantly.</p>
+
+                <h4>Interactive Visualization: Ansible Playbook Run</h4>
+                <div class="viz-container">
+                    <svg width="400" height="200" viewBox="0 0 400 200">
+                        <!-- Controller Node -->
+                        <rect x="20" y="80" width="50" height="50" fill="#b58900" />
+                        <text x="45" y="145" text-anchor="middle" font-size="10">Ansible Ctrl</text>
+
+                        <!-- Servers -->
+                        <rect id="srv1" x="300" y="30" width="40" height="40" class="server-rect" />
+                        <rect id="srv2" x="300" y="80" width="40" height="40" class="server-rect" />
+                        <rect id="srv3" x="300" y="130" width="40" height="40" class="server-rect" />
+                        
+                        <!-- Packets -->
+                        <circle id="pkt1" cx="70" cy="105" r="5" fill="#2aa198" class="config-packet" />
+                        <circle id="pkt2" cx="70" cy="105" r="5" fill="#2aa198" class="config-packet" />
+                        <circle id="pkt3" cx="70" cy="105" r="5" fill="#2aa198" class="config-packet" />
+                    </svg>
+                    <p style="font-size: 0.9em; margin-top: 10px;">Run the Playbook to enforce compliance across all servers.</p>
+                </div>
+
+                <h4>Ansible (YAML) Example: Enforcing Password Policy</h4>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-task">Task: Ensure SSH Protocol 2 is used</span>
+                        <span>YAML (Ansible)</span>
+                    </div>
+                    <div class="code-editor" id="code-l3">
+<span class="comment"># Ansible Playbook to harden SSH configuration</span>
+<span class="keyword">---</span>
+- <span class="keyword">name:</span> Secure SSH
+  <span class="keyword">hosts:</span> all
+  <span class="keyword">become:</span> yes
+  <span class="keyword">tasks:</span>
+
+    <span class="comment"># Ensure Protocol 2 is used (Protocol 1 is insecure)</span>
+    - <span class="keyword">name:</span> Ensure SSH Protocol 2 is set
+      <span class="command">lineinfile:</span>
+        <span class="string">path:</span> /etc/ssh/sshd_config
+        <span class="string">regexp:</span> '^Protocol'
+        <span class="string">line:</span> 'Protocol 2'
+        <span class="string">state:</span> present
+
+    <span class="comment"># Ensure Root Login is disabled</span>
+    - <span class="keyword">name:</span> Disable Root Login
+      <span class="command">lineinfile:</span>
+        <span class="string">path:</span> /etc/ssh/sshd_config
+        <span class="string">regexp:</span> '^PermitRootLogin'
+        <span class="string">line:</span> 'PermitRootLogin no'
+
+    <span class="comment"># Restart SSH to apply changes</span>
+    - <span class="keyword">name:</span> Restart SSHD
+      <span class="command">service:</span>
+        <span class="string">name:</span> sshd
+        <span class="string">state:</span> restarted
+</div>
+                    <div class="console-output" id="console-l3"></div>
+                    <div class="code-controls">
+                        <button class="btn btn-run" onclick="runLesson3()">Run Playbook</button>
+                        <button class="btn btn-clear" onclick="clearConsole('console-l3', 'l3')">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Quiz L3 -->
+                <div class="quiz-container">
+                    <h3>Check Your Knowledge: Automation</h3>
+                    <form id="quiz-l3">
+                        <div class="quiz-q">
+                            <p><strong>1. What is the benefit of "Infrastructure as Code"?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="radio" name="q1" value="a"> A) It prevents configuration drift and ensures consistency.</label>
+                                <label><input type="radio" name="q1" value="b"> B) It requires more people to type manually.</label>
+                                <label><input type="radio" name="q1" value="c"> C) It makes the computers heavier.</label>
+                            </div>
+                        </div>
+                        <div class="quiz-q">
+                            <p><strong>2. Which of these is a popular automation tool?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="radio" name="q2" value="a"> A) Ansible.</label>
+                                <label><input type="radio" name="q2" value="b"> B) MS Paint.</label>
+                                <label><input type="radio" name="q2" value="c"> C) Calculator.</label>
+                            </div>
+                        </div>
+                        <div class="quiz-q">
+                            <p><strong>3. (Select Multiple) Why use automation for compliance?</strong></p>
+                            <div class="quiz-options">
+                                <label><input type="checkbox" name="q3" value="a"> A) Speed (can update 1000s of servers at once).</label>
+                                <label><input type="checkbox" name="q3" value="b"> B) Repeatability (eliminates human error).</label>
+                                <label><input type="checkbox" name="q3" value="c"> C) It is slower than typing manually.</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-run" onclick="checkQuiz3()">Submit Answers</button>
+                        <button type="button" class="btn btn-clear" onclick="resetQuiz('quiz-l3', 'feedback-l3')">Reset</button>
+                    </form>
+                    <div id="feedback-l3" class="quiz-feedback"></div>
+                </div>
+            </section>
+
+            <!-- GLOSSARY TAB -->
+            <section id="glossary" class="lesson-section">
+                <h2>Glossary & Flashcards</h2>
+                <p>Hover over the cards to reveal the definition.</p>
+                <div class="flashcard-grid">
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">CIS Benchmark</div>
+                            <div class="flashcard-back">Consensus-based best practice guidelines for security configuration.</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">STIG</div>
+                            <div class="flashcard-back">Security Technical Implementation Guide (used by US DoD).</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">Vulnerability Scanning</div>
+                            <div class="flashcard-back">Automated inspection of systems for known weaknesses (e.g., Nessus).</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">Infrastructure as Code (IaC)</div>
+                            <div class="flashcard-back">Managing and provisioning computing infrastructure through machine-readable definition files.</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">Ansible</div>
+                            <div class="flashcard-back">An open-source automation tool used for configuration management and app deployment.</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">Hardening</div>
+                            <div class="flashcard-back">The process of securing a system by reducing its surface of vulnerability.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="disclaimer">
+                <strong>Disclaimer & Academic Integrity</strong><br>
+                <p>Students must respect privacy laws and data protection regulations (such as GDPR, CCPA, HIPAA) when working with systems. This lecture does not provide legal advice.</p>
+                <p>Academic Integrity: Cite Cyber.SoHo as the source. Do not present this as your own work. Links provided for educational purposes; always verify URLs.</p>
+                <p>Version 1.0 | Date: January 21, 2026</p>
+            </div>
+            <div>
+                <!-- Embedded SVG Logo for Cyber.SoHo -->
+                <svg class="logo-svg" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0" y="0" width="200" height="60" rx="5" fill="#073642"/>
+                    <path d="M20 30 L30 15 L40 30 L30 45 Z" fill="#268bd2"/>
+                    <text x="50" y="38" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#fdf6e3">Cyber.SoHo</text>
+                    <text x="50" y="52" font-family="Arial, sans-serif" font-size="10" fill="#2aa198">Cybersecurity Education</text>
+                </svg>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- NAVIGATION ---
+        function showTab(tabId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.lesson-section');
+            sections.forEach(sec => sec.classList.remove('active'));
+            
+            // Show selected
+            document.getElementById(tabId).classList.add('active');
+            
+            // Update Menu
+            const items = document.querySelectorAll('.nav-item');
+            items.forEach(item => item.classList.remove('active'));
+            // Find the item clicked (approximate logic for simplicity)
+            event.target.classList.add('active');
+        }
+
+        // --- THEME TOGGLE ---
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+        }
+
+        // --- SIMULATION HELPERS ---
+        async function typeWriter(elementId, text) {
+            const el = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.className = 'console-line';
+            div.textContent = text;
+            el.appendChild(div);
+            el.scrollTop = el.scrollHeight;
+            // Small delay to simulate processing
+            await new Promise(r => setTimeout(r, 400)); 
+        }
+
+        function clearConsole(consoleId, lessonId) {
+            document.getElementById(consoleId).innerHTML = '';
+            document.getElementById(consoleId).style.display = 'none';
+            
+            // Reset Viz L1
+            if(lessonId === 'l1') {
+                document.getElementById('l1-shield').style.opacity = '0';
+                document.querySelectorAll('.l1-lock').forEach(l => l.classList.remove('secured'));
+            }
+            // Reset Viz L2
+            if(lessonId === 'l2') {
+                document.getElementById('l2-scanner-beam').style.display = 'none';
+                document.querySelectorAll('.vuln-spot').forEach(l => l.classList.remove('detected'));
+            }
+            // Reset Viz L3
+            if(lessonId === 'l3') {
+                document.querySelectorAll('.config-packet').forEach(p => { p.style.animation = 'none'; p.style.opacity = '0'; });
+                document.querySelectorAll('.server-rect').forEach(s => s.classList.remove('updated'));
+            }
+        }
+
+        // --- LESSON 1 LOGIC ---
+        async function runLesson1() {
+            const c = 'console-l1';
+            const consoleEl = document.getElementById(c);
+            consoleEl.style.display = 'block';
+            consoleEl.innerHTML = ''; // auto clear on run
+
+            await typeWriter(c, "root@server:~# ./harden_script.sh");
+            await typeWriter(c, "Starting CIS Hardening Check...");
+            await typeWriter(c, "[INFO] Checking IPv6 status...");
+            await typeWriter(c, "net.ipv6.conf.all.disable_ipv6 = 0 (VULNERABLE)");
+            
+            // Animate Locks turning green
+            document.querySelectorAll('.l1-lock').forEach(l => l.classList.add('secured'));
+            
+            await typeWriter(c, "[ACTION] Writing to /etc/sysctl.conf...");
+            await typeWriter(c, "[INFO] Reloading networking configuration...");
+            
+            // Show Shield
+            document.getElementById('l1-shield').style.opacity = '1';
+            
+            await typeWriter(c, "[SUCCESS] System Hardened: IPv6 Disabled.");
+            await typeWriter(c, "Compliance Score: 100%");
+        }
+
+        // --- LESSON 2 LOGIC ---
+        async function runLesson2() {
+            const c = 'console-l2';
+            const consoleEl = document.getElementById(c);
+            consoleEl.style.display = 'block';
+            consoleEl.innerHTML = '';
+
+            // Start Radar
+            document.getElementById('l2-scanner-beam').style.display = 'block';
+            
+            await typeWriter(c, "python3 scanner.py --target 192.168.1.0/24");
+            await typeWriter(c, "[*] Starting Nessus-Lite Scan...");
+            
+            // Hit Node 1 (Host A) - Vulnerable
+            await new Promise(r => setTimeout(r, 1000));
+            document.getElementById('node1').classList.add('detected');
+            await typeWriter(c, "[!] Host 192.168.1.10: Port 21 OPEN (FTP - Insecure)");
+            
+            // Hit Node 2 (Host B) - Vulnerable
+            await new Promise(r => setTimeout(r, 800));
+            document.getElementById('node2').classList.add('detected');
+            await typeWriter(c, "[!] Host 192.168.1.11: Port 80 OPEN (HTTP - Cleartext)");
+            
+            await typeWriter(c, "[-] Host 192.168.1.12: Secure");
+            await typeWriter(c, "[-] Host 192.168.1.13: Secure");
+            
+            // Stop Radar (conceptually, we leave it spinning or stop it)
+            // document.getElementById('l2-scanner-beam').style.display = 'none';
+            await typeWriter(c, "[*] Scan Complete. Report generated: scan_results.pdf");
+        }
+
+        // --- LESSON 3 LOGIC ---
+        async function runLesson3() {
+            const c = 'console-l3';
+            const consoleEl = document.getElementById(c);
+            consoleEl.style.display = 'block';
+            consoleEl.innerHTML = '';
+
+            await typeWriter(c, "ansible-playbook secure_ssh.yml");
+            await typeWriter(c, "PLAY [Secure SSH] ***************************************************");
+            
+            // Animate Packets
+            const pkts = document.querySelectorAll('.config-packet');
+            const srvs = document.querySelectorAll('.server-rect');
+            
+            pkts[0].style.animation = "flyPacket 1s forwards"; // Not physically accurate mapping but good for visual
+            pkts[0].style.transform = "translate(230px, -25px)"; // Adjusting manually for demo
+            
+            // We'll just fake the movement logic with CSS classes for simplicity in this generated code
+            // Actually, let's just trigger the 'updated' class on servers sequentially
+            
+            await typeWriter(c, "TASK [Gathering Facts] **********************************************");
+            await typeWriter(c, "ok: [server1]");
+            await typeWriter(c, "ok: [server2]");
+            await typeWriter(c, "ok: [server3]");
+
+            await typeWriter(c, "TASK [Ensure SSH Protocol 2] **************************************");
+            
+            setTimeout(() => document.getElementById('srv1').classList.add('updated'), 500);
+            await typeWriter(c, "changed: [server1]");
+            
+            setTimeout(() => document.getElementById('srv2').classList.add('updated'), 1000);
+            await typeWriter(c, "changed: [server2]");
+            
+            setTimeout(() => document.getElementById('srv3').classList.add('updated'), 1500);
+            await typeWriter(c, "changed: [server3]");
+
+            await typeWriter(c, "PLAY RECAP ********************************************************");
+            await typeWriter(c, "server1 : ok=3 changed=1 unreachable=0 failed=0");
+            await typeWriter(c, "server2 : ok=3 changed=1 unreachable=0 failed=0");
+            await typeWriter(c, "server3 : ok=3 changed=1 unreachable=0 failed=0");
+        }
+
+        // --- QUIZ LOGIC ---
+        function checkQuiz1() {
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            const q3 = Array.from(document.querySelectorAll('input[name="q3"]:checked')).map(cb => cb.value);
+
+            let score = 0;
+            let feedback = "";
+            let isCorrect = true;
+
+            if (q1 === 'b') score++; else isCorrect = false;
+            if (q2 === 'b') score++; else isCorrect = false;
+            // Q3 is A and B
+            if (q3.includes('a') && q3.includes('b') && !q3.includes('c')) score++; else isCorrect = false;
+
+            const fbDiv = document.getElementById('feedback-l1');
+            fbDiv.style.display = 'block';
+            if (isCorrect && score === 3) {
+                fbDiv.className = 'quiz-feedback correct';
+                fbDiv.innerHTML = "<strong>Correct!</strong><br>1. CIS Benchmarks are consensus guides.<br>2. DoD uses STIGs.<br>3. Hardening reduces attack surface and secures defaults.";
+            } else {
+                fbDiv.className = 'quiz-feedback incorrect';
+                fbDiv.innerHTML = "<strong>Incorrect. Try again.</strong><br>Review the definitions of CIS, STIGs, and Hardening.";
+            }
+        }
+
+        function checkQuiz2() {
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            const q3 = Array.from(document.querySelectorAll('input[name="q3"]:checked')).map(cb => cb.value);
+
+            let isCorrect = true;
+            if (q1 !== 'b') isCorrect = false;
+            if (q2 !== 'b') isCorrect = false;
+            if (!q3.includes('a') || !q3.includes('b') || q3.includes('c')) isCorrect = false;
+
+            const fbDiv = document.getElementById('feedback-l2');
+            fbDiv.style.display = 'block';
+            if (isCorrect) {
+                fbDiv.className = 'quiz-feedback correct';
+                fbDiv.innerHTML = "<strong>Correct!</strong><br>1. Nessus is standard.<br>2. Scanners only identify issues.<br>3. Scans find unpatched soft & bad passwords.";
+            } else {
+                fbDiv.className = 'quiz-feedback incorrect';
+                fbDiv.innerHTML = "<strong>Incorrect.</strong> Remember scans are diagnostic, not curative.";
+            }
+        }
+
+        function checkQuiz3() {
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            const q3 = Array.from(document.querySelectorAll('input[name="q3"]:checked')).map(cb => cb.value);
+
+            let isCorrect = true;
+            if (q1 !== 'a') isCorrect = false;
+            if (q2 !== 'a') isCorrect = false;
+            if (!q3.includes('a') || !q3.includes('b') || q3.includes('c')) isCorrect = false;
+
+            const fbDiv = document.getElementById('feedback-l3');
+            fbDiv.style.display = 'block';
+            if (isCorrect) {
+                fbDiv.className = 'quiz-feedback correct';
+                fbDiv.innerHTML = "<strong>Correct!</strong> Ansible/IaC provides speed, consistency, and repeatability.";
+            } else {
+                fbDiv.className = 'quiz-feedback incorrect';
+                fbDiv.innerHTML = "<strong>Incorrect.</strong> Automation is about efficiency and preventing drift.";
+            }
+        }
+
+        function resetQuiz(formId, feedbackId) {
+            document.getElementById(formId).reset();
+            const fb = document.getElementById(feedbackId);
+            fb.style.display = 'none';
+            fb.className = 'quiz-feedback';
+        }
+    </script>
+</body>
+</html>
+
+
+
