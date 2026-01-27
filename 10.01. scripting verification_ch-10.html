@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 9: Scripting Verification - Cyber.SoHo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Solarized Light */
+            --base03: #002b36; --base02: #073642; --base01: #586e75; --base00: #657b83;
+            --base0: #839496; --base1: #93a1a1; --base2: #eee8d5; --base3: #fdf6e3;
+            --yellow: #b58900; --orange: #cb4b16; --red: #dc322f; --magenta: #d33682;
+            --violet: #6c71c4; --blue: #268bd2; --cyan: #2aa198; --green: #859900;
+            
+            --bg: var(--base3); --fg: var(--base00); --accent: var(--blue);
+            --card-bg: var(--base2); --nav-bg: var(--base2);
+        }
+
+        [data-theme='dark'] {
+            --bg: var(--base03); --fg: var(--base0); --accent: var(--cyan);
+            --card-bg: var(--base02); --nav-bg: var(--base02);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .solarized-link {
+            color: var(--blue);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .console {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            height: 120px;
+        }
+
+        .flashcard:hover .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--base1);
+            text-align: center;
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background: var(--accent);
+            color: var(--base3);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .nav-item.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        svg { max-width: 100%; height: auto; }
+        
+        .btn-run { background-color: var(--green); color: white; }
+        .btn-clear { background-color: var(--red); color: white; }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- Top Menu -->
+    <header class="fixed top-0 w-full z-50 px-6 py-3 flex justify-between items-center shadow-md" style="background: var(--nav-bg);">
+        <div class="flex items-center gap-4">
+            <img src="company_logo.png" alt="Cyber.SoHo Logo" class="h-8 w-auto" onerror="this.style.display='none'">
+            <h1 class="text-xl font-bold uppercase tracking-tight">Module 9: Scripting Verification</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm font-semibold">Theme:</span>
+            <button onclick="toggleTheme()" class="p-2 rounded-full border border-current hover:opacity-70 transition">
+                <span id="theme-icon">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex pt-16 min-h-screen">
+        <!-- Sidebar Menu -->
+        <nav class="w-64 fixed h-full overflow-y-auto p-4 border-r" style="background: var(--nav-bg); border-color: var(--base1);">
+            <ul class="space-y-2" id="sidebar-nav">
+                <li onclick="showTab('intro')" class="nav-item p-3 rounded cursor-pointer active">Intro & Concepts</li>
+                <li onclick="showTab('lesson1')" class="nav-item p-3 rounded cursor-pointer">Lesson 1: Evidence Gathering</li>
+                <li onclick="showTab('lesson2')" class="nav-item p-3 rounded cursor-pointer">Lesson 2: Patch Verification</li>
+                <li onclick="showTab('lesson3')" class="nav-item p-3 rounded cursor-pointer">Lesson 3: Log Analysis</li>
+                <li onclick="showTab('glossary')" class="nav-item p-3 rounded cursor-pointer">Glossary & Flashcards</li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="ml-64 p-8 w-full max-w-5xl mx-auto">
+            
+            <!-- Tab: Intro -->
+            <section id="intro" class="tab-content active space-y-6">
+                <h2 class="text-3xl font-bold text-blue-500">Why Scripting Matters in Compliance</h2>
+                <div class="p-6 bg-white/5 rounded-lg border border-blue-200">
+                    <p class="leading-relaxed">
+                        Imagine checking 5,000 computers manually. It would take months. Scripting allows you to do this in 30 minutes. 
+                        This module covers automated evidence gathering, version verification, and log analysis to ensure compliance without the manual drag.
+                    </p>
+                </div>
+                
+                <h3 class="text-xl font-semibold mt-6">Core Concept Visualization: Manual vs Automated</h3>
+                <div id="viz-intro" class="bg-slate-100 dark:bg-slate-800 p-4 rounded text-center">
+                    <!-- SVG Schematic -->
+                    <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="50" width="80" height="40" rx="5" fill="#dc322f" />
+                        <text x="50" y="75" text-anchor="middle" fill="white" font-size="12">Manual</text>
+                        <path d="M 90 70 L 150 70" stroke="#586e75" stroke-width="2" marker-end="url(#arrow)"/>
+                        
+                        <rect x="160" y="20" width="100" height="100" rx="10" fill="#268bd2" />
+                        <text x="210" y="75" text-anchor="middle" fill="white" font-size="12">Script Engine</text>
+                        
+                        <g id="data-nodes">
+                            <circle cx="330" cy="40" r="15" fill="#859900" />
+                            <circle cx="330" cy="80" r="15" fill="#859900" />
+                            <circle cx="330" cy="120" r="15" fill="#859900" />
+                        </g>
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orientation="auto" markerUnits="strokeWidth">
+                              <path d="M0,0 L0,6 L9,3 z" fill="#586e75" />
+                            </marker>
+                        </defs>
+                        <text x="210" y="150" text-anchor="middle" fill="var(--fg)" font-size="10">Automated Scalability: 1 Script -> 1000s Nodes</text>
+                    </svg>
+                </div>
+
+                <div class="mt-8 p-4 bg-orange-100 dark:bg-orange-900/20 border-l-4 border-orange-500">
+                    <h4 class="font-bold">Important Link:</h4>
+                    <p>Check the latest scripting standards at: <a href="https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final" class="solarized-link" target="_blank">NIST SP 800-53 Compliance Framework</a></p>
+                </div>
+            </section>
+
+            <!-- Tab: Lesson 1 -->
+            <section id="lesson1" class="tab-content space-y-6">
+                <h2 class="text-3xl font-bold text-blue-500">Lesson 1: Audit Evidence Gathering</h2>
+                <p>Collecting proof of configuration is the cornerstone of an audit. We use PowerShell for Windows environments and Python for cross-platform data parsing.</p>
+                
+                <div class="space-y-4">
+                    <h4 class="font-semibold">Task: Retrieve User Account Security Policy (Windows)</h4>
+                    <p class="text-sm italic">This script extracts password policy settings to verify compliance with complexity requirements.</p>
+                    
+                    <div class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                        <pre><code># Import the security module
+Import-Module ActiveDirectory
+# Get the default password policy
+Get-ADDefaultDomainPasswordPolicy | Select-Object PasswordHistoryCount, MinPasswordLength, ComplexityEnabled
+# Export findings to CSV for the auditor
+Export-Csv -Path "C:\Audit\Evidence_Passwords.csv"</code></pre>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="runCode('console1', 'Gathering Domain Policy...', 'Success: Evidence saved to C:\\Audit\\Evidence_Passwords.csv')" class="btn-run px-4 py-2 rounded font-bold">Run Sandbox</button>
+                        <button onclick="clearConsole('console1')" class="btn-clear px-4 py-2 rounded font-bold">Clear</button>
+                    </div>
+                    <div id="console1" class="console">Output will appear here...</div>
+                </div>
+
+                <!-- Quiz Block -->
+                <div class="mt-12 p-6 rounded-lg bg-slate-200 dark:bg-slate-800" id="quiz-l1">
+                    <h3 class="text-xl font-bold mb-4">Lesson 1 Review</h3>
+                    <div class="space-y-4">
+                        <p>1. Which PowerShell cmdlet is most likely used to collect system configuration for an audit?</p>
+                        <label class="block"><input type="radio" name="q1" value="a"> Get-Service</label>
+                        <label class="block"><input type="radio" name="q1" value="b"> Get-ADDefaultDomainPasswordPolicy</label>
+                        
+                        <p>2. True or False: Scripting evidence collection reduces the risk of human error during data entry.</p>
+                        <label class="block"><input type="radio" name="q2" value="true"> True</label>
+                        <label class="block"><input type="radio" name="q2" value="false"> False</label>
+                    </div>
+                    <button onclick="checkQuiz('l1')" class="mt-4 px-6 py-2 bg-blue-500 text-white rounded">Submit Answers</button>
+                    <div id="feedback-l1" class="mt-4 hidden p-4 bg-green-100 dark:bg-green-900/30 rounded"></div>
+                </div>
+            </section>
+
+            <!-- Tab: Lesson 2 -->
+            <section id="lesson2" class="tab-content space-y-6">
+                <h2 class="text-3xl font-bold text-blue-500">Lesson 2: Verifying Software & Patch Levels</h2>
+                <p>Compliance requires that all software is at a supported, patched version. We can automate the comparison of "Installed" vs "Required" versions.</p>
+
+                <div class="space-y-4">
+                    <h4 class="font-semibold">Task: Python Patch Audit (Cross-Platform)</h4>
+                    <p class="text-sm italic">Compares local software version against a security baseline.</p>
+                    
+                    <div class="bg-gray-900 text-gray-100 p-4 rounded-lg">
+                        <pre><code># Define the required secure version
+SECURE_VERSION = "2.4.52"
+# Mock-up of getting installed version
+installed = "2.4.48" 
+
+# Compare logic
+if installed < SECURE_VERSION:
+    print(f"[!] COMPLIANCE FAILURE: Version {installed} is vulnerable.")
+else:
+    print("[+] COMPLIANCE PASS")</code></pre>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="runCode('console2', 'Checking local binary versions...', '[!] COMPLIANCE FAILURE: Apache 2.4.48 detected. Required: 2.4.52')" class="btn-run px-4 py-2 rounded font-bold">Run Sandbox</button>
+                        <button onclick="clearConsole('console2')" class="btn-clear px-4 py-2 rounded font-bold">Clear</button>
+                    </div>
+                    <div id="console2" class="console">Ready...</div>
+                </div>
+
+                <!-- Animated Viz -->
+                <div class="p-6 bg-slate-100 dark:bg-slate-800 rounded">
+                    <h4 class="mb-4 font-bold">Visual Comparison Process</h4>
+                    <svg width="400" height="150" id="patch-viz">
+                        <rect x="20" y="40" width="100" height="60" fill="gray" id="v-box-1" />
+                        <text x="70" y="75" text-anchor="middle" fill="white">System A</text>
+                        <circle cx="70" cy="110" r="5" fill="red" id="status-1" />
+                        
+                        <rect x="280" y="40" width="100" height="60" fill="gray" id="v-box-2" />
+                        <text x="330" y="75" text-anchor="middle" fill="white">System B</text>
+                        <circle cx="330" cy="110" r="5" fill="green" id="status-2" />
+                        
+                        <line x1="120" y1="70" x2="280" y2="70" stroke="var(--fg)" stroke-dasharray="5,5" />
+                    </svg>
+                </div>
+            </section>
+
+            <!-- Tab: Lesson 3 -->
+            <section id="lesson3" class="tab-content space-y-6">
+                <h2 class="text-3xl font-bold text-blue-500">Lesson 3: Log Analysis for Evidence</h2>
+                <p>Auditors don't just ask "Are you logging?"; they ask "Show me the logs for failed logins on Tuesday."</p>
+
+                <div class="space-y-4">
+                    <h4 class="font-semibold">Task: Bash Script for Critical Error Filtering</h4>
+                    <div class="bg-gray-900 text-gray-100 p-4 rounded-lg">
+                        <pre><code># Search through auth logs for 'Failed password'
+# This provides evidence of brute-force monitoring
+grep "Failed password" /var/log/auth.log | awk '{print $1, $2, $11}' > unauthorized_attempts.txt
+echo "Analysis complete. Data exported to unauthorized_attempts.txt"</code></pre>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="runCode('console3', 'Reading /var/log/auth.log...', 'Found 14 failed attempts. Report generated.')" class="btn-run px-4 py-2 rounded font-bold">Run Sandbox</button>
+                    </div>
+                    <div id="console3" class="console">Ready...</div>
+                </div>
+            </section>
+
+            <!-- Tab: Glossary -->
+            <section id="glossary" class="tab-content space-y-6">
+                <h2 class="text-3xl font-bold text-blue-500">Glossary & Flashcards</h2>
+                <p>Hover over each card to reveal the definition of critical terms.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front font-bold">Idempotency</div>
+                            <div class="flashcard-back text-xs">The property of a script where running it multiple times has the same effect as running it once, without causing errors or duplicate data.</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front font-bold">Evidence Gathering</div>
+                            <div class="flashcard-back text-xs">The automated process of collecting logs, configurations, and screenshots to prove compliance during an audit.</div>
+                        </div>
+                    </div>
+                    <div class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front font-bold">CVE</div>
+                            <div class="flashcard-back text-xs">Common Vulnerabilities and Exposures. A list of publicly disclosed cybersecurity vulnerabilities used to check patch levels.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Footer Disclaimer -->
+    <footer class="mt-12 p-8 border-t text-sm opacity-80" style="background: var(--nav-bg); border-color: var(--base1);">
+        <div class="max-w-5xl mx-auto space-y-4">
+            <p><strong>Disclaimer:</strong> This educational material is provided for informational purposes only. Cybersecurity is a rapidly evolving field. Use these scripts with appropriate permissions—not too little (causing failures) and not too much (security risk).</p>
+            <p>Document Version: 1.0 | Last Updated: January 26, 2026 | Prepared by: Cyber.SoHo Educational Division</p>
+            <p>&copy; 2026 Cyber.SoHo. All rights reserved. <a href="https://www.virustotal.com" class="solarized-link" target="_blank">Verify Links at VirusTotal</a></p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', next);
+            document.getElementById('theme-icon').innerText = next === 'light' ? '🌙' : '☀️';
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        async function runCode(consoleId, startMsg, finalMsg) {
+            const consoleBox = document.getElementById(consoleId);
+            consoleBox.innerHTML = `> ${startMsg}<br>`;
+            
+            // Simulate steps
+            const steps = [
+                "Initializing sandbox environment...",
+                "Loading dependencies...",
+                "Executing code block...",
+                "Validating output..."
+            ];
+
+            for (let step of steps) {
+                await new Promise(r => setTimeout(r, 600));
+                consoleBox.innerHTML += `[STEP] ${step}<br>`;
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            }
+
+            await new Promise(r => setTimeout(r, 500));
+            consoleBox.innerHTML += `<span style="color: #0ff;">${finalMsg}</span>`;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function clearConsole(consoleId) {
+            document.getElementById(consoleId).innerHTML = "Console cleared.";
+        }
+
+        function checkQuiz(lesson) {
+            const feedback = document.getElementById(`feedback-${lesson}`);
+            feedback.classList.remove('hidden');
+            
+            if (lesson === 'l1') {
+                const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+                const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+                
+                let text = "<b>Results:</b><br>";
+                if (q1 === 'b') text += "Q1 Correct! Get-ADDefaultDomainPasswordPolicy is specific to security audits.<br>";
+                else text += "Q1 Incorrect. Review the PowerShell section.<br>";
+                
+                if (q2 === 'true') text += "Q2 Correct! Automation removes manual typo risks.<br>";
+                else text += "Q2 Incorrect. Automation is significantly safer for data integrity.<br>";
+                
+                feedback.innerHTML = text + "<br><button onclick='resetQuiz(\"l1\")' class='text-xs underline'>Reset Quiz</button>";
+            }
+        }
+
+        function resetQuiz(lesson) {
+            document.querySelectorAll(`#quiz-${lesson} input`).forEach(i => i.checked = false);
+            document.getElementById(`feedback-${lesson}`).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+
+
+
+

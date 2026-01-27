@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripting Verification Flashcards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            height: 300px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .flip-card-front {
+            background-color: #ffffff;
+            color: #1f2937;
+            border: 2px solid #e5e7eb;
+        }
+        .flip-card-back {
+            background-color: #3b82f6;
+            color: white;
+            transform: rotateY(180deg);
+        }
+        @media (max-width: 640px) {
+            .flip-card { height: 250px; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center py-8 px-4 font-sans text-gray-900">
+
+    <div class="max-w-2xl w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800">Module 9: Scripting Verification</h1>
+            <p class="text-gray-500 mt-2">Click the card to flip, use buttons to navigate</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <!-- Flashcard Container -->
+        <div id="card-container" class="flip-card w-full" onclick="toggleFlip()">
+            <div class="flip-card-inner" id="card-inner">
+                <div class="flip-card-front">
+                    <p id="front-text" class="text-xl md:text-2xl font-semibold"></p>
+                </div>
+                <div class="flip-card-back">
+                    <p id="back-text" class="text-lg md:text-xl leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between gap-4">
+            <button onclick="prevCard()" class="px-6 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors font-medium">
+                Previous
+            </button>
+            <span id="counter" class="text-gray-600 font-medium text-lg">1 / 25</span>
+            <button onclick="nextCard()" class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors font-medium">
+                Next
+            </button>
+        </div>
+
+        <!-- Help -->
+        <div class="bg-blue-50 p-4 rounded-lg text-blue-800 text-sm">
+            <p><strong>Tip:</strong> You can also use the <strong>Spacebar</strong> to flip and <strong>Arrow Keys</strong> to navigate.</p>
+        </div>
+    </div>
+
+    <script>
+        const flashcards = [
+            { front: "Audit Evidence Gathering", back: "The systematic process of collecting proof that an organization's systems and processes comply with specific regulations, standards, or internal policies." },
+            { front: "Primary focus of HIPAA", back: "Protecting patient health information (PHI)." },
+            { front: "Primary focus of PCI DSS", back: "Protecting credit card data and payment environments." },
+            { front: "Primary use case for PowerShell in auditing", back: "Working primarily with Windows environments, Active Directory, and Windows Server infrastructure." },
+            { front: "Primary use case for Python in auditing", back: "Working across multiple operating systems (Windows, Linux, macOS) and performing extensive data processing." },
+            { front: "Authentication in scripting", back: "The process of the script proving its identity to the system." },
+            { front: "Authorization in scripting", back: "The process of ensuring the script has permission to access specific resources." },
+            { front: "Methods to ensure Evidence Integrity", back: "Timestamping collection times, creating cryptographic hashes of data, and maintaining a chain of custody." },
+            { front: "PowerShell cmdlet to retrieve user account information", back: "Get-ADUser" },
+            { front: "Purpose of hashing audit reports", back: "To create a cryptographic fingerprint that allows auditors to verify the file has not been modified since creation." },
+            { front: "PowerShell cmdlet to check Windows Firewall profiles", back: "Get-NetFirewallProfile" },
+            { front: "PowerShell cmdlet to check Antivirus status", back: "Get-MpComputerStatus" },
+            { front: "PowerShell cmdlet to check BitLocker encryption", back: "Get-BitLockerVolume" },
+            { front: "PCI DSS Requirement 6.2", back: "Requires ensuring all system components and software are protected from known vulnerabilities by installing applicable security patches." },
+            { front: "CVE", back: "Common Vulnerabilities and Exposures; a dictionary of publicly known security vulnerabilities." },
+            { front: "PowerShell cmdlet to list installed hotfixes/patches", back: "Get-HotFix" },
+            { front: "Positive Evidence", back: "Proof of what IS present on a system (e.g., a list of installed patches)." },
+            { front: "Negative Evidence (Gap Analysis)", back: "Proof of what is MISSING from a system (e.g., a list of patches that should be installed but are not)." },
+            { front: "Windows Event ID 4624", back: "Successful logon" },
+            { front: "Windows Event ID 4625", back: "Failed logon attempt" },
+            { front: "Windows Event ID 4740", back: "Account lockout" },
+            { front: "Five key requirements for compliance log analysis", back: "Completeness, Adequacy, Effectiveness, Integrity, and Retention." },
+            { front: "Goal of checking 'Last Reboot Time' in patch audits", back: "To identify systems where patches may have been installed but are not yet active because the system hasn't restarted." },
+            { front: "Python 'subprocess' module usage", back: "Used to execute system commands, such as running PowerShell scripts from within a Python audit tool." },
+            { front: "Benefit of automated vs. manual compliance checks", back: "Automated checks allow for continuous monitoring, scalability to thousands of systems, and consistent, reproducible results." }
+        ];
+
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        function updateUI() {
+            const card = flashcards[currentIndex];
+            const container = document.getElementById('card-container');
+            
+            // Reset flip state for new card
+            container.classList.remove('flipped');
+            isFlipped = false;
+
+            // Update text (short delay to allow transition if needed)
+            setTimeout(() => {
+                document.getElementById('front-text').textContent = card.front;
+                document.getElementById('back-text').textContent = card.back;
+            }, 100);
+
+            // Update counter and progress
+            document.getElementById('counter').textContent = `${currentIndex + 1} / ${flashcards.length}`;
+            const progress = ((currentIndex + 1) / flashcards.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function toggleFlip() {
+            isFlipped = !isFlipped;
+            document.getElementById('card-container').classList.toggle('flipped', isFlipped);
+        }
+
+        function nextCard() {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                updateUI();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateUI();
+            }
+        }
+
+        // Keyboard Controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleFlip();
+            } else if (e.code === 'ArrowRight') {
+                nextCard();
+            } else if (e.code === 'ArrowLeft') {
+                prevCard();
+            }
+        });
+
+        // Initialize first card
+        updateUI();
+    </script>
+</body>
+</html>
+
+
+

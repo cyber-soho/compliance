@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 8: Auditing Tools - Cyber.SoHo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind Config for Solarized Theme -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        solarized: {
+                            base03: '#002b36',
+                            base02: '#073642',
+                            base01: '#586e75',
+                            base00: '#657b83',
+                            base0: '#839496',
+                            base1: '#93a1a1',
+                            base2: '#eee8d5',
+                            base3: '#fdf6e3',
+                            yellow: '#b58900',
+                            orange: '#cb4b16',
+                            red: '#dc322f',
+                            magenta: '#d33682',
+                            violet: '#6c71c4',
+                            blue: '#268bd2',
+                            cyan: '#2aa198',
+                            green: '#859900',
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+                        sans: ['ui-sans-serif', 'system-ui', '-apple-system', "Segoe UI", 'Roboto', "Helvetica Neue", 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Solarized Base Styles */
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* Light Mode Defaults (Solarized Light) */
+        body.light {
+            background-color: #fdf6e3; /* base3 */
+            color: #657b83; /* base00 */
+        }
+        
+        /* Dark Mode Defaults (Solarized Dark) */
+        body.dark {
+            background-color: #002b36; /* base03 */
+            color: #839496; /* base0 */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #93a1a1;
+            border-radius: 4px;
+        }
+        body.dark ::-webkit-scrollbar-thumb {
+            background: #586e75;
+        }
+
+        .code-console {
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+        }
+
+        /* Animations */
+        @keyframes scan-spin {
+            from { transform: rotate(0deg); transform-origin: 100px 100px; }
+            to { transform: rotate(360deg); transform-origin: 100px 100px; }
+        }
+        .scan-line-active {
+            animation: scan-spin 2s linear infinite;
+        }
+
+        @keyframes reveal-vuln {
+            0%, 100% { opacity: 0.2; r: 4; }
+            50% { opacity: 1; r: 6; }
+        }
+        .vuln-found {
+            animation: reveal-vuln 1s infinite;
+            fill: #dc322f !important;
+        }
+
+        @keyframes pulse-node {
+            0%, 100% { r: 5; opacity: 0.5; }
+            50% { r: 8; opacity: 1; }
+        }
+        .node-active {
+            animation: pulse-node 0.8s infinite;
+            fill: #859900 !important; /* Solarized Green */
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Flashcard Flip */
+        .flashcard {
+            perspective: 1000px;
+            height: 150px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flashcard:hover .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-base">
+
+    <!-- TOP NAVIGATION -->
+    <header class="bg-solarized-base2 dark:bg-solarized-base02 border-b border-solarized-base1 dark:border-solarized-base01 px-6 py-4 flex justify-between items-center z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <!-- Inline SVG Logo -->
+            <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="80" height="80" rx="10" fill="#268bd2" />
+                <path d="M30 50 L50 70 L80 30" stroke="#fdf6e3" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="25" cy="25" r="5" fill="#fdf6e3"/>
+            </svg>
+            <div>
+                <h1 class="font-bold text-xl text-solarized-base00 dark:text-solarized-base0">Module 8: Auditing Tools</h1>
+                <p class="text-xs text-solarized-base01 dark:text-solarized-base01">Cybersecurity Compliance Assessments</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <span class="text-sm font-semibold">Theme:</span>
+            <button id="theme-toggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-solarized-base1 transition-colors focus:outline-none focus:ring-2 focus:ring-solarized-blue focus:ring-offset-2">
+                <span class="sr-only">Enable dark mode</span>
+                <span id="toggle-knob" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-64 bg-solarized-base2 dark:bg-solarized-base02 border-r border-solarized-base1 dark:border-solarized-base01 overflow-y-auto flex-shrink-0 hidden md:block">
+            <nav class="p-4 space-y-2">
+                <button onclick="switchTab('intro')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-solarized-base1 hover:text-white dark:hover:bg-solarized-base01 transition-colors font-medium active-nav" data-target="intro">
+                    1. Intro & Concepts
+                </button>
+                <button onclick="switchTab('lesson1')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-solarized-base1 hover:text-white dark:hover:bg-solarized-base01 transition-colors font-medium" data-target="lesson1">
+                    2. SCAP & OpenSCAP
+                </button>
+                <button onclick="switchTab('lesson2')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-solarized-base1 hover:text-white dark:hover:bg-solarized-base01 transition-colors font-medium" data-target="lesson2">
+                    3. Vulnerability Scanners
+                </button>
+                <button onclick="switchTab('lesson3')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-solarized-base1 hover:text-white dark:hover:bg-solarized-base01 transition-colors font-medium" data-target="lesson3">
+                    4. Custom Scripts & Kali
+                </button>
+                <button onclick="switchTab('glossary')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-solarized-base1 hover:text-white dark:hover:bg-solarized-base01 transition-colors font-medium" data-target="glossary">
+                    5. Glossary & Flashcards
+                </button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto p-8 relative scroll-smooth bg-solarized-base3 dark:bg-solarized-base03">
+            
+            <!-- INTRO TAB -->
+            <div id="intro" class="tab-content active max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-solarized-blue mb-6">Introduction to Auditing Tools</h2>
+                <div class="prose dark:prose-invert max-w-none mb-8">
+                    <p class="text-lg mb-4">
+                        Welcome to Module 8! Think of auditing tools as the <strong>X-ray machines</strong> and <strong>metal detectors</strong> of the cybersecurity world. They see through the walls of your systems to find the hidden dangers that could cost companies millions of dollars or land executives in jail.
+                    </p>
+                    <div class="bg-solarized-base2 dark:bg-solarized-base02 p-6 rounded-xl border border-solarized-base1 dark:border-solarized-base01 my-6 flex gap-6 items-center flex-col md:flex-row">
+                        <div class="w-full md:w-1/3">
+                            <!-- Metaphor Visualization SVG -->
+                            <svg viewBox="0 0 200 150" class="w-full h-auto">
+                                <rect x="20" y="40" width="60" height="80" fill="#657b83" rx="4" />
+                                <rect x="120" y="40" width="60" height="80" fill="#657b83" rx="4" opacity="0.5" stroke="#2aa198" stroke-dasharray="4"/>
+                                <circle cx="150" cy="80" r="15" fill="#dc322f" opacity="0.8">
+                                    <animate attributeName="opacity" values="0.2;1;0.2" dur="2s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="150" y="80" text-anchor="middle" dy="5" fill="white" font-weight="bold" font-size="20">!</text>
+                                <path d="M90 80 L110 80" stroke="#268bd2" stroke-width="4" marker-end="url(#arrow)" />
+                                <text x="100" y="140" text-anchor="middle" class="fill-solarized-base00 dark:fill-solarized-base0" font-size="10">X-Ray Inspection</text>
+                            </svg>
+                        </div>
+                        <div class="w-full md:w-2/3">
+                            <h3 class="text-xl font-bold text-solarized-magenta">Why do we need them?</h3>
+                            <ul class="list-disc pl-5 mt-2 space-y-2 text-solarized-base00 dark:text-solarized-base0">
+                                <li><strong>Automation:</strong> Scan thousands of systems in minutes.</li>
+                                <li><strong>Visibility:</strong> Identify vulnerabilities before hackers do.</li>
+                                <li><strong>Compliance:</strong> Ensure alignment with regulations (HIPAA, PCI-DSS).</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p>Today we will explore three critical lessons:</p>
+                    <ol class="list-decimal pl-6 space-y-2 mt-4">
+                        <li><strong>SCAP & OpenSCAP:</strong> The "standard language" of compliance.</li>
+                        <li><strong>Vulnerability Scanners:</strong> Tools like Nessus that hunt for weaknesses.</li>
+                        <li><strong>Custom Scripts:</strong> The "Swiss Army Knives" like Kali Linux tools.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- LESSON 1: SCAP -->
+            <div id="lesson1" class="tab-content max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-solarized-blue mb-4">Lesson 1: Using SCAP and OpenSCAP</h2>
+                <div class="bg-solarized-yellow/10 border-l-4 border-solarized-yellow p-4 mb-6">
+                    <p class="font-bold text-solarized-yellow">Core Concept</p>
+                    <p>SCAP (Security Content Automation Protocol) is a suite of specifications that standardize the format and nomenclature by which security software communicates information about software flaws and security configurations.</p>
+                </div>
+
+                <!-- Visual Schematic -->
+                <div class="my-8 p-4 bg-white dark:bg-black/20 rounded-lg border border-solarized-base1 dark:border-solarized-base01">
+                    <h4 class="text-center font-bold mb-4">The SCAP Workflow</h4>
+                    <svg viewBox="0 0 600 150" class="w-full h-auto">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#93a1a1" />
+                            </marker>
+                        </defs>
+                        <!-- Policy Node -->
+                        <rect x="10" y="50" width="100" height="50" rx="5" fill="#268bd2" />
+                        <text x="60" y="80" text-anchor="middle" fill="white" font-weight="bold">Policy</text>
+                        <path d="M110 75 L150 75" stroke="#93a1a1" stroke-width="2" marker-end="url(#arrowhead)" />
+                        
+                        <!-- XCCDF Node -->
+                        <rect x="160" y="50" width="100" height="50" rx="5" fill="#2aa198" />
+                        <text x="210" y="70" text-anchor="middle" fill="white" font-weight="bold" font-size="12">XCCDF</text>
+                        <text x="210" y="85" text-anchor="middle" fill="white" font-size="10">(Checklist)</text>
+                        <path d="M260 75 L300 75" stroke="#93a1a1" stroke-width="2" marker-end="url(#arrowhead)" />
+
+                        <!-- Engine Node -->
+                        <circle cx="350" cy="75" r="40" fill="#b58900" />
+                        <text x="350" y="75" text-anchor="middle" fill="white" font-weight="bold" font-size="12">OpenSCAP</text>
+                        <text x="350" y="90" text-anchor="middle" fill="white" font-size="10">Engine</text>
+                        <path d="M390 75 L430 75" stroke="#93a1a1" stroke-width="2" marker-end="url(#arrowhead)" />
+
+                        <!-- Report Node -->
+                        <rect x="440" y="50" width="140" height="50" rx="5" fill="#dc322f" />
+                        <text x="510" y="80" text-anchor="middle" fill="white" font-weight="bold">Compliance Report</text>
+                    </svg>
+                </div>
+
+                <!-- Code Example -->
+                <div class="mt-8 mb-12">
+                    <h3 class="text-xl font-bold text-solarized-violet mb-2">Interactive Example: Running an OpenSCAP Scan</h3>
+                    <p class="mb-4 text-sm">This Bash command runs an evaluation against the RHEL7 profile and generates an HTML report. <br><strong>Task:</strong> Simulate a compliance scan against a specific XCCDF profile.</p>
+                    
+                    <div class="bg-solarized-base3 dark:bg-solarized-base03 border border-solarized-base1 rounded-lg overflow-hidden shadow-lg">
+                        <div class="bg-solarized-base2 dark:bg-solarized-base02 px-4 py-2 border-b border-solarized-base1 flex justify-between items-center">
+                            <span class="font-mono text-sm font-bold">Bash Terminal</span>
+                            <div class="flex gap-2">
+                                <button onclick="runSimulation('scap', 'bash')" class="bg-solarized-green text-white px-3 py-1 rounded text-xs hover:bg-opacity-80 font-bold transition">RUN</button>
+                                <button onclick="clearConsole('scap')" class="bg-solarized-red text-white px-3 py-1 rounded text-xs hover:bg-opacity-80 font-bold transition">CLEAR</button>
+                            </div>
+                        </div>
+                        <div class="p-4 overflow-x-auto">
+                            <!-- Code Snippet -->
+                            <div class="font-mono text-sm mb-4 text-solarized-base00 dark:text-solarized-base0">
+                                <span class="text-solarized-base01 dark:text-solarized-base01 italic"># Run OpenSCAP evaluation against RHEL7 profile</span><br>
+                                <span class="text-solarized-blue">oscap</span> xccdf eval \<br>
+                                &nbsp;&nbsp;--profile xccdf_org.ssgproject.content_profile_pci-dss \<br>
+                                &nbsp;&nbsp;--results results.xml \<br>
+                                &nbsp;&nbsp;--report report.html \<br>
+                                &nbsp;&nbsp;/usr/share/xml/scap/ssg/content/ssg-rhel7-ds.xml
+                            </div>
+                            <!-- Console Output -->
+                            <div id="console-scap" class="code-console bg-black text-green-400 p-4 rounded h-48 overflow-y-auto text-xs border border-gray-700">
+                                user@cybersoho:~$ _
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz -->
+                <div class="bg-solarized-base2 dark:bg-solarized-base02 p-6 rounded-lg border border-solarized-base1 mb-8">
+                    <h3 class="text-2xl font-bold mb-4 text-solarized-orange">Lesson 1 Quiz</h3>
+                    <form id="quiz-l1">
+                        <!-- MCQ 1 -->
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">1. What does XCCDF stand for in the context of SCAP?</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q1_1" value="wrong"> eXtensible Common Configuration Data Format</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q1_1" value="correct"> eXtensible Configuration Checklist Description Format</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q1_1" value="wrong"> XML Common Compliance Data File</label>
+                        </div>
+                        <!-- MCQ 2 -->
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">2. What is the primary purpose of OVAL?</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q1_2" value="wrong"> To generate the final PDF report.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q1_2" value="correct"> To provide technical details on how to check for a specific issue.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q1_2" value="wrong"> To encrypt the audit logs.</label>
+                        </div>
+                        <!-- MSQ -->
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">3. Which of the following are benefits of using automated auditing tools? (Select all that apply)</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q1_3" value="correct"> Speed and Efficiency</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q1_3" value="correct"> Consistency and Repeatability</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q1_3" value="wrong"> Automatically fixing all bugs without supervision</label>
+                        </div>
+                        <div class="flex gap-4">
+                            <button type="button" onclick="checkQuiz('l1')" class="bg-solarized-blue text-white px-4 py-2 rounded hover:bg-blue-600 transition">Submit Answers</button>
+                            <button type="button" onclick="resetQuiz('l1')" class="bg-solarized-base1 text-white px-4 py-2 rounded hover:bg-gray-500 transition">Reset</button>
+                        </div>
+                        <div id="result-l1" class="mt-4 font-bold hidden"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- LESSON 2: Vulnerability Scanners -->
+            <div id="lesson2" class="tab-content max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-solarized-blue mb-4">Lesson 2: Automated Vulnerability Scanners</h2>
+                <div class="prose dark:prose-invert max-w-none mb-6">
+                    <p>Tools like <strong>Nessus</strong> and <strong>OpenVAS (Greenbone)</strong> act like a doctor giving your network a physical exam. They check thousands of known issues ("signatures") against your systems.</p>
+                </div>
+
+                <!-- Radar Schematic -->
+                <div class="flex flex-col items-center justify-center my-8 bg-solarized-base2 dark:bg-solarized-base02 p-4 rounded-lg">
+                    <h4 class="mb-4 font-bold">Vulnerability Scanner Radar</h4>
+                    <svg width="300" height="300" viewBox="0 0 200 200" class="bg-black rounded-full border-4 border-solarized-base01">
+                        <!-- Grid Lines -->
+                        <circle cx="100" cy="100" r="90" stroke="#2aa198" stroke-width="1" fill="none" opacity="0.3"/>
+                        <circle cx="100" cy="100" r="60" stroke="#2aa198" stroke-width="1" fill="none" opacity="0.3"/>
+                        <circle cx="100" cy="100" r="30" stroke="#2aa198" stroke-width="1" fill="none" opacity="0.3"/>
+                        <line x1="100" y1="10" x2="100" y2="190" stroke="#2aa198" stroke-width="1" opacity="0.3"/>
+                        <line x1="10" y1="100" x2="190" y2="100" stroke="#2aa198" stroke-width="1" opacity="0.3"/>
+                        
+                        <!-- Scanning Line -->
+                        <line id="scan-line" x1="100" y1="100" x2="100" y2="10" stroke="#859900" stroke-width="2" />
+                        
+                        <!-- Simulated Vulnerabilities (Initially Hidden) -->
+                        <circle id="vuln1" class="vuln-dot" cx="140" cy="60" r="4" fill="#dc322f" opacity="0" />
+                        <circle id="vuln2" class="vuln-dot" cx="50" cy="120" r="4" fill="#dc322f" opacity="0" />
+                        <circle id="vuln3" class="vuln-dot" cx="160" cy="110" r="4" fill="#dc322f" opacity="0" />
+                    </svg>
+                    <p class="text-xs mt-2 text-solarized-base01">Click "RUN" in the console below to activate the scanner.</p>
+                </div>
+
+                <!-- Code Example -->
+                <div class="mt-8 mb-12">
+                    <h3 class="text-xl font-bold text-solarized-violet mb-2">Interactive Example: Python GVM (Greenbone) Script</h3>
+                    <p class="mb-4 text-sm">This Python script uses the Greenbone Management Protocol (GMP) to automate a scan. <br><strong>Task:</strong> Authenticate and start a scan task programmatically.</p>
+                    
+                    <div class="bg-solarized-base3 dark:bg-solarized-base03 border border-solarized-base1 rounded-lg overflow-hidden shadow-lg">
+                        <div class="bg-solarized-base2 dark:bg-solarized-base02 px-4 py-2 border-b border-solarized-base1 flex justify-between items-center">
+                            <span class="font-mono text-sm font-bold">Python Sandbox</span>
+                            <div class="flex gap-2">
+                                <button onclick="runSimulation('gvm', 'python')" class="bg-solarized-green text-white px-3 py-1 rounded text-xs hover:bg-opacity-80 font-bold transition">RUN</button>
+                                <button onclick="clearConsole('gvm')" class="bg-solarized-red text-white px-3 py-1 rounded text-xs hover:bg-opacity-80 font-bold transition">CLEAR</button>
+                            </div>
+                        </div>
+                        <div class="p-4 overflow-x-auto">
+                            <!-- Code Snippet -->
+                            <div class="font-mono text-sm mb-4 text-solarized-base00 dark:text-solarized-base0">
+                                <span class="text-solarized-base01 dark:text-solarized-base01 italic"># Import GVM library</span><br>
+                                <span class="text-solarized-orange">from</span> gvm.connections <span class="text-solarized-orange">import</span> UnixSocketConnection<br>
+                                <span class="text-solarized-orange">from</span> gvm.protocols.gmp <span class="text-solarized-orange">import</span> Gmp<br>
+                                <br>
+                                <span class="text-solarized-base01 dark:text-solarized-base01 italic"># Establish connection</span><br>
+                                path = <span class="text-solarized-cyan">'/run/gvmd/gvmd.sock'</span><br>
+                                connection = UnixSocketConnection(path=path)<br>
+                                <br>
+                                <span class="text-solarized-base01 dark:text-solarized-base01 italic"># Start scan task</span><br>
+                                <span class="text-solarized-orange">with</span> Gmp(connection=connection) <span class="text-solarized-orange">as</span> gmp:<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;gmp.authenticate(<span class="text-solarized-cyan">'admin'</span>, <span class="text-solarized-cyan">'password'</span>)<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;response = gmp.start_task(task_id=<span class="text-solarized-cyan">'uuid-of-task'</span>)<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-solarized-blue">print</span>(<span class="text-solarized-cyan">"Scan started successfully."</span>)
+                            </div>
+                            <!-- Console Output -->
+                            <div id="console-gvm" class="code-console bg-black text-green-400 p-4 rounded h-48 overflow-y-auto text-xs border border-gray-700">
+                                user@cybersoho:~$ _
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz -->
+                <div class="bg-solarized-base2 dark:bg-solarized-base02 p-6 rounded-lg border border-solarized-base1 mb-8">
+                    <h3 class="text-2xl font-bold mb-4 text-solarized-orange">Lesson 2 Quiz</h3>
+                    <form id="quiz-l2">
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">1. What is a "Credentialed Scan"?</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q2_1" value="wrong"> A scan that hacks the password.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q2_1" value="correct"> A scan where the tool logs in to check internal configurations.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q2_1" value="wrong"> A scan performed only by certified professionals.</label>
+                        </div>
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">2. What is a "False Positive"?</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q2_2" value="correct"> The tool reports a vulnerability that doesn't actually exist.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q2_2" value="wrong"> The tool misses a real vulnerability.</label>
+                        </div>
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">3. Why use APIs with vulnerability scanners? (Select all that apply)</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q2_3" value="correct"> To schedule regular scans automatically.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q2_3" value="correct"> To trigger scans when new code is deployed (CI/CD).</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q2_3" value="wrong"> To bypass the login screen manually.</label>
+                        </div>
+                        <div class="flex gap-4">
+                            <button type="button" onclick="checkQuiz('l2')" class="bg-solarized-blue text-white px-4 py-2 rounded hover:bg-blue-600 transition">Submit Answers</button>
+                            <button type="button" onclick="resetQuiz('l2')" class="bg-solarized-base1 text-white px-4 py-2 rounded hover:bg-gray-500 transition">Reset</button>
+                        </div>
+                        <div id="result-l2" class="mt-4 font-bold hidden"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- LESSON 3: Custom Scripts -->
+            <div id="lesson3" class="tab-content max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-solarized-blue mb-4">Lesson 3: Custom Scripts & Kali Linux</h2>
+                <div class="prose dark:prose-invert max-w-none mb-6">
+                    <p>Automated scanners are great, but sometimes you need a scalpel instead of a sledgehammer. Kali Linux provides tools like <strong>Nmap</strong> (Network Mapper) and <strong>Metasploit</strong> for specific, deep analysis.</p>
+                </div>
+
+                <!-- Network Scan Visualization -->
+                <div class="bg-solarized-base2 dark:bg-solarized-base02 p-4 rounded-lg border border-solarized-base1 mb-6 flex flex-col items-center">
+                    <h4 class="mb-2 font-bold">Network Topology Scan Visualization</h4>
+                    <svg width="400" height="200" viewBox="0 0 400 200">
+                        <line x1="200" y1="20" x2="100" y2="100" stroke="#93a1a1" stroke-width="2"/>
+                        <line x1="200" y1="20" x2="300" y2="100" stroke="#93a1a1" stroke-width="2"/>
+                        <line x1="100" y1="100" x2="50" y2="180" stroke="#93a1a1" stroke-width="2"/>
+                        <line x1="100" y1="100" x2="150" y2="180" stroke="#93a1a1" stroke-width="2"/>
+                        
+                        <!-- Attacker Node -->
+                        <circle cx="200" cy="20" r="15" fill="#dc322f" />
+                        <text x="200" y="25" text-anchor="middle" fill="white" font-size="10">Kali</text>
+
+                        <!-- Target Nodes -->
+                        <circle id="node1" cx="100" cy="100" r="10" fill="#657b83" />
+                        <circle id="node2" cx="300" cy="100" r="10" fill="#657b83" />
+                        <circle id="node3" cx="50" cy="180" r="10" fill="#657b83" />
+                        <circle id="node4" cx="150" cy="180" r="10" fill="#657b83" />
+                    </svg>
+                    <p class="text-xs mt-2 text-solarized-base01">Click "RUN" to see Nmap discover active nodes.</p>
+                </div>
+
+                <!-- Code Example -->
+                <div class="mt-8 mb-12">
+                    <h3 class="text-xl font-bold text-solarized-violet mb-2">Interactive Example: Nmap Scan</h3>
+                    <p class="mb-4 text-sm">Nmap uses raw IP packets to determine what hosts are available and what services are offering. <br><strong>Task:</strong> Scan a target for open ports and service versions.</p>
+                    
+                    <div class="bg-solarized-base3 dark:bg-solarized-base03 border border-solarized-base1 rounded-lg overflow-hidden shadow-lg">
+                        <div class="bg-solarized-base2 dark:bg-solarized-base02 px-4 py-2 border-b border-solarized-base1 flex justify-between items-center">
+                            <span class="font-mono text-sm font-bold">Bash Terminal</span>
+                            <div class="flex gap-2">
+                                <button onclick="runSimulation('nmap', 'bash')" class="bg-solarized-green text-white px-3 py-1 rounded text-xs hover:bg-opacity-80 font-bold transition">RUN</button>
+                                <button onclick="clearConsole('nmap')" class="bg-solarized-red text-white px-3 py-1 rounded text-xs hover:bg-opacity-80 font-bold transition">CLEAR</button>
+                            </div>
+                        </div>
+                        <div class="p-4 overflow-x-auto">
+                            <!-- Code Snippet -->
+                            <div class="font-mono text-sm mb-4 text-solarized-base00 dark:text-solarized-base0">
+                                <span class="text-solarized-base01 dark:text-solarized-base01 italic"># Run Nmap Service Version detection on target</span><br>
+                                <span class="text-solarized-blue">nmap</span> -sV -p 80,443,22 192.168.1.10
+                            </div>
+                            <!-- Console Output -->
+                            <div id="console-nmap" class="code-console bg-black text-green-400 p-4 rounded h-48 overflow-y-auto text-xs border border-gray-700">
+                                user@cybersoho:~$ _
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz -->
+                <div class="bg-solarized-base2 dark:bg-solarized-base02 p-6 rounded-lg border border-solarized-base1 mb-8">
+                    <h3 class="text-2xl font-bold mb-4 text-solarized-orange">Lesson 3 Quiz</h3>
+                    <form id="quiz-l3">
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">1. Which tool is primarily used for Network Mapping and port scanning?</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q3_1" value="correct"> Nmap</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q3_1" value="wrong"> Wireshark</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q3_1" value="wrong"> Burp Suite</label>
+                        </div>
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">2. Why might an auditor use manual scripts instead of automated tools?</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q3_2" value="wrong"> Because they are cheaper.</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="radio" name="q3_2" value="correct"> To validate specific findings or test custom environments.</label>
+                        </div>
+                        <div class="mb-6">
+                            <p class="font-bold mb-2">3. Which flags in Nmap help identify service versions? (Select all that apply)</p>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q3_3" value="correct"> -sV</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q3_3" value="wrong"> -Pn (No Ping)</label>
+                            <label class="block cursor-pointer hover:bg-black/5 p-2 rounded"><input type="checkbox" name="q3_3" value="correct"> -A (Aggressive scan, includes version detection)</label>
+                        </div>
+                        <div class="flex gap-4">
+                            <button type="button" onclick="checkQuiz('l3')" class="bg-solarized-blue text-white px-4 py-2 rounded hover:bg-blue-600 transition">Submit Answers</button>
+                            <button type="button" onclick="resetQuiz('l3')" class="bg-solarized-base1 text-white px-4 py-2 rounded hover:bg-gray-500 transition">Reset</button>
+                        </div>
+                        <div id="result-l3" class="mt-4 font-bold hidden"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- GLOSSARY TAB -->
+            <div id="glossary" class="tab-content max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-solarized-blue mb-6">Glossary & Flashcards</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Card 1 -->
+                    <div class="flashcard group">
+                        <div class="flashcard-inner text-solarized-base00 dark:text-solarized-base0">
+                            <div class="flashcard-front bg-solarized-base2 dark:bg-solarized-base02 border border-solarized-base1">
+                                <h3 class="text-xl font-bold">SCAP</h3>
+                            </div>
+                            <div class="flashcard-back bg-solarized-blue text-white border border-solarized-blue">
+                                <p class="text-sm">Security Content Automation Protocol. A standard for communicating security configs.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="flashcard group">
+                        <div class="flashcard-inner text-solarized-base00 dark:text-solarized-base0">
+                            <div class="flashcard-front bg-solarized-base2 dark:bg-solarized-base02 border border-solarized-base1">
+                                <h3 class="text-xl font-bold">CVE</h3>
+                            </div>
+                            <div class="flashcard-back bg-solarized-blue text-white border border-solarized-blue">
+                                <p class="text-sm">Common Vulnerabilities and Exposures. A list of publicly known cybersecurity vulnerabilities.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="flashcard group">
+                        <div class="flashcard-inner text-solarized-base00 dark:text-solarized-base0">
+                            <div class="flashcard-front bg-solarized-base2 dark:bg-solarized-base02 border border-solarized-base1">
+                                <h3 class="text-xl font-bold">Credentialed Scan</h3>
+                            </div>
+                            <div class="flashcard-back bg-solarized-blue text-white border border-solarized-blue">
+                                <p class="text-sm">A scan performed with login privileges to check internal configurations and patches.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="flashcard group">
+                        <div class="flashcard-inner text-solarized-base00 dark:text-solarized-base0">
+                            <div class="flashcard-front bg-solarized-base2 dark:bg-solarized-base02 border border-solarized-base1">
+                                <h3 class="text-xl font-bold">False Positive</h3>
+                            </div>
+                            <div class="flashcard-back bg-solarized-blue text-white border border-solarized-blue">
+                                <p class="text-sm">When a scanning tool incorrectly identifies a vulnerability that does not exist.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                     <!-- Card 5 -->
+                     <div class="flashcard group">
+                        <div class="flashcard-inner text-solarized-base00 dark:text-solarized-base0">
+                            <div class="flashcard-front bg-solarized-base2 dark:bg-solarized-base02 border border-solarized-base1">
+                                <h3 class="text-xl font-bold">Nmap</h3>
+                            </div>
+                            <div class="flashcard-back bg-solarized-blue text-white border border-solarized-blue">
+                                <p class="text-sm">Network Mapper. A utility for network discovery and security auditing.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 6 -->
+                    <div class="flashcard group">
+                        <div class="flashcard-inner text-solarized-base00 dark:text-solarized-base0">
+                            <div class="flashcard-front bg-solarized-base2 dark:bg-solarized-base02 border border-solarized-base1">
+                                <h3 class="text-xl font-bold">XCCDF</h3>
+                            </div>
+                            <div class="flashcard-back bg-solarized-blue text-white border border-solarized-blue">
+                                <p class="text-sm">The "Checklist" format in SCAP used to describe security configuration rules.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- DISCLAIMER SECTION -->
+            <div class="mt-12 p-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-sm">
+                <h4 class="font-bold text-red-600 dark:text-red-400">DISCLAIMER & WARNING</h4>
+                <p class="mb-2"><strong>Educational Use Only:</strong> This content is intended solely for educational purposes within the Cyber.SoHo Cybersecurity Compliance Assessments program. The tools and techniques demonstrated (e.g., Nmap, OpenSCAP, vulnerability scanners) are powerful utilities used by security professionals to secure systems.</p>
+                <p class="mb-2"><strong>Unauthorized Use is Prohibited:</strong> Scanning networks or systems without explicit, written permission from the owner is illegal in many jurisdictions (e.g., Computer Fraud and Abuse Act in the US). Never use these tools on networks you do not own or have authorization to test.</p>
+                <p><strong>VirusTotal Check:</strong> All external links referenced in course materials should be verified at <a href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">VirusTotal.com</a> before access. Cyber.SoHo is not responsible for external content.</p>
+            </div>
+
+            <!-- FOOTER -->
+            <footer class="bg-stone-900 text-stone-400 py-6 mt-8">
+                <div class="container mx-auto text-center text-sm">
+                    <p style="display:flex; justify-content:center; align-items:center; gap:8px; margin:0;">
+                        <img src="cyber_soho.png" alt="Cyber Soho" style="height:32px;">
+                        <span>&copy; 2025 Cybersecurity Compliance Assessments Program. Educational Use Only.</span>
+                    </p>
+                </div>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- Theme Toggling ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const toggleKnob = document.getElementById('toggle-knob');
+        const htmlElement = document.documentElement;
+        const bodyElement = document.body;
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = htmlElement.classList.contains('dark');
+            if (isDark) {
+                htmlElement.classList.remove('dark');
+                htmlElement.classList.add('light');
+                bodyElement.classList.remove('dark');
+                bodyElement.classList.add('light');
+                toggleKnob.classList.remove('translate-x-6');
+                toggleKnob.classList.add('translate-x-1');
+            } else {
+                htmlElement.classList.remove('light');
+                htmlElement.classList.add('dark');
+                bodyElement.classList.remove('light');
+                bodyElement.classList.add('dark');
+                toggleKnob.classList.remove('translate-x-1');
+                toggleKnob.classList.add('translate-x-6');
+            }
+        });
+
+        // --- Tab Switching ---
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Update Menu Active State
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-solarized-base1', 'text-white', 'dark:bg-solarized-base01');
+                if(btn.dataset.target === tabId) {
+                    btn.classList.add('bg-solarized-base1', 'text-white', 'dark:bg-solarized-base01');
+                }
+            });
+        }
+
+        // Initialize first tab active state styling
+        document.querySelector('.nav-btn[data-target="intro"]').classList.add('bg-solarized-base1', 'text-white');
+
+
+        // --- Code Simulation Logic ---
+        
+        const simulationSteps = {
+            'scap': [
+                "Loading OpenSCAP engine...",
+                "Loading profile 'xccdf_org.ssgproject.content_profile_pci-dss'...",
+                "Checking system against Rule: ensure_ssh_protocol_v2... [PASS]",
+                "Checking system against Rule: no_empty_passwords... [PASS]",
+                "Checking system against Rule: partition_noexec... [FAIL]",
+                "Generating HTML report at 'report.html'...",
+                "Evaluation finished. Score: 85%."
+            ],
+            'gvm': [
+                "Connecting to GVM socket at /run/gvmd/gvmd.sock...",
+                "Authenticating user 'admin'...",
+                "Authentication successful.",
+                "Initializing Task UUID: uuid-of-task...",
+                "Scan started successfully.",
+                "Status: Running... 10%",
+                "Status: Running... 45% (Found: CVE-2023-1234)",
+                "Status: Finished."
+            ],
+            'nmap': [
+                "Starting Nmap 7.94 at 2026-01-22 10:00 EST",
+                "Nmap scan report for 192.168.1.10",
+                "Host is up (0.00045s latency).",
+                "Not shown: 997 closed tcp ports (reset)",
+                "PORT    STATE SERVICE  VERSION",
+                "22/tcp  open  ssh      OpenSSH 8.2p1",
+                "80/tcp  open  http     Apache httpd 2.4.41",
+                "443/tcp open  ssl/http Apache httpd 2.4.41",
+                "Service detection performed. Please report any incorrect results at https://nmap.org/submit/ ."
+            ]
+        };
+
+        function runSimulation(id, type) {
+            const consoleDiv = document.getElementById(`console-${id}`);
+            const steps = simulationSteps[id];
+            consoleDiv.innerHTML = "user@cybersoho:~$ " + (type === 'python' ? 'python3 script.py' : './scan.sh') + "\n";
+            
+            // --- React Visualizations ---
+            
+            // Lesson 2: Radar Animation
+            if(id === 'gvm') {
+                const scanLine = document.getElementById('scan-line');
+                const vulns = document.querySelectorAll('.vuln-dot');
+                if(scanLine) scanLine.classList.add('scan-line-active');
+                if(vulns) {
+                    vulns.forEach((v, i) => {
+                        setTimeout(() => v.classList.add('vuln-found'), 2000 + (i*1000));
+                    });
+                }
+            }
+
+            // Lesson 3: Network Pulse Animation
+            if(id === 'nmap') {
+                const nodes = document.querySelectorAll('#node1, #node2, #node3, #node4');
+                nodes.forEach((n, i) => {
+                    setTimeout(() => n.classList.add('node-active'), i * 500);
+                });
+            }
+
+            let i = 0;
+            function printLine() {
+                if(i < steps.length) {
+                    consoleDiv.innerHTML += steps[i] + "\n";
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                    i++;
+                    setTimeout(printLine, 800); // 800ms delay between lines
+                } else {
+                    consoleDiv.innerHTML += "user@cybersoho:~$ _";
+                    // Cleanup animations after run (optional, or leave them until clear)
+                }
+            }
+            printLine();
+        }
+
+        function clearConsole(id) {
+            document.getElementById(`console-${id}`).innerHTML = "user@cybersoho:~$ _";
+            
+            // Clear animations
+            if(id === 'gvm') {
+                 document.getElementById('scan-line').classList.remove('scan-line-active');
+                 document.querySelectorAll('.vuln-dot').forEach(v => v.classList.remove('vuln-found'));
+            }
+            if(id === 'nmap') {
+                document.querySelectorAll('.node-active').forEach(n => n.classList.remove('node-active'));
+            }
+        }
+
+        // --- Quiz Logic ---
+        const quizAnswers = {
+            'l1': { 'q1_1': 'correct', 'q1_2': 'correct', 'q1_3': ['correct', 'correct'] },
+            'l2': { 'q2_1': 'correct', 'q2_2': 'correct', 'q2_3': ['correct', 'correct'] },
+            'l3': { 'q3_1': 'correct', 'q3_2': 'correct', 'q3_3': ['correct', 'correct'] }
+        };
+
+        function checkQuiz(lessonId) {
+            const form = document.getElementById(`quiz-${lessonId}`);
+            const resultDiv = document.getElementById(`result-${lessonId}`);
+            const answers = quizAnswers[lessonId];
+            let correct = true;
+
+            const formData = new FormData(form);
+            
+            // Basic validation logic
+            for (let [key, val] of Object.entries(answers)) {
+                if (Array.isArray(val)) {
+                    // Checkbox logic: ensure no wrong answers checked
+                    const userVals = formData.getAll(key);
+                    if(userVals.length === 0) correct = false;
+                    if(userVals.includes('wrong')) correct = false;
+                } else {
+                    if (formData.get(key) !== val) correct = false;
+                }
+            }
+
+            resultDiv.classList.remove('hidden');
+            if(correct) {
+                resultDiv.innerHTML = "<span class='text-green-600 dark:text-green-400'>Excellent! All answers are correct.</span>";
+            } else {
+                resultDiv.innerHTML = "<span class='text-red-600 dark:text-red-400'>Some answers are incorrect. Please review the lesson and try again.</span>";
+            }
+        }
+
+        function resetQuiz(lessonId) {
+            document.getElementById(`quiz-${lessonId}`).reset();
+            document.getElementById(`result-${lessonId}`).classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>

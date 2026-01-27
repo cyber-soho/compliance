@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Task 8: Scripting Verification Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Chart Container Styling - MANDATORY */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Constrain width on large screens */
+            height: 300px;
+            max-height: 350px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Custom Scrollbar for text areas */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Tab Transitions */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-connector {
+            flex-grow: 1;
+            height: 2px;
+            background-color: #e2e8f0;
+        }
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+    </style>
+    <!-- Chosen Palette: Slate (Neutrals) + Blue (Primary) + Emerald (Success) + Amber (Warning) -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Immediate context setting (NorthStream Project) and high-level constraints (Time, Deliverable).
+         2. Strategic Overview: A dashboard view using a Chart to visualize Grading Criteria (Weighting), helping students prioritize.
+         3. The Mission Control (Tabs): The core interactive area split into the 3 assignment parts:
+            - Part 1 (Scripting): Interactive checklist to plan the script and language selection.
+            - Part 2 (Execution): A vertical flow guide for the lab setup and execution process.
+            - Part 3 (Integration): An interactive mapper connecting Technical Checks to Regulatory Requirements (NIST/PIPEDA).
+         4. Deliverables & Safety: Final checklist and safety warnings.
+         Reasoning: The report is a complex multi-stage assignment. Breaking it into a "Process Flow" helps the user digest the requirements step-by-step rather than a wall of text.
+    -->
+    <!-- Visualization & Content Choices: 
+         - Grading Weighting -> Goal: Inform prioritization -> Method: Doughnut Chart (Chart.js) -> Interaction: Tooltips -> Justification: Visualizes where the most points are (Technical Accuracy).
+         - Compliance Mapping -> Goal: Relationships -> Method: Interactive List/Detail View (JS) -> Interaction: Click list item to reveal details -> Justification: Connects abstract technical ports to concrete legal acts (NIST/PIPEDA) without cluttered text.
+         - Execution Flow -> Goal: Organize -> Method: HTML/CSS Step UI -> Interaction: None (Visual guide) -> Justification: Clearly delineates the required operational steps.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navigation / Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🛡️</span>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">NorthStream <span class="text-slate-500 font-normal">| Project Task 8</span></h1>
+            </div>
+            <div class="text-sm font-medium text-slate-500 hidden sm:block">
+                Module 9: Scripting Verification
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Intro Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Context Card -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Context</span>
+                    <span class="bg-slate-100 text-slate-600 text-xs font-semibold px-2.5 py-0.5 rounded">Time: 4 Hours+</span>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-3">Automated Compliance Verification</h2>
+                <p class="text-slate-600 mb-4 leading-relaxed">
+                    You have previously defined a Configuration Baseline (Task 6) for NorthStream's Web Servers based on CIS Benchmarks. Now, you must prove those configurations exist in practice. 
+                    <br><br>
+                    <strong>Your Mission:</strong> Develop verification scripts to programmatically check compliance, execute them against a test target, and map findings to Canadian laws (PIPEDA) and frameworks (NIST CSF).
+                </p>
+                <div class="flex flex-wrap gap-4 mt-6">
+                    <div class="flex items-center gap-2 text-sm text-slate-600">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Objective: Translate policy to code
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-600">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Objective: Create audit evidence
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-600">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Objective: Verify CIS Benchmarks
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grading Visualizer -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">Evaluation Criteria</h3>
+                    <p class="text-sm text-slate-500 mb-4">Where to focus your efforts</p>
+                </div>
+                
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="gradingChart"></canvas>
+                </div>
+                <p class="text-xs text-center text-slate-400 mt-2">Total Weight: 100%</p>
+            </div>
+        </section>
+
+        <!-- Main Task Workflow Interface -->
+        <section>
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Task Execution Workflow</h2>
+                <p class="text-slate-600 mt-1">Navigate through the three phases of the assignment to view detailed requirements and tools.</p>
+            </div>
+
+            <!-- Custom Tabs -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[600px] flex flex-col">
+                <!-- Tab Headers -->
+                <div class="flex border-b border-slate-200 overflow-x-auto">
+                    <button onclick="switchTab('part1')" id="tab-part1" class="flex-1 py-4 px-6 text-sm font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none transition-colors hover:bg-slate-50 whitespace-nowrap">
+                        Part 1: Development
+                    </button>
+                    <button onclick="switchTab('part2')" id="tab-part2" class="flex-1 py-4 px-6 text-sm font-medium text-slate-500 hover:text-slate-700 focus:outline-none transition-colors hover:bg-slate-50 whitespace-nowrap">
+                        Part 2: Execution
+                    </button>
+                    <button onclick="switchTab('part3')" id="tab-part3" class="flex-1 py-4 px-6 text-sm font-medium text-slate-500 hover:text-slate-700 focus:outline-none transition-colors hover:bg-slate-50 whitespace-nowrap">
+                        Part 3: Integration
+                    </button>
+                </div>
+
+                <!-- Tab Content Area -->
+                <div class="p-6 md:p-8 bg-slate-50 flex-grow">
+                    
+                    <!-- TAB 1: Development -->
+                    <div id="part1-content" class="tab-content active space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-4">Script Requirements</h3>
+                                <p class="text-sm text-slate-600 mb-4">Select at least <strong>FIVE</strong> configuration items from your previous Task 6 Baseline to verify programmatically.</p>
+                                
+                                <div class="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+                                    <h4 class="font-semibold text-sm text-slate-800">Recommended Check Types:</h4>
+                                    <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer transition">
+                                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                        <span class="text-sm text-slate-700">Service Status (e.g., FTP disabled)</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer transition">
+                                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                        <span class="text-sm text-slate-700">Port Accessibility (e.g., Port 23 Closed)</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer transition">
+                                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                        <span class="text-sm text-slate-700">User Settings (e.g., Root Login Restricted)</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer transition">
+                                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                        <span class="text-sm text-slate-700">File Permissions (e.g., /etc/shadow 600)</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer transition">
+                                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                        <span class="text-sm text-slate-700">Logging Config (e.g., Syslog active)</span>
+                                    </label>
+                                </div>
+
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-sm text-slate-800 mb-2">Supported Tools/Languages:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">Bash</span>
+                                        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">Python (Paramiko)</span>
+                                        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">PowerShell</span>
+                                        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">Ansible</span>
+                                        <span class="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">Chef InSpec</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Safety Warning Card -->
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-5 h-fit">
+                                <div class="flex items-start gap-3">
+                                    <div class="text-2xl mt-1">⚠️</div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-amber-900 mb-2">Critical Safety Protocol</h3>
+                                        <p class="text-sm text-amber-800 leading-relaxed mb-4">
+                                            This exercise resembles actual penetration testing. To protect yourself and your institution:
+                                        </p>
+                                        <ul class="list-disc list-outside ml-4 space-y-1 text-sm text-amber-800">
+                                            <li>ONLY execute scripts against systems you own.</li>
+                                            <li>Use isolated VMs or Containers (VirtualBox, Docker).</li>
+                                            <li>NEVER run against school infrastructure.</li>
+                                            <li>Unauthorized scanning may violate the Criminal Code of Canada.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Execution -->
+                    <div id="part2-content" class="tab-content space-y-6">
+                        <div class="flex flex-col md:flex-row gap-6 h-full">
+                            <!-- Left: Steps -->
+                            <div class="md:w-1/3 space-y-8 relative">
+                                <!-- Connecting Line -->
+                                <div class="absolute left-4 top-4 bottom-4 w-0.5 bg-slate-200 -z-10"></div>
+
+                                <!-- Step 1 -->
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0 ring-4 ring-slate-50">1</div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900">Setup Environment</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Virtual Machine or Container</p>
+                                        <p class="text-sm text-slate-600 mt-2">Configure target with <strong>INTENTIONAL</strong> non-compliance to test your script's detection logic.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2 -->
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-full bg-white border-2 border-slate-300 text-slate-500 flex items-center justify-center font-bold text-sm shrink-0 ring-4 ring-slate-50">2</div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900">Execute Script</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Run with privileges</p>
+                                        <p class="text-sm text-slate-600 mt-2">Document command syntax, permissions required, and libraries.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3 -->
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-full bg-white border-2 border-slate-300 text-slate-500 flex items-center justify-center font-bold text-sm shrink-0 ring-4 ring-slate-50">3</div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900">Capture Results</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Pass/Fail Output</p>
+                                        <p class="text-sm text-slate-600 mt-2">Take screenshots of the output showing clear Pass/Fail status for each check.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Documentation Requirements -->
+                            <div class="md:w-2/3 bg-white rounded-lg border border-slate-200 p-6">
+                                <h3 class="text-lg font-bold text-slate-900 mb-4">Required Documentation</h3>
+                                <div class="space-y-4">
+                                    <div class="p-4 bg-slate-50 rounded border border-slate-100">
+                                        <h5 class="font-semibold text-sm text-slate-800">Proof of Environment</h5>
+                                        <p class="text-sm text-slate-600 mt-1">Screenshots proving OS version and installed services.</p>
+                                    </div>
+                                    <div class="p-4 bg-slate-50 rounded border border-slate-100">
+                                        <h5 class="font-semibold text-sm text-slate-800">Analysis of Failures</h5>
+                                        <p class="text-sm text-slate-600 mt-1">For each failed check, explain the gap, the risk, and the remediation.</p>
+                                    </div>
+                                    <div class="p-4 bg-slate-50 rounded border border-slate-100">
+                                        <h5 class="font-semibold text-sm text-slate-800">Critical Evaluation</h5>
+                                        <p class="text-sm text-slate-600 mt-1">Assess your script: What worked? What are the limitations? False positives?</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Integration -->
+                    <div id="part3-content" class="tab-content">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-bold text-slate-900">Compliance Logic Mapper</h3>
+                            <p class="text-sm text-slate-600">Click a Technical Check below to see how it maps to Legal and Framework requirements.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Selection Column -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Technical Checks</h4>
+                                
+                                <button onclick="showMapping('port23')" class="w-full text-left p-4 rounded-lg bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md transition group focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold text-slate-800">Close Telnet (Port 23)</span>
+                                        <span class="text-slate-400 group-hover:text-blue-500">→</span>
+                                    </div>
+                                </button>
+
+                                <button onclick="showMapping('rootLogin')" class="w-full text-left p-4 rounded-lg bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md transition group focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold text-slate-800">Restrict Root Login</span>
+                                        <span class="text-slate-400 group-hover:text-blue-500">→</span>
+                                    </div>
+                                </button>
+
+                                <button onclick="showMapping('logging')" class="w-full text-left p-4 rounded-lg bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md transition group focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold text-slate-800">Enable Audit Logging</span>
+                                        <span class="text-slate-400 group-hover:text-blue-500">→</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Detail Column -->
+                            <div class="bg-slate-800 rounded-lg p-6 text-slate-100 flex flex-col justify-center min-h-[250px] relative overflow-hidden">
+                                <!-- Background decor -->
+                                <div class="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-slate-700 rounded-full opacity-50"></div>
+                                
+                                <div id="mapping-placeholder" class="text-center text-slate-400">
+                                    <p class="text-3xl mb-2">🔍</p>
+                                    <p>Select a check to view compliance mapping</p>
+                                </div>
+
+                                <div id="mapping-content" class="hidden space-y-4 relative z-10">
+                                    <div>
+                                        <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">NIST CSF Mapping</span>
+                                        <div id="nist-target" class="text-lg font-bold mt-1">PR.AC-5: Network Integrity</div>
+                                        <p id="nist-desc" class="text-sm text-slate-300 mt-1">Ensures network integrity by disabling insecure protocols.</p>
+                                    </div>
+                                    <div class="h-px bg-slate-700 w-full"></div>
+                                    <div>
+                                        <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Legal (PIPEDA)</span>
+                                        <div id="legal-target" class="text-lg font-bold mt-1">Safeguard Principle 7</div>
+                                        <p id="legal-desc" class="text-sm text-slate-300 mt-1">Personal information shall be protected by security safeguards appropriate to the sensitivity of the information.</p>
+                                    </div>
+                                    <div class="mt-4 pt-4 border-t border-slate-700">
+                                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Audit Question</span>
+                                        <p id="audit-q" class="text-sm text-slate-300 italic mt-1">"How do you ensure insecure remote access is prevented?"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Report Checklist -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+            <h2 class="text-xl font-bold text-slate-900 mb-4">Final Report Checklist</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase border-b border-slate-200 pb-2 mb-2">Page 1: Method</h3>
+                    <ul class="space-y-2 text-sm text-slate-600">
+                        <li class="flex items-center gap-2">✅ Intro & NorthStream Context</li>
+                        <li class="flex items-center gap-2">✅ Config Item Rationale</li>
+                        <li class="flex items-center gap-2">✅ Tooling & Environment</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase border-b border-slate-200 pb-2 mb-2">Page 2: Results</h3>
+                    <ul class="space-y-2 text-sm text-slate-600">
+                        <li class="flex items-center gap-2">✅ Pass/Fail Summary Table</li>
+                        <li class="flex items-center gap-2">✅ Failure Analysis</li>
+                        <li class="flex items-center gap-2">✅ Evidence Screenshots</li>
+                        <li class="flex items-center gap-2">✅ Methodology Evaluation</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase border-b border-slate-200 pb-2 mb-2">Page 3: Integration</h3>
+                    <ul class="space-y-2 text-sm text-slate-600">
+                        <li class="flex items-center gap-2">✅ Legal Mapping (PIPEDA)</li>
+                        <li class="flex items-center gap-2">✅ NIST Framework Mapping</li>
+                        <li class="flex items-center gap-2">✅ Continuous Monitoring Plan</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p class="mb-2">⚠️ <strong>Academic Integrity:</strong> Cite all sources (CIS, NIST, Code Snippets). Do not run scripts on unauthorized systems.</p>
+            <p>Module 9: Scripting Verification | Project Task 8</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Data for Mapping Logic
+        const complianceData = {
+            port23: {
+                nist: "PR.AC-5: Network Integrity",
+                nistDesc: "Protects network integrity by ensuring insecure protocols (like Telnet) are disabled to prevent eavesdropping.",
+                legal: "PIPEDA Principle 7 (Safeguards)",
+                legalDesc: "Requires technical measures to prevent unauthorized access to personal data in transit.",
+                audit: "\"Show me evidence that insecure remote administration ports are blocked on all web servers.\""
+            },
+            rootLogin: {
+                nist: "PR.AC-4: Access Control",
+                nistDesc: "Access permissions and authorizations are managed, incorporating the principles of least privilege.",
+                legal: "PIPEDA Principle 7.2",
+                legalDesc: "Safeguards must protect against unauthorized access. Root login allows unaccountable full system access.",
+                audit: "\"Demonstrate how you restrict privileged access and attribute actions to specific individuals.\""
+            },
+            logging: {
+                nist: "DE.AE-3: Anomalies & Events",
+                nistDesc: "Event data are collected and correlated from multiple sources and sensors.",
+                legal: "PIPEDA & GDPR (Accountability)",
+                legalDesc: "Organizations must demonstrate compliance. Logs provide the necessary trail for breach investigations.",
+                audit: "\"Provide log evidence showing that critical configuration changes are recorded.\""
+            }
+        };
+
+        // Function to handle Mapping Clicks
+        function showMapping(key) {
+            const data = complianceData[key];
+            const placeholder = document.getElementById('mapping-placeholder');
+            const content = document.getElementById('mapping-content');
+            
+            // Populate Data
+            document.getElementById('nist-target').textContent = data.nist;
+            document.getElementById('nist-desc').textContent = data.nistDesc;
+            document.getElementById('legal-target').textContent = data.legal;
+            document.getElementById('legal-desc').textContent = data.legalDesc;
+            document.getElementById('audit-q').textContent = data.audit;
+
+            // Simple Fade In
+            placeholder.style.display = 'none';
+            content.style.display = 'block';
+            content.style.animation = 'fadeIn 0.5s';
+        }
+
+        // Function to handle Tab Switching
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Deactivate all buttons
+            const buttons = ['part1', 'part2', 'part3'];
+            buttons.forEach(btn => {
+                const btnEl = document.getElementById(`tab-${btn}`);
+                btnEl.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                btnEl.classList.add('text-slate-500');
+            });
+
+            // Activate Selected
+            document.getElementById(`${tabId}-content`).classList.add('active');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('text-slate-500');
+            activeBtn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+        }
+
+        // Initialize Chart.js
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('gradingChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Technical Accuracy', 'Documentation Quality', 'Compliance Integration', 'Critical Thinking'],
+                    datasets: [{
+                        data: [40, 30, 20, 10],
+                        backgroundColor: [
+                            '#2563eb', // Blue 600
+                            '#64748b', // Slate 500
+                            '#10b981', // Emerald 500
+                            '#f59e0b'  // Amber 500
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw}%`;
+                                }
+                            },
+                            backgroundColor: '#1e293b',
+                            padding: 10
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
