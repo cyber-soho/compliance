@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber.SoHo | Module 11: Incident Response</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Professional Calm (Stone/Orange/Slate) -->
+    <!-- Application Structure Plan: The app is designed as a linear educational journey with a persistent navigation bar. It breaks the lecture into three distinct interactive modules: 1) Compliance Deadlines (Calculator & Comparative Chart), 2) Audit Readiness (Interactive Checklist & Score Visualizer), and 3) Evidence Integrity (Real-time Hashing Simulator). This structure allows students to learn the theory, then immediately apply it using the simulated tools, reinforcing the 'Emergency Room' analogy. -->
+    <!-- Visualization & Content Choices: 
+        1. Reporting Module: Uses a Bar Chart to visually compare the rigid 72h GDPR window vs the flexible PIPEDA window. Includes a JS-driven Date Calculator to simulate the pressure of deadlines.
+        2. Audit Module: Uses a Doughnut Chart to visualize 'Compliance Readiness' based on an interactive checklist, gamifying the boring task of auditing.
+        3. Evidence Module: Uses a custom JS implementation of SHA-256 (via crypto API) to demonstrate the 'Avalanche Effect' in hashing, proving why Chain of Custody matters. 
+        4. No SVGs or Mermaid used; icons are Unicode/CSS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #fafaf9; color: #44403c; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid #e7e5e4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .nav-active { border-bottom: 2px solid #d97706; color: #d97706; font-weight: 600; }
+        .step-connector::after { content: ''; position: absolute; top: 50%; left: 100%; width: 2rem; height: 2px; background: #d6d3d1; transform: translateY(-50%); z-index: 0; }
+        .step-connector:last-child::after { display: none; }
+        /* Custom scrollbar for text areas */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #f1f1f1; }
+        textarea::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+    </style>
+</head>
+<body class="bg-stone-50 min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white border-b border-stone-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <span class="text-2xl text-orange-600">🛡️</span>
+                        <span class="font-bold text-xl tracking-tight text-stone-800"> Module 11: Incident Response</span>
+                    </div>
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
+                        <button onclick="navTo('intro')" id="nav-intro" class="nav-btn text-stone-500 hover:text-stone-900 px-1 pt-1 inline-flex items-center text-sm font-medium border-b-2 border-transparent transition-colors">Introduction</button>
+                        <button onclick="navTo('reporting')" id="nav-reporting" class="nav-btn text-stone-500 hover:text-stone-900 px-1 pt-1 inline-flex items-center text-sm font-medium border-b-2 border-transparent transition-colors">Breach Reporting</button>
+                        <button onclick="navTo('auditing')" id="nav-auditing" class="nav-btn text-stone-500 hover:text-stone-900 px-1 pt-1 inline-flex items-center text-sm font-medium border-b-2 border-transparent transition-colors">IRP Auditing</button>
+                        <button onclick="navTo('evidence')" id="nav-evidence" class="nav-btn text-stone-500 hover:text-stone-900 px-1 pt-1 inline-flex items-center text-sm font-medium border-b-2 border-transparent transition-colors">Chain of Custody</button>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs font-semibold bg-stone-100 text-stone-600 px-3 py-1 rounded-full">Module 10</span>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Nav Menu (Simple Toggle implementation for brevity) -->
+        <div class="sm:hidden flex justify-around border-t border-stone-200 py-2 bg-stone-50 text-xs">
+            <button onclick="navTo('intro')" class="p-2 text-stone-600">Intro</button>
+            <button onclick="navTo('reporting')" class="p-2 text-stone-600">Reporting</button>
+            <button onclick="navTo('auditing')" class="p-2 text-stone-600">Audit</button>
+            <button onclick="navTo('evidence')" class="p-2 text-stone-600">Evidence</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- SECTION: INTRO -->
+        <section id="intro" class="space-y-8 animate-fade-in">
+            <div class="text-center py-10">
+                <h1 class="text-4xl font-extrabold text-stone-900 tracking-tight sm:text-5xl mb-4">Incident Response Protocols</h1>
+                <p class="text-xl text-stone-600 max-w-3xl mx-auto">Welcome to the "Emergency Room" of cybersecurity. In this module, we explore the critical minutes and hours following a data breach.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="glass-panel p-6 rounded-xl hover:shadow-md transition-shadow cursor-pointer" onclick="navTo('reporting')">
+                    <div class="text-3xl mb-4">⏱️</div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">Mandatory Reporting</h3>
+                    <p class="text-sm text-stone-600">Navigate the high-pressure timelines of PIPEDA and GDPR. 72 hours can determine your organization's fate.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="glass-panel p-6 rounded-xl hover:shadow-md transition-shadow cursor-pointer" onclick="navTo('auditing')">
+                    <div class="text-3xl mb-4">📋</div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">IRP Auditing</h3>
+                    <p class="text-sm text-stone-600">Don't wait for a fire to test the drills. Learn how to systematically audit your response plans.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="glass-panel p-6 rounded-xl hover:shadow-md transition-shadow cursor-pointer" onclick="navTo('evidence')">
+                    <div class="text-3xl mb-4">⛓️</div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">Chain of Custody</h3>
+                    <p class="text-sm text-stone-600">Preserve the digital fingerprint. Understand why hashing and documentation are vital for court admissibility.</p>
+                </div>
+            </div>
+
+            <div class="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg mt-8">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <span class="text-orange-400 text-xl">💡</span>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-orange-800">
+                            <span class="font-bold">Real-World Context:</span> Just like triage in a hospital, Incident Response requires calm, calculated action under pressure. This dashboard simulates the tools you need to make those decisions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: BREACH REPORTING -->
+        <section id="reporting" class="hidden space-y-8 animate-fade-in">
+            <div class="border-b border-stone-200 pb-4">
+                <h2 class="text-3xl font-bold text-stone-800">Mandatory Breach Reporting</h2>
+                <p class="mt-2 text-stone-600">When a breach occurs, the clock starts immediately. Different jurisdictions have different rules.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Content & Calculator -->
+                <div class="space-y-6">
+                    <div class="glass-panel p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold text-stone-800 mb-4">Timeline Calculator</h3>
+                        <p class="text-sm text-stone-600 mb-4">Enter the date and time a breach was discovered to calculate your reporting deadlines for PIPEDA (Canada) and GDPR (EU).</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="breachTime" class="block text-sm font-medium text-stone-700">Breach Discovery Time</label>
+                                <input type="datetime-local" id="breachTime" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm p-2 border">
+                            </div>
+                            <button onclick="calculateDeadlines()" class="w-full bg-stone-800 text-white px-4 py-2 rounded-md hover:bg-stone-700 transition-colors">Calculate Deadlines</button>
+                        </div>
+
+                        <div id="resultsArea" class="hidden mt-6 space-y-4 border-t border-stone-100 pt-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white p-3 rounded border border-stone-200 text-center">
+                                    <h4 class="text-xs uppercase tracking-wide text-stone-500 font-semibold">GDPR Deadline (Strict)</h4>
+                                    <p id="gdprResult" class="text-lg font-bold text-stone-900 mt-1">--</p>
+                                    <div id="gdprStatus" class="mt-2 text-xs font-bold px-2 py-1 rounded inline-block bg-green-100 text-green-800">PENDING</div>
+                                </div>
+                                <div class="bg-white p-3 rounded border border-stone-200 text-center">
+                                    <h4 class="text-xs uppercase tracking-wide text-stone-500 font-semibold">PIPEDA Target (Flexible)</h4>
+                                    <p id="pipedaResult" class="text-lg font-bold text-stone-900 mt-1">--</p>
+                                    <div id="pipedaStatus" class="mt-2 text-xs font-bold px-2 py-1 rounded inline-block bg-yellow-100 text-yellow-800">ASAP</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-stone-500 italic">
+                                * PIPEDA requires "as soon as feasible". 48 hours is a safe operational target.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                        <h4 class="font-bold text-stone-800 mb-2">Key Regulatory Differences</h4>
+                        <ul class="space-y-3 text-sm text-stone-600">
+                            <li class="flex items-start">
+                                <span class="mr-2 text-orange-500">➤</span>
+                                <span><strong>GDPR (EU):</strong> Strict 72-hour limit. Heavy fines (up to €10M or 2% global revenue).</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="mr-2 text-orange-500">➤</span>
+                                <span><strong>PIPEDA (Canada):</strong> "As soon as feasible" if "Real Risk of Significant Harm" (RROSH) exists.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="mr-2 text-orange-500">➤</span>
+                                <span><strong>Record Keeping:</strong> Both require maintaining internal records of ALL breaches, even those not reported.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Visualization -->
+                <div class="flex flex-col">
+                    <div class="glass-panel p-6 rounded-xl flex-grow">
+                        <h3 class="text-lg font-semibold text-stone-800 mb-4">Compliance Windows Visualized</h3>
+                        <p class="text-xs text-stone-500 mb-4">Comparison of acceptable reporting windows in hours.</p>
+                        <div class="chart-container">
+                            <canvas id="reportingChart"></canvas>
+                        </div>
+                        <div class="mt-4 text-sm text-stone-600">
+                            <p><strong>Analysis:</strong> While PIPEDA offers flexibility, operating on a GDPR-standard (72h) helps global companies maintain a single, robust standard for all incidents.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: AUDITING -->
+        <section id="auditing" class="hidden space-y-8 animate-fade-in">
+            <div class="border-b border-stone-200 pb-4">
+                <h2 class="text-3xl font-bold text-stone-800">Auditing the Response Plan</h2>
+                <p class="mt-2 text-stone-600">A plan on paper is useless if it doesn't work in reality. Regular auditing uncovers gaps.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Checklist Interactive -->
+                <div class="lg:col-span-2 glass-panel p-6 rounded-xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-stone-800">IRP Readiness Audit</h3>
+                        <span id="auditScoreDisplay" class="text-2xl font-bold text-stone-300">0%</span>
+                    </div>
+                    
+                    <p class="text-sm text-stone-600 mb-6">Conduct a mock audit of your Incident Response Plan (IRP). Check off the items that are "Verified Current" to see your readiness status.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Audit Item 1 -->
+                        <div class="flex items-start p-3 bg-white rounded border border-stone-200">
+                            <input type="checkbox" id="audit1" class="audit-check mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-stone-300 rounded" onchange="updateAudit()">
+                            <div class="ml-3 text-sm">
+                                <label for="audit1" class="font-medium text-stone-900">CSIRT Contact List</label>
+                                <p class="text-stone-500 text-xs">Names, 24/7 phones, and emails are verified active.</p>
+                            </div>
+                        </div>
+                        <!-- Audit Item 2 -->
+                        <div class="flex items-start p-3 bg-white rounded border border-stone-200">
+                            <input type="checkbox" id="audit2" class="audit-check mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-stone-300 rounded" onchange="updateAudit()">
+                            <div class="ml-3 text-sm">
+                                <label for="audit2" class="font-medium text-stone-900">Legal Escalation Path</label>
+                                <p class="text-stone-500 text-xs">Legal counsel retainer is active and available.</p>
+                            </div>
+                        </div>
+                        <!-- Audit Item 3 -->
+                        <div class="flex items-start p-3 bg-white rounded border border-stone-200">
+                            <input type="checkbox" id="audit3" class="audit-check mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-stone-300 rounded" onchange="updateAudit()">
+                            <div class="ml-3 text-sm">
+                                <label for="audit3" class="font-medium text-stone-900">Evidence Handling Tools</label>
+                                <p class="text-stone-500 text-xs">Write-blockers & clean drives are physically present.</p>
+                            </div>
+                        </div>
+                        <!-- Audit Item 4 -->
+                        <div class="flex items-start p-3 bg-white rounded border border-stone-200">
+                            <input type="checkbox" id="audit4" class="audit-check mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-stone-300 rounded" onchange="updateAudit()">
+                            <div class="ml-3 text-sm">
+                                <label for="audit4" class="font-medium text-stone-900">Communication Templates</label>
+                                <p class="text-stone-500 text-xs">Pre-approved draft emails for customers/regulators.</p>
+                            </div>
+                        </div>
+                        <!-- Audit Item 5 -->
+                        <div class="flex items-start p-3 bg-white rounded border border-stone-200">
+                            <input type="checkbox" id="audit5" class="audit-check mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-stone-300 rounded" onchange="updateAudit()">
+                            <div class="ml-3 text-sm">
+                                <label for="audit5" class="font-medium text-stone-900">Vendor Contacts</label>
+                                <p class="text-stone-500 text-xs">ISP, Cloud Provider, and Forensics firm contracts valid.</p>
+                            </div>
+                        </div>
+                        <!-- Audit Item 6 -->
+                        <div class="flex items-start p-3 bg-white rounded border border-stone-200">
+                            <input type="checkbox" id="audit6" class="audit-check mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-stone-300 rounded" onchange="updateAudit()">
+                            <div class="ml-3 text-sm">
+                                <label for="audit6" class="font-medium text-stone-900">Last Drill Date</label>
+                                <p class="text-stone-500 text-xs">Tabletop exercise conducted within last 6 months.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization -->
+                <div class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-2">Compliance Status</h3>
+                    <div class="chart-container" style="height: 250px; max-height: 250px;">
+                        <canvas id="auditChart"></canvas>
+                    </div>
+                    <div id="auditFeedback" class="text-center text-sm font-medium text-stone-600 mt-4">
+                        Pending Audit Start...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: EVIDENCE -->
+        <section id="evidence" class="hidden space-y-8 animate-fade-in">
+            <div class="border-b border-stone-200 pb-4">
+                <h2 class="text-3xl font-bold text-stone-800">Chain of Custody & Evidence</h2>
+                <p class="mt-2 text-stone-600">Digital evidence is fragile. A single modification can render it inadmissible in court.</p>
+            </div>
+
+            <!-- Theory Flow -->
+            <div class="glass-panel p-6 rounded-xl overflow-x-auto">
+                <h3 class="text-lg font-semibold text-stone-800 mb-6">The Chain of Custody Lifecycle</h3>
+                <div class="flex justify-between min-w-[600px] relative pb-8">
+                    <!-- Step 1 -->
+                    <div class="step-connector relative flex flex-col items-center w-1/5">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-lg z-10 border-4 border-stone-50">1</div>
+                        <div class="mt-3 text-center">
+                            <div class="font-bold text-sm text-stone-800">Detection</div>
+                            <div class="text-xs text-stone-500">Log discovery time</div>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="step-connector relative flex flex-col items-center w-1/5">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-lg z-10 border-4 border-stone-50">2</div>
+                        <div class="mt-3 text-center">
+                            <div class="font-bold text-sm text-stone-800">Isolation</div>
+                            <div class="text-xs text-stone-500">Disconnect network</div>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="step-connector relative flex flex-col items-center w-1/5">
+                        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-lg z-10 border-4 border-stone-50 ring-2 ring-orange-400">3</div>
+                        <div class="mt-3 text-center">
+                            <div class="font-bold text-sm text-orange-700">Hashing</div>
+                            <div class="text-xs text-stone-500">Create fingerprint</div>
+                        </div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="step-connector relative flex flex-col items-center w-1/5">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-lg z-10 border-4 border-stone-50">4</div>
+                        <div class="mt-3 text-center">
+                            <div class="font-bold text-sm text-stone-800">Imaging</div>
+                            <div class="text-xs text-stone-500">Bit-by-bit copy</div>
+                        </div>
+                    </div>
+                    <!-- Step 5 -->
+                    <div class="step-connector relative flex flex-col items-center w-1/5">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-lg z-10 border-4 border-stone-50">5</div>
+                        <div class="mt-3 text-center">
+                            <div class="font-bold text-sm text-stone-800">Storage</div>
+                            <div class="text-xs text-stone-500">Secure locker</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Lab -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-2">Evidence Simulator</h3>
+                    <p class="text-sm text-stone-600 mb-4">Type any text below (simulating file content). Observe how the <span class="font-mono text-orange-600">SHA-256 Hash</span> changes dramatically with even a single character change. This is how we prove file integrity.</p>
+                    
+                    <label class="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">Evidence Content (File Data)</label>
+                    <textarea id="evidenceInput" rows="5" class="w-full p-3 rounded-md border border-stone-300 font-mono text-sm focus:ring-orange-500 focus:border-orange-500 bg-white" placeholder="Enter simulated evidence data here..." oninput="generateHash()"></textarea>
+                    
+                    <div class="mt-2 flex justify-end">
+                        <button onclick="tamperEvidence()" class="text-xs text-red-600 hover:text-red-800 underline">Simulate Tampering (Add Space)</button>
+                    </div>
+                </div>
+
+                <div class="bg-stone-800 text-stone-50 p-6 rounded-xl shadow-inner flex flex-col justify-center">
+                    <div class="mb-6">
+                        <h4 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Calculated SHA-256 Hash (Fingerprint)</h4>
+                        <div id="hashOutput" class="font-mono text-xs sm:text-sm break-all bg-black bg-opacity-30 p-4 rounded border border-stone-600 text-green-400">
+                            Waiting for input...
+                        </div>
+                    </div>
+                    
+                    <div id="integrityStatus" class="flex items-center p-3 rounded bg-stone-700/50 border border-stone-600">
+                        <div class="text-2xl mr-3">🔍</div>
+                        <div>
+                            <div class="font-bold text-sm text-stone-200">Integrity Check</div>
+                            <div class="text-xs text-stone-400">Hashes prove the file has not been altered since collection.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-stone-200 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center text-xs text-stone-500">
+            <div>&copy; 2026 Cyber.SoHo Educational Division</div>
+            <div class="mt-2 sm:mt-0">
+                Data Source: Module 10 Lecture Notes
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Navigation Logic ---
+        function navTo(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('main > section').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Update Nav Styling
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('nav-active', 'text-stone-900');
+                btn.classList.add('text-stone-500');
+            });
+            const activeBtn = document.getElementById('nav-' + sectionId);
+            if(activeBtn) {
+                activeBtn.classList.add('nav-active', 'text-stone-900');
+                activeBtn.classList.remove('text-stone-500');
+            }
+            
+            // Trigger chart resize on tab switch
+            if (sectionId === 'reporting') reportingChart.resize();
+            if (sectionId === 'auditing') auditChart.resize();
+        }
+
+        // --- Module 1: Reporting Logic ---
+        let reportingChart;
+
+        function initReportingChart() {
+            const ctx = document.getElementById('reportingChart').getContext('2d');
+            reportingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['GDPR (EU)', 'PIPEDA (Canada)', 'Industry Avg Response'],
+                    datasets: [{
+                        label: 'Reporting Window (Hours)',
+                        data: [72, 48, 24], // 48 is target for PIPEDA
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)', // Red for strict GDPR
+                            'rgba(245, 158, 11, 0.7)', // Orange for PIPEDA
+                            'rgba(16, 185, 129, 0.7)'  // Green for Best Practice
+                        ],
+                        borderColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(16, 185, 129)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw + ' Hours Max';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Hours after Discovery' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calculateDeadlines() {
+            const inputVal = document.getElementById('breachTime').value;
+            if (!inputVal) {
+                alert("Please select a breach discovery date and time.");
+                return;
+            }
+
+            const discoveryTime = new Date(inputVal);
+            const gdprTime = new Date(discoveryTime.getTime() + (72 * 60 * 60 * 1000));
+            // PIPEDA "As soon as feasible" - using 48h as safe target per lecture
+            const pipedaTime = new Date(discoveryTime.getTime() + (48 * 60 * 60 * 1000));
+
+            const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+            document.getElementById('gdprResult').innerText = gdprTime.toLocaleDateString('en-US', options);
+            document.getElementById('pipedaResult').innerText = pipedaTime.toLocaleDateString('en-US', options);
+
+            document.getElementById('resultsArea').classList.remove('hidden');
+            
+            // Logic to check if deadline passed (comparing to NOW)
+            const now = new Date();
+            const gdprDiff = gdprTime - now;
+            const pipedaDiff = pipedaTime - now;
+
+            const updateStatus = (id, diff) => {
+                const el = document.getElementById(id);
+                if (diff < 0) {
+                    el.innerText = "DEADLINE PASSED";
+                    el.className = "mt-2 text-xs font-bold px-2 py-1 rounded inline-block bg-red-100 text-red-800";
+                } else {
+                    const hoursLeft = Math.ceil(diff / (1000 * 60 * 60));
+                    el.innerText = `${hoursLeft} HRS REMAINING`;
+                    el.className = "mt-2 text-xs font-bold px-2 py-1 rounded inline-block bg-green-100 text-green-800";
+                }
+            };
+
+            updateStatus('gdprStatus', gdprDiff);
+            updateStatus('pipedaStatus', pipedaDiff);
+        }
+
+        // --- Module 2: Auditing Logic ---
+        let auditChart;
+
+        function initAuditChart() {
+            const ctx = document.getElementById('auditChart').getContext('2d');
+            auditChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ready', 'Gaps'],
+                    datasets: [{
+                        data: [0, 6],
+                        backgroundColor: ['#10b981', '#e5e7eb'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function updateAudit() {
+            const checks = document.querySelectorAll('.audit-check');
+            const total = checks.length;
+            let checked = 0;
+            
+            checks.forEach(c => { if(c.checked) checked++; });
+            
+            const percent = Math.round((checked / total) * 100);
+            const scoreEl = document.getElementById('auditScoreDisplay');
+            scoreEl.innerText = percent + "%";
+            
+            // Color logic for text
+            if(percent < 50) scoreEl.className = "text-2xl font-bold text-red-500";
+            else if(percent < 100) scoreEl.className = "text-2xl font-bold text-yellow-500";
+            else scoreEl.className = "text-2xl font-bold text-green-500";
+
+            // Update Chart
+            auditChart.data.datasets[0].data = [checked, total - checked];
+            auditChart.update();
+
+            // Feedback Text
+            const fb = document.getElementById('auditFeedback');
+            if(percent === 100) fb.innerText = "Audit Passed: Fully Compliant";
+            else if(percent === 0) fb.innerText = "Audit Status: Non-Compliant";
+            else fb.innerText = "Audit In Progress: Identify Gaps";
+        }
+
+        // --- Module 3: Evidence Logic ---
+        async function generateHash() {
+            const text = document.getElementById('evidenceInput').value;
+            const output = document.getElementById('hashOutput');
+            
+            if (!text) {
+                output.innerText = "Waiting for input...";
+                output.classList.remove('text-green-400', 'text-white');
+                output.classList.add('text-stone-500');
+                return;
+            }
+
+            // Encoder
+            const msgUint8 = new TextEncoder().encode(text);
+            // Hash
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            // Convert to Hex
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            output.innerText = hashHex;
+            output.classList.remove('text-stone-500');
+            output.classList.add('text-green-400');
+        }
+
+        function tamperEvidence() {
+            const input = document.getElementById('evidenceInput');
+            input.value += " "; // Add invisible space
+            generateHash(); // Re-trigger hash
+            
+            // Visual feedback
+            const status = document.getElementById('integrityStatus');
+            status.classList.add('bg-red-900', 'bg-opacity-50');
+            setTimeout(() => status.classList.remove('bg-red-900', 'bg-opacity-50'), 500);
+        }
+
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            initReportingChart();
+            initAuditChart();
+            
+            // Set default date for calculator to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('breachTime').value = now.toISOString().slice(0,16);
+        });
+
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Response Flashcards & Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .flip-card {
+            perspective: 1000px;
+            height: 300px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div id="app" class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-indigo-700 mb-2">Module 10: Incident Response</h1>
+            <p class="text-slate-500">Interactive Study Tool & Quiz</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button onclick="switchMode('study')" id="btn-study" class="px-6 py-2 rounded-full font-medium transition bg-indigo-600 text-white shadow-lg">Study Mode</button>
+                <button onclick="switchMode('quiz')" id="btn-quiz" class="px-6 py-2 rounded-full font-medium transition bg-white text-slate-600 hover:bg-slate-100 shadow">Quiz Mode</button>
+            </div>
+        </header>
+
+        <!-- Flashcard Study Section -->
+        <section id="study-section" class="block">
+            <div class="flex flex-col items-center">
+                <div id="card-container" class="flip-card w-full max-w-md" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-white border-2 border-indigo-100">
+                            <p id="study-front" class="text-xl font-semibold text-slate-800"></p>
+                        </div>
+                        <div class="flip-card-back bg-indigo-600 text-white">
+                            <p id="study-back" class="text-lg leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex items-center gap-8">
+                    <button onclick="prevCard()" class="p-3 rounded-full bg-white shadow hover:bg-indigo-50 text-indigo-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <span id="card-progress" class="font-mono text-slate-500 text-sm tracking-widest uppercase">Card 1 / 25</span>
+                    <button onclick="nextCard()" class="p-3 rounded-full bg-white shadow hover:bg-indigo-50 text-indigo-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+                <p class="mt-4 text-xs text-slate-400">Click the card to flip</p>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz-section" class="hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+                <div id="quiz-container">
+                    <div class="flex justify-between items-center mb-6">
+                        <span id="quiz-progress" class="text-sm font-bold text-indigo-600 uppercase tracking-wider">Question 1 / 25</span>
+                        <span id="quiz-score" class="text-sm font-medium text-slate-500">Score: 0</span>
+                    </div>
+                    <h2 id="quiz-question" class="text-xl font-bold mb-8 text-slate-800"></h2>
+                    <div id="quiz-options" class="space-y-3">
+                        <!-- Options injected here -->
+                    </div>
+                    <div id="quiz-feedback" class="mt-6 p-4 rounded-lg hidden"></div>
+                    <button id="next-quiz-btn" onclick="nextQuestion()" class="mt-8 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hidden hover:bg-indigo-700 transition">Next Question</button>
+                </div>
+
+                <!-- Quiz Results -->
+                <div id="quiz-results" class="hidden text-center py-10">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h2 class="text-2xl font-bold mb-2">Quiz Complete!</h2>
+                    <p id="final-score" class="text-slate-600 mb-8"></p>
+                    <button onclick="resetQuiz()" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">Try Again</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const flashcardData = [
+            { "front": "Definition of Incident Response", "back": "The organized approach to addressing and managing the aftermath of a security breach or cyberattack." },
+            { "front": "PIPEDA Reporting Deadline", "back": "\"As soon as feasible\" after discovery if there is a real risk of significant harm." },
+            { "front": "GDPR Reporting Deadline", "back": "Within 72 hours of becoming aware of the personal data breach." },
+            { "front": "PIPEDA stands for", "back": "Personal Information Protection and Electronic Documents Act" },
+            { "front": "GDPR Regulatory Body", "back": "European Data Protection Board (EDPB)" },
+            { "front": "Potential GDPR Non-Compliance Fine", "back": "Up to €10 million OR 2% of global annual revenue, whichever is higher." },
+            { "front": "Trigger for the GDPR 72-hour countdown", "back": "When the organization has sufficient information to reasonably determine a breach occurred." },
+            { "front": "IRP stands for", "back": "Incident Response Plan" },
+            { "front": "Recommended IRP Testing Frequency", "back": "At least annually (though bi-annual or quarterly is often recommended)." },
+            { "front": "Tabletop Exercise", "back": "A discussion-based scenario where team members talk through their roles and responses to a hypothetical incident." },
+            { "front": "CSIRT", "back": "Cyber Security Incident Response Team" },
+            { "front": "Chain of Custody", "back": "The chronological documentation recording the sequence of custody, control, transfer, analysis, and disposition of evidence." },
+            { "front": "Why shut down is avoided during device isolation", "back": "It can trigger data destruction scripts or result in the loss of volatile memory (RAM) evidence." },
+            { "front": "Write-Blocker", "back": "A hardware device that allows reading from storage media while preventing any write operations." },
+            { "front": "Preferred Hashing Algorithm for Forensics", "back": "SHA-256 (Secure Hash Algorithm 256-bit)" },
+            { "front": "Purpose of Cryptographic Hashes in Evidence", "back": "To create a unique digital fingerprint that proves evidence has not been altered since collection." },
+            { "front": "Binary Mode ('rb')", "back": "The file opening mode required for hashing to prevent text encoding issues." },
+            { "front": "Standard maximum age for IRP documents", "back": "365 days (1 year)" },
+            { "front": "Red Team Exercise", "back": "A simulation where authorized hackers attempt to breach defenses to test capabilities." },
+            { "front": "First step in Chain of Custody Protocol", "back": "Documentation of the initial detection (date, time, and discovery details)." },
+            { "front": "Consequence of Broken Chain of Custody", "back": "Evidence may be ruled inadmissible in court." },
+            { "front": "Python module for time calculations", "back": "datetime" },
+            { "front": "Gap Analysis", "back": "Identifying missing tools or procedures during an IRP audit." },
+            { "front": "Device Isolation method", "back": "Disconnecting from the network without powering down." },
+            { "front": "Requirement for PIPEDA breach recording", "back": "Organizations must keep records of ALL breaches for two years." }
+        ];
+
+        let currentCardIndex = 0;
+        let quizIndex = 0;
+        let score = 0;
+        let quizShuffled = [];
+
+        // Navigation
+        function switchMode(mode) {
+            document.getElementById('study-section').classList.toggle('hidden', mode !== 'study');
+            document.getElementById('quiz-section').classList.toggle('hidden', mode !== 'quiz');
+            
+            const btnStudy = document.getElementById('btn-study');
+            const btnQuiz = document.getElementById('btn-quiz');
+            
+            if (mode === 'study') {
+                btnStudy.className = "px-6 py-2 rounded-full font-medium transition bg-indigo-600 text-white shadow-lg";
+                btnQuiz.className = "px-6 py-2 rounded-full font-medium transition bg-white text-slate-600 hover:bg-slate-100 shadow";
+            } else {
+                btnQuiz.className = "px-6 py-2 rounded-full font-medium transition bg-indigo-600 text-white shadow-lg";
+                btnStudy.className = "px-6 py-2 rounded-full font-medium transition bg-white text-slate-600 hover:bg-slate-100 shadow";
+                resetQuiz();
+            }
+        }
+
+        // Flashcard Logic
+        function updateCard() {
+            const card = document.getElementById('card-container');
+            card.classList.remove('flipped');
+            setTimeout(() => {
+                document.getElementById('study-front').innerText = flashcardData[currentCardIndex].front;
+                document.getElementById('study-back').innerText = flashcardData[currentCardIndex].back;
+                document.getElementById('card-progress').innerText = `Card ${currentCardIndex + 1} / ${flashcardData.length}`;
+            }, 150);
+        }
+
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % flashcardData.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentCardIndex = (currentCardIndex - 1 + flashcardData.length) % flashcardData.length;
+            updateCard();
+        }
+
+        // Quiz Logic
+        function resetQuiz() {
+            quizIndex = 0;
+            score = 0;
+            quizShuffled = [...flashcardData].sort(() => Math.random() - 0.5);
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('quiz-results').classList.add('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = quizShuffled[quizIndex];
+            document.getElementById('quiz-progress').innerText = `Question ${quizIndex + 1} / ${quizShuffled.length}`;
+            document.getElementById('quiz-score').innerText = `Score: ${score}`;
+            document.getElementById('quiz-question').innerText = q.front;
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            document.getElementById('next-quiz-btn').classList.add('hidden');
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            // Generate 3 random wrong answers
+            let others = flashcardData.filter(f => f.back !== q.back)
+                                      .sort(() => Math.random() - 0.5)
+                                      .slice(0, 3)
+                                      .map(f => f.back);
+            
+            let choices = [...others, q.back].sort(() => Math.random() - 0.5);
+
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:border-indigo-300 hover:bg-indigo-50 transition font-medium text-slate-700";
+                btn.innerText = choice;
+                btn.onclick = () => checkAnswer(choice, q.back, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct, btn) {
+            const buttons = document.querySelectorAll('#quiz-options button');
+            buttons.forEach(b => b.disabled = true);
+
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if (selected === correct) {
+                score++;
+                btn.classList.replace('border-slate-100', 'border-green-500');
+                btn.classList.add('bg-green-50', 'text-green-700');
+                feedback.innerText = "Correct! Well done.";
+                feedback.className = "mt-6 p-4 rounded-lg bg-green-100 text-green-700 font-bold";
+            } else {
+                btn.classList.replace('border-slate-100', 'border-red-500');
+                btn.classList.add('bg-red-50', 'text-red-700');
+                feedback.innerText = `Incorrect. The correct answer is: ${correct}`;
+                feedback.className = "mt-6 p-4 rounded-lg bg-red-100 text-red-700 font-bold";
+                
+                // Highlight the correct one
+                buttons.forEach(b => {
+                    if (b.innerText === correct) {
+                        b.classList.replace('border-slate-100', 'border-green-500');
+                    }
+                });
+            }
+
+            document.getElementById('next-quiz-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            quizIndex++;
+            if (quizIndex < quizShuffled.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            const results = document.getElementById('quiz-results');
+            results.classList.remove('hidden');
+            document.getElementById('final-score').innerText = `You scored ${score} out of ${quizShuffled.length} (${Math.round(score/quizShuffled.length*100)}%)`;
+        }
+
+        // Initialize
+        window.onload = () => {
+            updateCard();
+        };
+    </script>
+</body>
+</html>
+
+
+

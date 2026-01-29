@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Flashcards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .perspective {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flipped {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+
+    <div class="max-w-2xl w-full mt-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Module 9 Flashcards</h1>
+        <p class="text-gray-600 mb-8">Third-Party & Cloud Compliance Assessments</p>
+
+        <!-- Flashcard Container -->
+        <div class="perspective w-full h-80 mb-8">
+            <div id="flashcard" class="flip-card-inner bg-white border border-gray-200">
+                <div class="flip-card-front">
+                    <p id="card-front-text" class="text-2xl font-semibold text-blue-600"></p>
+                </div>
+                <div class="flip-card-back">
+                    <p id="card-back-text" class="text-lg text-gray-800 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between px-4">
+            <button onclick="prevCard()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg transition">
+                Previous
+            </button>
+            <span id="counter" class="text-gray-500 font-medium">Card 1 of 25</span>
+            <button onclick="nextCard()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                Next
+            </button>
+        </div>
+
+        <div class="mt-8 text-sm text-gray-400">
+            Click the card to flip
+        </div>
+    </div>
+
+    <script>
+        const flashcardData = [
+            { "front": "Third-Party Risk", "back": "The potential threat to an organization's security and data arising from its reliance on outside vendors, suppliers, and service providers." },
+            { "front": "Fourth-Party Risk", "back": "Risks introduced by the vendors of your vendors (your vendor's subcontractors), which you did not directly vet." },
+            { "front": "ISO 27001", "back": "The international standard for Information Security Management Systems (ISMS) that demonstrates a vendor's commitment to security." },
+            { "front": "SOC 2 Type I Report", "back": "A compliance report that evaluates the design of a vendor's controls at a specific point in time (a snapshot)." },
+            { "front": "SOC 2 Type II Report", "back": "A compliance report that evaluates the operating effectiveness of a vendor's controls over a period of time (typically 6-12 months)." },
+            { "front": "Five Trust Service Criteria (SOC 2)", "back": "Security, Availability, Processing Integrity, Confidentiality, and Privacy." },
+            { "front": "SOC 2 Independent Auditor's Report", "back": "The section stating if issues were found: 'unqualified opinion' (good) vs 'qualified opinion' (red flag)." },
+            { "front": "Management's Assertion", "back": "The section of a SOC 2 report containing the vendor's claims about their own control environment." },
+            { "front": "Control Exception in SOC 2", "back": "A failure identified by the auditor during testing where a control did not operate as intended." },
+            { "front": "Shared Responsibility Model", "back": "A framework defining cloud security as a joint obligation: provider secures infrastructure, customer secures data/config." },
+            { "front": "Security OF the Cloud", "back": "The cloud provider's responsibility: physical security, hardware, networking, and virtualization." },
+            { "front": "Security IN the Cloud", "back": "The customer's responsibility: data encryption, IAM, OS patching, and application security." },
+            { "front": "IaaS Shared Responsibility", "back": "Infrastructure as a Service: Customer manages OS, apps, and data; provider manages physical infrastructure." },
+            { "front": "SaaS Shared Responsibility", "back": "Software as a Service: Provider handles most (app, OS, infra), customer handles data and access." },
+            { "front": "AWS CloudTrail", "back": "An AWS service used for logging and compliance monitoring." },
+            { "front": "Azure Active Directory", "back": "Microsoft's identity management service for managing access responsibilities in the Azure cloud." },
+            { "front": "Continuous Monitoring", "back": "The practice of regularly assessing vendor security rather than relying on a one-time assessment." },
+            { "front": "Vendor Risk Classification", "back": "Categorizing vendors by risk level (e.g., payment data handlers vs. office supply vendors)." },
+            { "front": "Incident Response Planning", "back": "A component detailing how an organization will respond, communicate, and remediate during a breach." },
+            { "front": "SOC 2 High Risk Threshold", "back": "An exception rate above 15% in a SOC 2 report indicates serious control deficiencies." },
+            { "front": "Data Encryption Responsibility", "back": "Under the Shared Responsibility Model, enabling data encryption (at rest/transit) is the customer's responsibility." },
+            { "front": "Publicly Accessible Database", "back": "A critical violation where a database is exposed to the internet; prevention is the customer's duty." },
+            { "front": "GDPR", "back": "EU regulation mandating strict data protection and privacy for European Union citizens." },
+            { "front": "HIPAA", "back": "U.S. legislation (Health Insurance Portability and Accountability Act) protecting sensitive patient health information." },
+            { "front": "PCI DSS", "back": "Payment Card Industry Data Security Standard: Security standards for handling credit card information." }
+        ];
+
+        let currentIndex = 0;
+        const cardElement = document.getElementById('flashcard');
+        const frontText = document.getElementById('card-front-text');
+        const backText = document.getElementById('card-back-text');
+        const counter = document.getElementById('counter');
+
+        function updateCard() {
+            cardElement.classList.remove('flipped');
+            setTimeout(() => {
+                frontText.innerText = flashcardData[currentIndex].front;
+                backText.innerText = flashcardData[currentIndex].back;
+                counter.innerText = `Card ${currentIndex + 1} of ${flashcardData.length}`;
+            }, 150);
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % flashcardData.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + flashcardData.length) % flashcardData.length;
+            updateCard();
+        }
+
+        cardElement.addEventListener('click', () => {
+            cardElement.classList.toggle('flipped');
+        });
+
+        // Initialize first card
+        window.onload = updateCard;
+    </script>
+</body>
+</html>
+
+
+

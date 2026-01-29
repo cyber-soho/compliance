@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Compliance Assessment - Project 10</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Corporate Energy & Legal (Deep Navy, Slate, Teal, Alert Red) -->
+    <!-- Application Structure Plan: 
+         1. Header: Branding and Mission Status.
+         2. Scenario Context: Interactive overview of NorthStream's operations (Canada vs EU) to set the jurisdictional stage.
+         3. The Legal Framework (LRR Core): A tabbed interface allowing users to drill down into each specific law (PIPEDA, CERA, CASL, GDPR). 
+            This replaces a static list with an interactive "Investigation" flow where users reveal key mapping details (Article, Data Type, Retention).
+         4. Analytical Insight: Visual comparison of the conflicting breach protocols (GDPR 72h vs PIPEDA) using charts.
+         5. Project Roadmap: A visual progress tracker showing where this specific task fits in the larger 12-step project.
+    -->
+    <!-- Visualization & Content Choices:
+         - Scenario Context: Uses HTML/CSS Cards with Unicode icons to represent Operational Sectors. Goal: Inform user of scope.
+         - Law Distribution (Chart.js Donut): Visualizes the "1-2-1 Ponderation" strategy. Goal: Inform on strategy balance.
+         - Breach Timeline (Chart.js Bar): Compares GDPR 72h limit vs PIPEDA's "Feasible" (estimated) time. Goal: Compare urgency.
+         - LRR Explorer: Custom JS-driven tab system. Goal: Organize complex text data (Articles, Retention) into digestible chunks.
+         - Project Roadmap: CSS Flexbox stepper. Goal: Inform on progress.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        /* Custom Utilities for Chart Containers to ensure strict sizing */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Limit max width for readability */
+            margin: 0 auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        
+        /* Smooth transitions for interactive elements */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-btn.active {
+            background-color: #1e3a8a; /* blue-900 */
+            color: white;
+            border-bottom: 4px solid #14b8a6; /* teal-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 font-sans antialiased">
+
+    <!-- NAVIGATION / HEADER -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-2">🛢️</span>
+                    <span class="font-bold text-xl tracking-wider">NORTHSTREAM <span class="text-teal-400 font-light">SECURE</span></span>
+                </div>
+                <div class="hidden md:flex space-x-4">
+                    <button onclick="scrollToSection('mission')" class="hover:text-teal-300 transition px-3 py-2 text-sm font-medium">Mission Brief</button>
+                    <button onclick="scrollToSection('legal-framework')" class="hover:text-teal-300 transition px-3 py-2 text-sm font-medium">Legal Register (LRR)</button>
+                    <button onclick="scrollToSection('analysis')" class="hover:text-teal-300 transition px-3 py-2 text-sm font-medium">Compliance Analysis</button>
+                    <button onclick="scrollToSection('roadmap')" class="hover:text-teal-300 transition px-3 py-2 text-sm font-medium">Project Roadmap</button>
+                </div>
+                <div class="text-xs bg-teal-600 px-2 py-1 rounded text-white font-mono">POJECT 10: ACTIVE</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- SECTION 1: MISSION & SCENARIO OVERVIEW -->
+        <section id="mission" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-100 px-6 py-4 border-b border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                    <span class="bg-blue-600 text-white p-1 rounded mr-3 text-sm">TASK 1</span>
+                    Scenario: The NorthStream Landscape
+                </h2>
+            </div>
+            
+            <div class="p-6 md:p-8">
+                <p class="text-slate-600 mb-8 max-w-4xl">
+                    Welcome to the <strong>Compliance Assessment Module</strong>. This interface synthesizes the legal requirements for NorthStream, a midstream energy company. 
+                    Our operations span two critical jurisdictions: <strong>Canada</strong> (Physical Infrastructure) and the <strong>European Union</strong> (Digital Services). 
+                    Your objective is to navigate the "Legal Requirements Register" (LRR) derived from the 1-2-1 Ponderation strategy.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Canada Operation Card -->
+                    <div class="border border-slate-200 rounded-lg p-5 hover:shadow-md transition bg-gradient-to-br from-white to-red-50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-red-900">🇨🇦 Canadian Operations</h3>
+                            <span class="text-3xl">⚙️</span>
+                        </div>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li class="flex items-start"><span class="mr-2 text-red-500">▶</span> <strong>Infrastructure:</strong> Inter-provincial pipelines.</li>
+                            <li class="flex items-start"><span class="mr-2 text-red-500">▶</span> <strong>Data Type:</strong> Telemetry, Pressure Data.</li>
+                            <li class="flex items-start"><span class="mr-2 text-red-500">▶</span> <strong>Primary Law:</strong> PIPEDA (Privacy).</li>
+                            <li class="flex items-start"><span class="mr-2 text-red-500">▶</span> <strong>Sectoral Law:</strong> CERA (Energy Regulator).</li>
+                        </ul>
+                    </div>
+
+                    <!-- EU Operation Card -->
+                    <div class="border border-slate-200 rounded-lg p-5 hover:shadow-md transition bg-gradient-to-br from-white to-blue-50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-blue-900">🇪🇺 European Operations</h3>
+                            <span class="text-3xl">📡</span>
+                        </div>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li class="flex items-start"><span class="mr-2 text-blue-500">▶</span> <strong>Service:</strong> Digital Service Office.</li>
+                            <li class="flex items-start"><span class="mr-2 text-blue-500">▶</span> <strong>Data Type:</strong> International Investment Data, PI.</li>
+                            <li class="flex items-start"><span class="mr-2 text-blue-500">▶</span> <strong>International Overlay:</strong> GDPR.</li>
+                            <li class="flex items-start"><span class="mr-2 text-blue-500">▶</span> <strong>Key Risk:</strong> 72-Hour Breach Notification.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: THE LEGAL REQUIREMENTS REGISTER (LRR) -->
+        <section id="legal-framework" class="scroll-mt-20">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-slate-900">Legal Requirements Register (LRR)</h2>
+                <p class="text-slate-500 mt-2">Explore the mapped compliance obligations for each legislative body.</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden min-h-[500px] flex flex-col md:flex-row">
+                
+                <!-- Sidebar / Tab Navigation -->
+                <div class="w-full md:w-1/4 bg-slate-50 border-r border-slate-200 flex flex-col">
+                    <div class="p-4 bg-slate-100 font-bold text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                        Select Legislation
+                    </div>
+                    <button onclick="switchTab('pipeda')" id="btn-pipeda" class="nav-btn active text-left px-6 py-4 font-semibold text-slate-700 hover:bg-slate-100 transition border-b border-slate-100 flex items-center justify-between group">
+                        <span>PIPEDA (Primary)</span>
+                        <span class="opacity-0 group-hover:opacity-100 transition text-slate-400">→</span>
+                    </button>
+                    <button onclick="switchTab('cera')" id="btn-cera" class="nav-btn text-left px-6 py-4 font-semibold text-slate-700 hover:bg-slate-100 transition border-b border-slate-100 flex items-center justify-between group">
+                        <span>CERA (Sectoral)</span>
+                        <span class="opacity-0 group-hover:opacity-100 transition text-slate-400">→</span>
+                    </button>
+                    <button onclick="switchTab('casl')" id="btn-casl" class="nav-btn text-left px-6 py-4 font-semibold text-slate-700 hover:bg-slate-100 transition border-b border-slate-100 flex items-center justify-between group">
+                        <span>CASL (Sectoral)</span>
+                        <span class="opacity-0 group-hover:opacity-100 transition text-slate-400">→</span>
+                    </button>
+                    <button onclick="switchTab('gdpr')" id="btn-gdpr" class="nav-btn text-left px-6 py-4 font-semibold text-slate-700 hover:bg-slate-100 transition flex items-center justify-between group">
+                        <span>GDPR (Intl.)</span>
+                        <span class="opacity-0 group-hover:opacity-100 transition text-slate-400">→</span>
+                    </button>
+                    
+                    <div class="mt-auto p-4">
+                        <div class="chart-wrapper h-32">
+                            <canvas id="ponderationChart"></canvas>
+                        </div>
+                        <p class="text-center text-xs text-slate-400 mt-2">1-2-1 Ponderation Mix</p>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="w-full md:w-3/4 p-8 bg-white relative">
+                    
+                    <!-- PIPEDA CONTENT -->
+                    <div id="pipeda" class="tab-content active">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800">PIPEDA</h3>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-400">Primary Law</span>
+                        </div>
+                        <p class="mb-4 text-slate-600 italic">Personal Information Protection and Electronic Documents Act</p>
+                        <p class="mb-6 text-slate-700">The federal privacy law for private-sector organizations. It sets the ground rules for how businesses must handle personal information in the course of commercial activity.</p>
+                        
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Compliance Mapping</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Applicable Section</div>
+                                    <div class="text-lg font-mono text-blue-700">Schedule 1</div>
+                                    <div class="text-sm text-slate-600 mt-1">10 Fair Information Principles</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Data Type</div>
+                                    <div class="text-lg font-semibold text-slate-800">Employee Records</div>
+                                    <div class="text-sm text-slate-600 mt-1">& Client PI</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Retention Rule</div>
+                                    <div class="text-lg font-semibold text-slate-800">Minimum Duration</div>
+                                    <div class="text-sm text-slate-600 mt-1">Long enough to allow exhaustion of recourse.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <a href="https://www.priv.gc.ca/en/" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center">
+                                Visit Official Site <span class="ml-1">↗</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- CERA CONTENT -->
+                    <div id="cera" class="tab-content">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800">CERA</h3>
+                            <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-teal-400">Sectoral Law</span>
+                        </div>
+                        <p class="mb-4 text-slate-600 italic">Canadian Energy Regulator Act</p>
+                        <p class="mb-6 text-slate-700">Regulates pipelines, energy development, and trade in the Canadian public interest. Focuses heavily on safety and critical infrastructure protection.</p>
+                        
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Compliance Mapping</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Applicable Section</div>
+                                    <div class="text-lg font-mono text-teal-700">Safety & Security</div>
+                                    <div class="text-sm text-slate-600 mt-1">Critical Infrastructure Protection</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Data Type</div>
+                                    <div class="text-lg font-semibold text-slate-800">Telemetry Data</div>
+                                    <div class="text-sm text-slate-600 mt-1">Pipeline Pressure & Flow</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Retention Rule</div>
+                                    <div class="text-lg font-semibold text-slate-800">Operational Lifecycle</div>
+                                    <div class="text-sm text-slate-600 mt-1">Maintained for facility life + audit period.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <a href="https://www.cer-rec.gc.ca/" target="_blank" class="text-teal-600 hover:text-teal-800 text-sm font-semibold flex items-center">
+                                Visit Official Site <span class="ml-1">↗</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- CASL CONTENT -->
+                    <div id="casl" class="tab-content">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800">CASL</h3>
+                            <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-teal-400">Sectoral Law</span>
+                        </div>
+                        <p class="mb-4 text-slate-600 italic">Canada’s Anti-Spam Legislation</p>
+                        <p class="mb-6 text-slate-700">One of the world's toughest laws on commercial electronic messages (CEMs). Affects marketing and digital communication protocols.</p>
+                        
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-slate-900 mb-4 border-b pb-2">Compliance Mapping</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Focus Area</div>
+                                    <div class="text-lg font-mono text-teal-700">Consent Mgmt</div>
+                                    <div class="text-sm text-slate-600 mt-1">Digital Marketing Protocols</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Data Type</div>
+                                    <div class="text-lg font-semibold text-slate-800">Email Addresses</div>
+                                    <div class="text-sm text-slate-600 mt-1">Marketing Contact Lists</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Retention Rule</div>
+                                    <div class="text-lg font-semibold text-slate-800">3 Years</div>
+                                    <div class="text-sm text-slate-600 mt-1">After unsubscription/contact.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <a href="https://fightspam-combattrelepourriel.gc.ca/" target="_blank" class="text-teal-600 hover:text-teal-800 text-sm font-semibold flex items-center">
+                                Visit Official Site <span class="ml-1">↗</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- GDPR CONTENT -->
+                    <div id="gdpr" class="tab-content">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800">GDPR</h3>
+                            <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-purple-400">International Overlay</span>
+                        </div>
+                        <p class="mb-4 text-slate-600 italic">General Data Protection Regulation</p>
+                        <p class="mb-6 text-slate-700">Applies due to the EU Digital Service Office. Strict requirements for data breach notifications and handling of EU citizen data.</p>
+                        
+                        <div class="bg-red-50 p-6 rounded-lg border border-red-200">
+                            <div class="flex items-center mb-4 border-b border-red-200 pb-2">
+                                <h4 class="font-bold text-red-900">CRITICAL REQUIREMENT</h4>
+                                <span class="ml-auto text-xl">⚠️</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Applicable Article</div>
+                                    <div class="text-lg font-mono text-red-700">Article 33</div>
+                                    <div class="text-sm text-slate-600 mt-1">Notification of personal data breach</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Data Type</div>
+                                    <div class="text-lg font-semibold text-slate-800">Investor P.I.</div>
+                                    <div class="text-sm text-slate-600 mt-1">EU Citizen Financial Data</div>
+                                </div>
+                                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500">
+                                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Strict Deadline</div>
+                                    <div class="text-lg font-bold text-red-700">72 Hours</div>
+                                    <div class="text-sm text-slate-600 mt-1">Must notify supervisory authority.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <a href="https://gdpr-info.eu/" target="_blank" class="text-purple-600 hover:text-purple-800 text-sm font-semibold flex items-center">
+                                Visit Official Site <span class="ml-1">↗</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ANALYTICAL VISUALS (Conflict & Context) -->
+        <section id="analysis" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Context Text -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Analysis: The Breach Notification Conflict</h3>
+                <p class="text-slate-600 text-sm mb-4">
+                    A key challenge in the upcoming <strong>Compliance Matrix</strong> (Task 2) is reconciling the conflict between Canadian and EU standards regarding incident response speed.
+                </p>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-green-500 font-bold mr-2">✓</span>
+                        <span><strong>PIPEDA Standard:</strong> "As soon as feasible." This allows for flexibility based on the complexity of the breach but lacks a hard deadline.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-red-500 font-bold mr-2">!</span>
+                        <span><strong>GDPR Standard:</strong> "72 Hours." This is a rigid, hard deadline that begins the moment the breach is discovered.</span>
+                    </li>
+                </ul>
+                <div class="mt-6 p-4 bg-yellow-50 text-yellow-800 text-sm rounded border border-yellow-200">
+                    <strong>Implication:</strong> NorthStream's Incident Response Plan (IRP) must default to the strictest standard (GDPR's 72h) to ensure global compliance.
+                </div>
+            </div>
+
+            <!-- Visualization -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
+                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Urgency Comparison: Notification Windows</h3>
+                <div class="chart-wrapper">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PROJECT ROADMAP -->
+        <section id="roadmap" class="bg-slate-900 text-white rounded-xl p-8 shadow-lg">
+            <h2 class="text-xl font-bold mb-6 flex items-center">
+                <span class="text-teal-400 mr-2">⚡</span> Project Roadmap: Module 11
+            </h2>
+            <div class="relative">
+                <!-- Line -->
+                <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-700 md:hidden"></div>
+                <div class="hidden md:block absolute top-4 left-0 right-0 h-0.5 bg-slate-700"></div>
+
+                <div class="flex flex-col md:flex-row justify-between relative z-10">
+                    <!-- Step 1 (Current) -->
+                    <div class="flex md:flex-col items-center mb-6 md:mb-0">
+                        <div class="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-[0_0_10px_rgba(20,184,166,0.6)]">1</div>
+                        <div class="ml-4 md:ml-0 md:mt-3 md:text-center">
+                            <h4 class="font-bold text-teal-400 text-sm">LRR Creation</h4>
+                            <p class="text-xs text-slate-400">Current Task</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex md:flex-col items-center mb-6 md:mb-0 opacity-50">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm">2</div>
+                        <div class="ml-4 md:ml-0 md:mt-3 md:text-center">
+                            <h4 class="font-bold text-slate-300 text-sm">Framework Selection</h4>
+                            <p class="text-xs text-slate-500">NIST CSF Mapping</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex md:flex-col items-center mb-6 md:mb-0 opacity-50">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm">3</div>
+                        <div class="ml-4 md:ml-0 md:mt-3 md:text-center">
+                            <h4 class="font-bold text-slate-300 text-sm">Gap Analysis</h4>
+                            <p class="text-xs text-slate-500">Policy Audit</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="flex md:flex-col items-center mb-6 md:mb-0 opacity-50">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm">4</div>
+                        <div class="ml-4 md:ml-0 md:mt-3 md:text-center">
+                            <h4 class="font-bold text-slate-300 text-sm">Technical Scan</h4>
+                            <p class="text-xs text-slate-500">CIS / VM Audit</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="flex md:flex-col items-center opacity-50">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm">5</div>
+                        <div class="ml-4 md:ml-0 md:mt-3 md:text-center">
+                            <h4 class="font-bold text-slate-300 text-sm">Final Assembly</h4>
+                            <p class="text-xs text-slate-500">PDF Report</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="text-center text-slate-400 text-sm pt-8 border-t border-slate-200">
+            <p>Module 11: Incident Response & Legal Frameworks Exercise</p>
+            <p class="mt-1 text-xs">Based on Mock Scenarios. For Educational Use Only.</p>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- Navigation Logic ---
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Show selected content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Update button states
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        // --- Chart.js Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // 1. Ponderation Donut Chart (Law Distribution)
+            const ctxPonderation = document.getElementById('ponderationChart').getContext('2d');
+            new Chart(ctxPonderation, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Primary (PIPEDA)', 'Sectoral (CERA, CASL)', 'Intl (GDPR)'],
+                    datasets: [{
+                        data: [1, 2, 1], // The 1-2-1 Ponderation
+                        backgroundColor: [
+                            '#2563eb', // Blue-600
+                            '#14b8a6', // Teal-500
+                            '#9333ea'  // Purple-600
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Timeline Bar Chart (GDPR vs PIPEDA)
+            const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+            new Chart(ctxTimeline, {
+                type: 'bar',
+                data: {
+                    labels: ['GDPR (Strict)', 'PIPEDA (Variable)', 'Internal Goal'],
+                    datasets: [{
+                        label: 'Notification Window (Hours)',
+                        data: [72, 168, 48], // 168h is approx 1 week ("feasible" estimate), 48 is ambitious internal goal
+                        backgroundColor: [
+                            '#ef4444', // Red (Strict/High Risk)
+                            '#3b82f6', // Blue (Variable)
+                            '#10b981'  // Emerald (Goal)
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal bar for timeline feel
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours after Discovery'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                footer: function(tooltipItems) {
+                                    if(tooltipItems[0].label === 'GDPR (Strict)') return 'Critical Compliance Boundary';
+                                    if(tooltipItems[0].label === 'PIPEDA (Variable)') return '"As soon as feasible" (Est. 1 week)';
+                                    return 'Target Internal SLA';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Assessments Mid-Term Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Trust Blue -->
+    <!-- Application Structure Plan: 
+         1. Dashboard: Overview of the curriculum coverage using a Donut chart.
+         2. Quiz Arena: The core interactive component. Handles both single-choice (radio) and multi-choice (checkbox) inputs logic. Provides immediate feedback.
+         3. Study Guide: A searchable, accordion-style list for passive review and keyword searching.
+         Rationale: This structure separates 'testing knowledge' (Quiz) from 'referencing knowledge' (Study Guide), catering to different learning phases. -->
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        /* Chart Container Styling per requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Tailwind max-w-xl is approx 576px, explicit 600px aligns with requirements */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .option-card {
+            transition: all 0.2s ease;
+        }
+        .option-card:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .option-selected {
+            border-color: #2563eb;
+            background-color: #dbeafe;
+            font-weight: 600;
+        }
+        
+        .correct-answer {
+            background-color: #d1fae5 !important;
+            border-color: #10b981 !important;
+            color: #065f46;
+        }
+        
+        .incorrect-answer {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm flex-none z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-xl">CS</div>
+                    <div>
+                        <h1 class="font-bold text-slate-900 leading-tight">Compliance Assessments</h1>
+                        <p class="text-xs text-slate-500 font-medium">Mid-Term Review • 75 Questions</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="px-3 py-2 rounded-md text-sm font-medium text-blue-600 bg-blue-50 transition-colors">Dashboard</button>
+                    <button onclick="switchView('quiz')" id="nav-quiz" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Practice Quiz</button>
+                    <button onclick="switchView('study')" id="nav-study" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Study Guide</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto bg-slate-50 relative scroll-smooth">
+        
+        <!-- View: Dashboard -->
+        <div id="view-dashboard" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
+            <header class="text-center max-w-2xl mx-auto mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-3">Study Dashboard</h2>
+                <p class="text-slate-600 text-lg">
+                    This interactive tool covers all materials for the Compliance Assessments Mid-Term. 
+                    Review Technical Compliance (CIS/STIGs), Scripting, Third-Party Risks, and Incident Response.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Stat Card 1 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <span>📊</span> Topic Distribution
+                    </h3>
+                    <p class="text-sm text-slate-500 mb-4">Breakdown of questions by domain.</p>
+                    <!-- Visualization & Content Choices: Donut Chart -> Goal: Compare -> Shows weight of topics -> Chart.js -->
+                    <div class="flex-grow flex items-center justify-center w-full">
+                        <div class="chart-container">
+                            <canvas id="topicChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stat Card 2 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Ready to Practice?</h3>
+                        <p class="text-slate-600 mb-6">Test your knowledge with 45 MCQs and 30 MSQs. The exam is not open book, so rely on your memory!</p>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                <span class="block text-2xl font-bold text-blue-600">45</span>
+                                <span class="text-xs font-semibold text-blue-800 uppercase tracking-wide">Single Choice</span>
+                            </div>
+                            <div class="bg-indigo-50 p-4 rounded-lg text-center">
+                                <span class="block text-2xl font-bold text-indigo-600">30</span>
+                                <span class="text-xs font-semibold text-indigo-800 uppercase tracking-wide">Multi Select</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="switchView('quiz')" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                        Start Practice Quiz
+                    </button>
+                </div>
+            </div>
+
+            <!-- Key Concepts Quick Look -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-slate-50">
+                    <h3 class="font-semibold text-slate-800">Review Highlights</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                    <div class="p-6">
+                        <span class="text-emerald-600 font-bold text-xs uppercase mb-1 block">Timeline</span>
+                        <h4 class="font-bold text-slate-900 mb-2">GDPR Reporting</h4>
+                        <p class="text-sm text-slate-600">Strict requirement to report breaches within <span class="font-bold text-slate-900">72 hours</span>.</p>
+                    </div>
+                    <div class="p-6">
+                        <span class="text-amber-600 font-bold text-xs uppercase mb-1 block">Core Concept</span>
+                        <h4 class="font-bold text-slate-900 mb-2">Shared Responsibility</h4>
+                        <p class="text-sm text-slate-600">In the cloud, you (the customer) are always responsible for <span class="font-bold text-slate-900">your data</span>.</p>
+                    </div>
+                    <div class="p-6">
+                        <span class="text-purple-600 font-bold text-xs uppercase mb-1 block">Tooling</span>
+                        <h4 class="font-bold text-slate-900 mb-2">SCAP & OpenSCAP</h4>
+                        <p class="text-sm text-slate-600">The standard protocol and tool for <span class="font-bold text-slate-900">automated</span> compliance audits.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Quiz -->
+        <div id="view-quiz" class="hidden max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full flex flex-col">
+            <div class="flex-none mb-6">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Question <span id="q-current">1</span> of <span id="q-total">75</span></span>
+                        <h2 class="text-xl font-bold text-slate-900 mt-1" id="quiz-category-badge">Category</h2>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-medium text-slate-500">Score</span>
+                        <div class="text-2xl font-bold text-blue-600"><span id="score-val">0</span>%</div>
+                    </div>
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto pr-2" id="quiz-content-area">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+                    <span id="q-type-badge" class="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded mb-4">SINGLE CHOICE</span>
+                    <h3 id="q-text" class="text-xl font-medium text-slate-800 mb-6 leading-relaxed">
+                        Question text goes here...
+                    </h3>
+                    
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options injected by JS -->
+                    </div>
+
+                    <!-- Feedback Area -->
+                    <div id="feedback-area" class="hidden mt-6 p-4 rounded-lg bg-slate-50 border border-slate-200 animate-fade-in">
+                        <div class="flex items-start gap-3">
+                            <span id="feedback-icon" class="text-2xl mt-0.5">💡</span>
+                            <div>
+                                <h4 id="feedback-title" class="font-bold text-slate-900 text-sm mb-1">Explanation</h4>
+                                <p id="feedback-text" class="text-slate-700 text-sm leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-none pt-6 pb-2 flex justify-between">
+                <button onclick="prevQuestion()" id="btn-prev" class="px-6 py-2 rounded-lg text-slate-500 hover:text-slate-800 font-medium disabled:opacity-30">Previous</button>
+                <button onclick="checkAnswer()" id="btn-check" class="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition-colors">Submit Answer</button>
+                <button onclick="nextQuestion()" id="btn-next" class="hidden px-8 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold shadow-md transition-colors flex items-center gap-2">
+                    Next <span>→</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- View: Study Guide -->
+        <div id="view-study" class="hidden max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">Study Guide & Knowledge Base</h2>
+                <div class="relative">
+                    <input type="text" id="search-input" placeholder="Search questions, answers, or keywords (e.g., 'GDPR', 'Port')..." 
+                        class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                    <span class="absolute left-3 top-3.5 text-slate-400">🔍</span>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <button onclick="filterStudy('All')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-blue-600 text-white">All</button>
+                    <button onclick="filterStudy('Tech')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300">Technical Compliance</button>
+                    <button onclick="filterStudy('Scripting')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300">Scripting</button>
+                    <button onclick="filterStudy('Risk')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300">Third-Party & Cloud</button>
+                    <button onclick="filterStudy('Incident')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300">Incident Response</button>
+                </div>
+            </div>
+
+            <div id="study-list" class="space-y-4">
+                <!-- Study items injected by JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <script>
+        // Data Store
+        const quizData = [
+            // PART 1: MCQs (1-45)
+            // Tech Compliance
+            {id: 1, type: "MC", cat: "Tech", q: "What are CIS Benchmarks primarily used for?", options: ["Creating marketing materials", "Providing globally recognized security configuration guides", "Designing hardware components", "Managing employee payroll"], ans: [1], exp: "CIS Benchmarks are consensus-driven security configuration guides developed to help organizations harden their systems against attacks."},
+            {id: 2, type: "MC", cat: "Tech", q: "Which organization is responsible for creating STIGs (Security Technical Implementation Guides)?", options: ["DISA (Defense Information Systems Agency)", "Microsoft", "Apple", "The Department of Agriculture"], ans: [0], exp: "STIGs are security configuration standards managed by DISA for the US Department of Defense (DoD)."},
+            {id: 3, type: "MC", cat: "Tech", q: "What is the main difference between a CIS Benchmark and a STIG?", options: ["STIGs are for home users, Benchmarks are for businesses", "Benchmarks are industry-led; STIGs are government/military mandates", "Benchmarks only cover Windows, while STIGs only cover Linux", "There is no difference; they are the same thing"], ans: [1], exp: "While both provide hardening guides, CIS Benchmarks are industry-standard best practices, whereas STIGs are strict requirements for military and government systems."},
+            {id: 4, type: "MC", cat: "Tech", q: "What does 'hardening' a system mean in technical compliance?", options: ["Making the physical computer case stronger", "Increasing the CPU clock speed", "Reducing the 'attack surface' by closing vulnerabilities and disabling unnecessary services", "Installing more RAM to handle security software"], ans: [2], exp: "System hardening is the process of securing a system by reducing its surface of vulnerability, such as disabling unused ports and services."},
+            {id: 5, type: "MC", cat: "Tech", q: "Which protocol is the standard for automating security configuration and vulnerability management?", options: ["HTTP", "SCAP (Security Content Automation Protocol)", "SMTP", "FTP"], ans: [1], exp: "SCAP is a suite of specifications that standardize the format by which software communicates security flaws and configuration issues."},
+            {id: 6, type: "MC", cat: "Tech", q: "What is the primary function of the 'OpenSCAP' tool?", options: ["To perform automated configuration audits and vulnerability scans", "To edit photos for security reports", "To browse the dark web safely", "To speed up internet connections"], ans: [0], exp: "OpenSCAP is an open-source tool that implements the SCAP standard to automate the process of checking systems for compliance and vulnerabilities."},
+            // Scripting
+            {id: 7, type: "MC", cat: "Scripting", q: "In a PowerShell script, which command is used to check if a specific Windows Feature is enabled?", options: ["Show-Feature", "Check-WindowsOptionalFeature", "Get-WindowsOptionalFeature", "Find-Feature"], ans: [2], exp: "Get-WindowsOptionalFeature is the standard cmdlet used to retrieve information about the status of optional features in Windows."},
+            {id: 8, type: "MC", cat: "Scripting", q: "Why is scripting (like Python or PowerShell) valuable for compliance assessments?", options: ["It makes the auditor look more professional", "It allows for rapid, consistent verification of thousands of systems", "It is required by law for every small business", "It replaces the need for any security policies"], ans: [1], exp: "Scripting enables automation, allowing auditors to gather evidence across large environments quickly and without the human error associated with manual checks."},
+            {id: 9, type: "MC", cat: "Scripting", q: "Which Python library is commonly used for interacting with the operating system to check for files or directories?", options: ["math", "os", "random", "requests"], ans: [1], exp: "The 'os' module in Python provides a portable way of using operating system-dependent functionality like checking for the existence of paths."},
+            // Risk
+            {id: 10, type: "MC", cat: "Risk", q: "What is a 'Third-Party Risk'?", options: ["The risk introduced to an organization through its vendors or partners", "The risk of having more than three employees", "The risk that a user will forget their third password", "The risk of using a third-generation computer"], ans: [0], exp: "Third-party risk involves the potential for security breaches or compliance failures occurring through an external vendor, service provider, or supply chain partner."},
+            {id: 11, type: "MC", cat: "Risk", q: "Under the 'Shared Responsibility Model' in cloud computing, who is responsible for the security *of* the cloud infrastructure?", options: ["The customer", "The Cloud Service Provider (CSP)", "The local government", "No one is responsible"], ans: [1], exp: "In cloud computing, the provider (like AWS or Azure) is responsible for the underlying physical infrastructure and virtualization layer."},
+            {id: 12, type: "MC", cat: "Risk", q: "Under the 'Shared Responsibility Model,' who is typically responsible for the security of the data stored *in* the cloud?", options: ["The customer", "The Cloud Service Provider", "The internet service provider", "The hardware manufacturer"], ans: [0], exp: "Regardless of the cloud model (IaaS, PaaS, SaaS), the customer is almost always responsible for managing and securing their own data."},
+            {id: 13, type: "MC", cat: "Risk", q: "What is a SOC 2 Report?", options: ["A report on social media popularity", "A technical manual for building servers", "An independent audit report focusing on security, availability, and privacy controls", "A list of all employees in a company"], ans: [2], exp: "SOC 2 is an auditing procedure that ensures service providers securely manage data to protect the interests of their clients and the privacy of their clients' users."},
+            {id: 14, type: "MC", cat: "Risk", q: "Which document defines the specific security requirements a vendor must meet before a contract is signed?", options: ["A birthday card", "A Security Addendum or Exhibit", "A LinkedIn profile", "A user manual"], ans: [1], exp: "Legal contracts with vendors often include a Security Addendum that outlines the specific technical and administrative controls the vendor must maintain."},
+            // Incident
+            {id: 15, type: "MC", cat: "Incident", q: "What does the acronym 'PIPEDA' stand for in the context of Canadian law?", options: ["Personal Information Protection and Electronic Documents Act", "Private Internet Policy and Every Data Act", "Public Information Protection and Electronic Digital Act", "Professional Intercom Policy and Electronic Data Association"], ans: [0], exp: "PIPEDA is the federal privacy law for private-sector organizations in Canada."},
+            {id: 16, type: "MC", cat: "Incident", q: "Under GDPR, within how many hours must a data breach be reported to the authorities?", options: ["24 hours", "48 hours", "72 hours", "1 week"], ans: [2], exp: "The General Data Protection Regulation (GDPR) requires organizations to report a personal data breach to the relevant supervisory authority within 72 hours of becoming aware of it."},
+            {id: 17, type: "MC", cat: "Incident", q: "What is the primary goal of 'Incident Response'?", options: ["To fire the person who caused the mistake", "To minimize damage and restore normal operations as quickly as possible", "To hide the breach from the public", "To buy new computers for everyone"], ans: [1], exp: "Incident response is organized to handle the aftermath of a security breach or cyberattack to limit damage and reduce recovery time and costs."},
+            {id: 18, type: "MC", cat: "Incident", q: "In digital forensics, why is 'Chain of Custody' important?", options: ["It makes sure the computers are kept in a literal chain", "It proves that evidence has not been tampered with and is admissible in court", "It helps track how many people are working on the case", "It is a type of encryption"], ans: [1], exp: "Chain of custody is a chronological documentation or paper trail showing the seizure, custody, control, transfer, and analysis of physical or electronic evidence."},
+            {id: 19, type: "MC", cat: "Incident", q: "Which phase of the NIST Incident Response Life Cycle involves 'cleaning' the systems and removing the attacker?", options: ["Preparation", "Detection & Analysis", "Containment, Eradication, and Recovery", "Post-Incident Activity"], ans: [2], exp: "The Eradication portion of this phase involves removing the threat (malware, compromised accounts) from the environment."},
+            // Mixed
+            {id: 20, type: "MC", cat: "Risk", q: "What is a 'Shadow IT' risk?", options: ["Using computers in the dark", "Employees using unauthorized software or cloud services without IT's knowledge", "Hackers following employees home", "Software that only works at night"], ans: [1], exp: "Shadow IT refers to IT systems or solutions used inside an organization without explicit organizational approval."},
+            {id: 21, type: "MC", cat: "Tech", q: "Which tool would you use to verify if a Linux system meets the 'CIS Level 1' profile?", options: ["Windows Defender", "OpenSCAP", "Adobe Acrobat", "Microsoft Word"], ans: [1], exp: "OpenSCAP is specifically designed to audit systems against security profiles like CIS Benchmarks."},
+            {id: 22, type: "MC", cat: "Incident", q: "When auditing logs, what does 'Log Retention' refer to?", options: ["The speed at which logs are written", "The color of the log text", "How long log data is kept before being deleted", "The number of people who can read the logs"], ans: [2], exp: "Log retention policies define the duration for which log entries must be stored to meet compliance or investigative requirements."},
+            {id: 23, type: "MC", cat: "Incident", q: "What is the purpose of an 'Incident Response Plan' (IRP)?", options: ["To provide a list of passwords for the CEO", "To provide a structured roadmap for responding to security incidents", "To replace the need for firewalls", "To explain how to install Windows"], ans: [1], exp: "An IRP ensures that an organization can respond effectively and consistently to security threats."},
+            {id: 24, type: "MC", cat: "Tech", q: "Which of these is a 'Technical Control'?", options: ["A written security policy", "Employee training", "A firewall rule", "A background check"], ans: [2], exp: "Technical controls use technology (software/hardware) to protect systems, unlike administrative controls which are policy-based."},
+            {id: 25, type: "MC", cat: "Tech", q: "What does the term 'Air-Gapping' mean?", options: ["Leaving the server room window open", "Physically isolating a computer or network from the internet and other networks", "Using a wireless router with high range", "Cleaning the dust out of a computer"], ans: [1], exp: "Air-gapping is a security measure that ensures a computer or network is physically incapable of connecting to the internet or other unsecure networks."},
+            {id: 26, type: "MC", cat: "Tech", q: "In the context of compliance, what is 'Evidence Gathering'?", options: ["Collecting logs, screenshots, and configurations to prove a control is working", "Hiring a private investigator to watch employees", "Printing out every email sent by the company", "Guessing that the security is working"], ans: [0], exp: "Auditors require objective evidence (data, logs, screenshots) to verify that an organization is actually following its security policies."},
+            {id: 27, type: "MC", cat: "Tech", q: "Why should you use an 'Administrator' or 'Root' account sparingly during an audit?", options: ["It costs more money to use those accounts", "To follow the 'Principle of Least Privilege' and reduce risk", "Because those accounts are slower", "Because those accounts don't have access to logs"], ans: [1], exp: "The Principle of Least Privilege dictates that users should only have the minimum permissions necessary to perform their jobs, reducing the impact of potential accidents or compromises."},
+            {id: 28, type: "MC", cat: "Risk", q: "What is the main risk of a 'Supply Chain Attack'?", options: ["An attacker compromising a trusted vendor to gain access to their customers", "A delivery truck being stolen", "Running out of office supplies", "A slow internet connection at a warehouse"], ans: [0], exp: "In a supply chain attack, the attacker targets a less secure element in the supply chain (like a software vendor) to infect the end-target's environment."},
+            {id: 29, type: "MC", cat: "Risk", q: "What does 'Multi-Tenancy' mean in cloud computing?", options: ["One person owning many computers", "Multiple customers sharing the same physical hardware resources", "Having many different passwords for one account", "A building with many IT offices"], ans: [1], exp: "Multi-tenancy is a primary characteristic of cloud computing where resources are shared among different clients, requiring strong logical isolation."},
+            {id: 30, type: "MC", cat: "Risk", q: "Which regulation specifically protects healthcare data in the United States?", options: ["GDPR", "PIPEDA", "HIPAA", "PCI DSS"], ans: [2], exp: "The Health Insurance Portability and Accountability Act (HIPAA) sets the standard for sensitive patient data protection in the US."},
+            {id: 31, type: "MC", cat: "Incident", q: "What is the first step in the NIST Incident Response process?", options: ["Preparation", "Detection", "Recovery", "Eradication"], ans: [0], exp: "Preparation involves building the team, tools, and processes before an incident actually happens."},
+            {id: 32, type: "MC", cat: "Incident", q: "What is a 'Dry Run' in the context of Incident Response?", options: ["Running a computer without any cooling fans", "A tabletop exercise to practice the response plan without a real emergency", "Deleting all data to see what happens", "Testing if the fire sprinklers work"], ans: [1], exp: "Tabletop exercises (dry runs) help teams identify gaps in their plans and practice their roles in a low-stress environment."},
+            {id: 33, type: "MC", cat: "Scripting", q: "Which PowerShell cmdlet allows you to see the current execution policy?", options: ["Set-ExecutionPolicy", "Get-ExecutionPolicy", "Show-Policy", "Read-ExecutionPolicy"], ans: [1], exp: "Get-ExecutionPolicy reveals the current security settings for running scripts on the system."},
+            {id: 34, type: "MC", cat: "Tech", q: "What is the 'Attack Surface'?", options: ["The sum total of all points where an unauthorized user can enter or extract data", "The screen of a computer being hacked", "The physical location of the server room", "The number of hackers in the world"], ans: [0], exp: "Reducing the attack surface (by closing ports, disabling services) is a key goal of technical compliance."},
+            {id: 35, type: "MC", cat: "Incident", q: "What is the purpose of 'Hashing' in digital forensics?", options: ["To encrypt a hard drive so no one can read it", "To make a file larger so it's harder to steal", "To provide a unique digital fingerprint of a file to ensure it hasn't changed", "To speed up the copying of files"], ans: [2], exp: "Hashing creates a fixed-length string of characters that represents the data; if even one bit changes, the hash changes, proving the evidence was altered."},
+            {id: 36, type: "MC", cat: "Risk", q: "Which cloud service model offers the *most* control to the customer?", options: ["IaaS (Infrastructure as a Service)", "PaaS (Platform as a Service)", "SaaS (Software as a Service)", "They all offer the same control"], ans: [0], exp: "In IaaS, the customer manages the OS, middleware, and applications, giving them the highest level of control compared to PaaS or SaaS."},
+            {id: 37, type: "MC", cat: "Risk", q: "Which cloud service model offers the *least* management burden to the customer?", options: ["IaaS", "PaaS", "SaaS", "They all require the same effort"], ans: [2], exp: "In SaaS, the provider manages everything except the user's data and access, making it the easiest for the customer to use but giving them the least control."},
+            {id: 38, type: "MC", cat: "Tech", q: "What is 'Egress Filtering'?", options: ["Filtering the air in a server room", "Monitoring and restricting data leaving the network", "Stopping people from entering the building", "Filtering spam emails coming into the inbox"], ans: [1], exp: "Egress filtering is a compliance measure to prevent data exfiltration by controlling what traffic can leave the internal network."},
+            {id: 39, type: "MC", cat: "Tech", q: "What is a 'Zero-Day' vulnerability?", options: ["A vulnerability that is unknown to the vendor and has no patch", "A vulnerability that was fixed zero days ago", "A vulnerability that only works at midnight", "A vulnerability that is so simple it takes zero days to fix"], ans: [0], exp: "Zero-day refers to the fact that the developers have had 'zero days' to fix the problem because they just found out about it (often because it's being exploited)."},
+            {id: 40, type: "MC", cat: "Scripting", q: "In compliance scripting, why do we use 'Try-Except' blocks in Python?", options: ["To make the code run faster", "To handle errors gracefully so the script doesn't crash", "To hide the code from users", "To repeat the code ten times"], ans: [1], exp: "Try-except blocks allow a script to attempt an action and, if an error occurs, perform an alternative action instead of stopping abruptly."},
+            {id: 41, type: "MC", cat: "Tech", q: "What is the 'Principle of Least Privilege' (PoLP)?", options: ["Giving everyone admin access to avoid complaints", "Only giving privileges to the CEO", "Giving users only the access they need to perform their job", "Giving privileges only to the IT department"], ans: [2], exp: "PoLP is a core security principle that minimizes the potential damage from a compromised account or user error."},
+            {id: 42, type: "MC", cat: "Tech", q: "What is a 'Vulnerability Scanner'?", options: ["An automated tool that searches for known security weaknesses in a system", "A tool that finds where the physically weakest part of a laptop is", "A person who interviews employees to see if they are sad", "A program that generates random passwords"], ans: [0], exp: "Vulnerability scanners (like Nessus or OpenSCAP) compare system states against databases of known flaws."},
+            {id: 43, type: "MC", cat: "Incident", q: "What is the purpose of a 'Lessons Learned' meeting after an incident?", options: ["To decide who to blame and fire", "To analyze what went well and what failed to improve future responses", "To celebrate that the incident is over", "To delete all records of the incident"], ans: [1], exp: "The 'Post-Incident Activity' phase is crucial for continuous improvement of the organization's security posture."},
+            {id: 44, type: "MC", cat: "Tech", q: "Which of these is an example of 'Non-Technical' evidence?", options: ["A firewall log", "A registry key setting", "A signed employee code of conduct", "A list of open ports"], ans: [2], exp: "Non-technical (or administrative) evidence consists of policies, signatures, and training records rather than system configurations."},
+            {id: 45, type: "MC", cat: "Tech", q: "What does 'Patch Management' involve?", options: ["Fixing holes in the office carpet", "Systematically acquiring, testing, and installing software updates", "Buying new software every month", "Deleting old files to save space"], ans: [1], exp: "Patch management is a critical compliance process that ensures software is up to date and protected against known vulnerabilities."},
+
+            // PART 2: MSQs (46-75)
+            {id: 46, type: "MS", cat: "Tech", q: "Which of the following are benefits of using CIS Benchmarks for an organization? (Select 3)", options: ["They are consensus-based and globally recognized", "They provide step-by-step hardening instructions", "They help meet regulatory compliance requirements", "They guarantee that a hacker can never break in", "They are free to use for any purpose without license", "They automatically fix all system errors"], ans: [0, 1, 2], exp: "CIS Benchmarks are trusted standards that provide clear guidance and help satisfy auditors, though they do not guarantee 100% security."},
+            {id: 47, type: "MS", cat: "Tech", q: "Which components are typically included in an SCAP 'Security Content' package? (Select 2)", options: ["XCCDF (Extensible Configuration Checklist Description Format)", "OVAL (Open Vulnerability and Assessment Language)", "A video tutorial on hacking", "A list of employee phone numbers", "The source code for the Windows kernel", "A PDF of the company's marketing plan"], ans: [0, 1], exp: "XCCDF defines the checklist structure, and OVAL defines the technical tests to be performed on the system."},
+            {id: 48, type: "MS", cat: "Scripting", q: "When writing a PowerShell script for an audit, which of the following are 'Best Practices'? (Select 3)", options: ["Using comments to explain what each part of the script does", "Implementing error handling (Try/Catch)", "Logging the results to a file for evidence", "Using the most complex code possible to impress the boss", "Hard-coding your administrator password into the script", "Disabling the system's firewall before running the script"], ans: [0, 1, 2], exp: "Good auditing scripts must be readable, resilient to errors, and provide a clear trail of evidence."},
+            {id: 49, type: "MS", cat: "Incident", q: "What are the key stages of the NIST Incident Response Life Cycle? (Select 4)", options: ["Preparation", "Detection and Analysis", "Containment, Eradication, and Recovery", "Post-Incident Activity", "Blame and Punishment", "Marketing and Public Relations"], ans: [0, 1, 2, 3], exp: "These four phases form the standard framework for handling security incidents as defined by NIST SP 800-61."},
+            {id: 50, type: "MS", cat: "Risk", q: "Which of the following are types of 'Third-Party' service providers? (Select 3)", options: ["Cloud Service Providers (CSPs)", "Managed Service Providers (MSPs)", "SaaS Vendors", "Internal IT departments", "The company's own CEO", "Direct employees of the company"], ans: [0, 1, 2], exp: "Third parties are external entities that provide services to the organization, unlike internal departments or staff."},
+            {id: 51, type: "MS", cat: "Incident", q: "What should be included in a 'Forensic Image' of a hard drive? (Select 2)", options: ["A bit-for-bit copy of the entire drive", "A cryptographic hash of the original and the copy", "Only the files that look suspicious", "A copy of the user's internet browser history only", "A deleted file recovery tool", "The technician's personal notes on the drive"], ans: [0, 1], exp: "Digital forensics requires a complete, unaltered copy of the media and a hash to prove the copy's integrity."},
+            {id: 52, type: "MS", cat: "Risk", q: "Which of the following are common 'Compliance Frameworks' or standards? (Select 3)", options: ["PCI DSS (Payment Card Industry Data Security Standard)", "SOC 2", "ISO 27001", "Adobe Creative Cloud", "Microsoft Office 365", "The Python Software Foundation"], ans: [0, 1, 2], exp: "These are recognized frameworks used to assess and certify an organization's security and compliance posture."},
+            {id: 53, type: "MS", cat: "Risk", q: "What are the main risks associated with Cloud Computing? (Select 3)", options: ["Lack of direct control over physical infrastructure", "Data breaches due to misconfigured cloud settings", "Dependency on the provider's availability (Outages)", "The cloud literally falling from the sky", "The internet being too fast to monitor", "Not being able to use a mouse or keyboard"], ans: [0, 1, 2], exp: "Cloud users must manage risks related to shared infrastructure, configuration errors, and service availability."},
+            {id: 54, type: "MS", cat: "Tech", q: "Which items are typically checked during a 'Technical Compliance Audit'? (Select 3)", options: ["Password complexity requirements", "Status of anti-virus software", "Firewall configuration rules", "Employee dress code", "The price of the company's stock", "The cleanliness of the office breakroom"], ans: [0, 1, 2], exp: "Technical audits focus on the actual configuration and state of the IT systems."},
+            {id: 55, type: "MS", cat: "Incident", q: "Which of the following are 'Breach Notification' requirements under GDPR? (Select 2)", options: ["Notify the supervisory authority within 72 hours", "Notify affected individuals if there is a high risk to their rights", "Notify the local newspaper immediately", "Notify the company's competitors", "Keep the breach a secret for at least a year", "Only notify if more than 1 million records are stolen"], ans: [0, 1], exp: "GDPR has strict timelines and criteria for when authorities and individuals must be informed of a data breach."},
+            {id: 56, type: "MS", cat: "Tech", q: "What are the characteristics of a 'Strong Password Policy'? (Select 3)", options: ["Minimum length (e.g., 12+ characters)", "Requirement for mixed character types (numbers, symbols, case)", "Prohibition of easily guessed words (like 'Password123')", "Requirement to change passwords every 5 days", "Allowing users to share passwords with their managers", "Using the same password for all company accounts"], ans: [0, 1, 2], exp: "Strong policies focus on complexity and length to resist brute-force and dictionary attacks."},
+            {id: 57, type: "MS", cat: "Incident", q: "Which roles are usually part of a 'CSIRT' (Computer Security Incident Response Team)? (Select 3)", options: ["Incident Commander/Leader", "Technical Lead (Forensics/Security Analyst)", "Legal/Compliance Representative", "The Janitorial Staff", "The local librarian", "A random person from the street"], ans: [0, 1, 2], exp: "An effective CSIRT needs leadership, technical expertise, and legal guidance to manage an incident."},
+            {id: 58, type: "MS", cat: "Tech", q: "What information should be captured in a 'Security Log'? (Select 3)", options: ["Success/Failure of login attempts", "Changes to user privileges or permissions", "System errors and warnings", "The contents of every private chat message", "A list of what every employee ate for lunch", "The desktop wallpaper of every user"], ans: [0, 1, 2], exp: "Logs should focus on events relevant to security auditing and troubleshooting."},
+            {id: 59, type: "MS", cat: "Scripting", q: "Which Python modules are useful for security automation? (Select 3)", options: ["subprocess (to run system commands)", "requests (to check web APIs or status)", "json (to parse configuration files)", "turtle (to draw shapes)", "pygame (to create video games)", "math (to solve basic arithmetic)"], ans: [0, 1, 2], exp: "These modules allow scripts to interact with the system, networks, and data formats common in security work."},
+            {id: 60, type: "MS", cat: "Incident", q: "What are common 'Indicators of Compromise' (IoCs)? (Select 3)", options: ["Unusual outbound network traffic to unknown IP addresses", "Unexpected new administrator accounts", "Multiple failed login attempts from a foreign country", "The computer's fan spinning faster while playing a game", "An update notification from Windows", "A change in the company's logo on the website"], ans: [0, 1, 2], exp: "IoCs are pieces of forensic data that suggest a system may have been breached."},
+            {id: 61, type: "MS", cat: "Incident", q: "What are the primary functions of an 'Audit Trail'? (Select 2)", options: ["To provide accountability for actions taken on a system", "To reconstruct a sequence of events during an investigation", "To slow down the computer's performance", "To save space on the hard drive", "To show how many hours an employee worked", "To act as a backup of all deleted files"], ans: [0, 1], exp: "Audit trails are essential for tracking who did what and when, which is critical for both compliance and forensics."},
+            {id: 62, type: "MS", cat: "Tech", q: "Which of these are 'Administrative Controls'? (Select 2)", options: ["Security awareness training for employees", "An 'Acceptable Use Policy' (AUP)", "An encrypted hard drive", "A biometric thumbprint scanner", "A network firewall", "An intrusion detection system"], ans: [0, 1], exp: "Administrative controls are 'paper' controls—policies and training—rather than technical hardware or software."},
+            {id: 63, type: "MS", cat: "Risk", q: "Which items are included in a 'Supply Chain'? (Select 3)", options: ["Software vendors", "Hardware manufacturers", "Cloud hosting providers", "The company's own internal servers", "The office building's landlord", "The local water utility"], ans: [0, 1, 2], exp: "In a cybersecurity context, the supply chain consists of the external entities that provide the tech and services the organization uses."},
+            {id: 64, type: "MS", cat: "Incident", q: "What must a 'Breach Report' typically include? (Select 3)", options: ["The nature of the breach and types of data involved", "The estimated number of affected individuals", "Measures taken or proposed to address the breach", "The personal home address of the hacker", "The credit card numbers of the IT team", "A list of every single file on the server"], ans: [0, 1, 2], exp: "Regulators require specific details to assess the severity of the breach and the adequacy of the response."},
+            {id: 65, type: "MS", cat: "Tech", q: "What are the benefits of 'Automated' compliance checks over 'Manual' checks? (Select 3)", options: ["Higher speed and efficiency", "Reduced risk of human error", "Ability to check systems continuously (Continuous Monitoring)", "Automated checks are always 100% correct without any setup", "They don't require any technical knowledge to use", "They are always cheaper than manual checks for every company"], ans: [0, 1, 2], exp: "Automation provides scale and consistency, although it still requires expert oversight."},
+            {id: 66, type: "MS", cat: "Tech", q: "Which of the following are 'Physical' security controls? (Select 2)", options: ["Security cameras (CCTV)", "Locked server room doors", "A strong password policy", "Data encryption", "Anti-virus software", "A written privacy policy"], ans: [0, 1], exp: "Physical controls protect the tangible assets and environment of the organization."},
+            {id: 67, type: "MS", cat: "Risk", q: "What are the 'Five Trust Services Criteria' for SOC 2? (Select 3)", options: ["Security", "Availability", "Confidentiality", "Profitability", "Popularity", "Scalability"], ans: [0, 1, 2], exp: "The five criteria are Security, Availability, Processing Integrity, Confidentiality, and Privacy."},
+            {id: 68, type: "MS", cat: "Tech", q: "When gathering 'Evidence' for an audit, what makes it 'Reliable'? (Select 2)", options: ["It is obtained directly from the source system (e.g., a system-generated log)", "It is protected from tampering (e.g., read-only access)", "It is a verbal statement from a manager", "It is a handwritten note on a napkin", "It was edited in Photoshop to look cleaner", "It is from a system that hasn't been updated in 5 years"], ans: [0, 1], exp: "Auditors prefer objective, system-generated data that hasn't been touched by human hands."},
+            {id: 69, type: "MS", cat: "Risk", q: "What are common challenges in 'Cloud Compliance'? (Select 3)", options: ["Difficulty in obtaining physical access to servers for audits", "Rapidly changing cloud environments (Ephemerality)", "Complex shared responsibility models", "The cloud being too expensive for any security", "Not being able to use Linux in the cloud", "Having too many different types of mice to support"], ans: [0, 1, 2], exp: "The dynamic and remote nature of the cloud makes traditional auditing more difficult."},
+            {id: 70, type: "MS", cat: "Incident", q: "Which of these are 'Incident Containment' strategies? (Select 2)", options: ["Disconnecting an infected computer from the network", "Disabling a compromised user account", "Reinstalling Windows immediately before checking logs", "Telling everyone in the company to change their password at the same time", "Deleting all logs to hide the evidence", "Shutting down the entire company's power grid"], ans: [0, 1], exp: "Containment is about stopping the 'bleeding' and preventing the threat from spreading further."},
+            {id: 71, type: "MS", cat: "Tech", q: "What does a 'Security Baseline' represent? (Select 2)", options: ["The minimum set of security controls that must be in place", "A starting point for securing a specific type of system (e.g., a Windows Server)", "The maximum security possible for a system", "A list of every single software ever installed", "A physical line drawn on the server room floor", "The lowest salary paid to a security guard"], ans: [0, 1], exp: "Baselines (like those from CIS) provide the standard configuration every system must meet."},
+            {id: 72, type: "MS", cat: "Incident", q: "Why is 'Logging' essential for incident response? (Select 2)", options: ["It provides a historical record of what happened before and during the breach", "It helps identify the 'Root Cause' of the incident", "It prevents the incident from happening in the first place", "It makes the computer run 20% faster", "It automatically repairs any damaged files", "It allows you to track the physical location of the hacker in real-time"], ans: [0, 1], exp: "Without logs, responders are 'flying blind' and cannot prove what the attacker did or how they got in."},
+            {id: 73, type: "MS", cat: "Tech", q: "Which of the following are 'Vulnerability Management' steps? (Select 3)", options: ["Scanning systems for weaknesses", "Prioritizing which vulnerabilities to fix first", "Applying patches or configuration changes", "Hiring more marketing staff", "Changing the company's name after a hack", "Hiding vulnerability reports from the IT team"], ans: [0, 1, 2], exp: "Vulnerability management is a continuous cycle of identification, assessment, and remediation."},
+            {id: 74, type: "MS", cat: "Incident", q: "What are the requirements for 'Admissible' digital evidence? (Select 2)", options: ["It must be authentic (proven to be what it claims to be)", "It must have a documented chain of custody", "It must be printed on gold-leaf paper", "It must be encrypted with a 100-character password", "It must be found by a person with no security training", "It must be stored on a floppy disk"], ans: [0, 1], exp: "For evidence to hold up in court, its origin and handling must be beyond reproach."},
+            {id: 75, type: "MS", cat: "Risk", q: "Which of these are part of 'Supply Chain Security'? (Select 2)", options: ["Conducting security assessments of new vendors", "Including security requirements in vendor contracts", "Checking the fuel efficiency of the delivery trucks", "Making sure the vendor has a nice-looking website", "Giving the vendor full admin access to your network", "Buying the cheapest software available regardless of security"], ans: [0, 1], exp: "Managing the risk of third parties requires vetting them before and during the business relationship."}
+        ];
+
+        // --- CHART & DASHBOARD LOGIC ---
+        function initCharts() {
+            const ctx = document.getElementById('topicChart').getContext('2d');
+            const counts = { 'Tech': 0, 'Scripting': 0, 'Risk': 0, 'Incident': 0 };
+            
+            quizData.forEach(q => {
+                if(q.cat in counts) counts[q.cat]++;
+            });
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Technical Compliance', 'Scripting & Verification', 'Third-Party & Risk', 'Incident Response'],
+                    datasets: [{
+                        data: [counts['Tech'], counts['Scripting'], counts['Risk'], counts['Incident']],
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: {family: 'Inter'} } },
+                        tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 8 }
+                    }
+                }
+            });
+        }
+
+        // --- STUDY GUIDE LOGIC ---
+        function renderStudyGuide(filter = 'All') {
+            const container = document.getElementById('study-list');
+            container.innerHTML = '';
+            
+            const filtered = filter === 'All' 
+                ? quizData 
+                : quizData.filter(q => q.cat === filter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400">No questions found for this category.</div>`;
+                return;
+            }
+
+            filtered.forEach(q => {
+                const el = document.createElement('div');
+                el.className = "bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden";
+                
+                // Get answer texts
+                const ansText = q.ans.map(idx => `<li class="ml-4 list-disc">${q.options[idx]}</li>`).join("");
+
+                el.innerHTML = `
+                    <button class="w-full text-left p-4 focus:outline-none flex justify-between items-start hover:bg-slate-50 transition-colors" onclick="toggleAccordion(this)">
+                        <div class="flex gap-3">
+                            <span class="flex-none bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded h-fit self-center">Q${q.id}</span>
+                            <h4 class="font-medium text-slate-800 pr-4">${q.q}</h4>
+                        </div>
+                        <span class="transform transition-transform text-slate-400 text-xl">▼</span>
+                    </button>
+                    <div class="hidden border-t border-slate-100 bg-slate-50 p-4 animate-fade-in">
+                        <div class="mb-3">
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-1">Correct Answer(s)</p>
+                            <ul class="text-slate-800 font-medium space-y-1">${ansText}</ul>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-1">Explanation</p>
+                            <p class="text-sm text-slate-600 leading-relaxed">${q.exp}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function toggleAccordion(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('span:last-child');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                btn.classList.add('bg-slate-50');
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+                btn.classList.remove('bg-slate-50');
+            }
+        }
+
+        function filterStudy(cat) {
+            // Update active button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.textContent.includes(cat) || (cat === 'All' && btn.textContent === 'All')) {
+                    btn.classList.replace('bg-slate-200', 'bg-blue-600');
+                    btn.classList.replace('text-slate-700', 'text-white');
+                } else {
+                    btn.classList.replace('bg-blue-600', 'bg-slate-200');
+                    btn.classList.replace('text-white', 'text-slate-700');
+                }
+            });
+            renderStudyGuide(cat);
+        }
+
+        // Search logic for Study Guide
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const container = document.getElementById('study-list');
+            const items = container.children; // This only filters rendered items, for full search we re-render or filter
+            
+            // Better approach: filter data then render
+            const filtered = quizData.filter(q => 
+                q.q.toLowerCase().includes(term) || 
+                q.exp.toLowerCase().includes(term) ||
+                q.id.toString().includes(term)
+            );
+            
+            // Re-use rendering logic but with manual data injection
+            // Quick hack: clear and rebuild
+            container.innerHTML = '';
+            filtered.forEach(q => {
+                 const el = document.createElement('div');
+                el.className = "bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden";
+                const ansText = q.ans.map(idx => `<li class="ml-4 list-disc">${q.options[idx]}</li>`).join("");
+                el.innerHTML = `
+                    <button class="w-full text-left p-4 focus:outline-none flex justify-between items-start hover:bg-slate-50 transition-colors" onclick="toggleAccordion(this)">
+                        <div class="flex gap-3">
+                            <span class="flex-none bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded h-fit self-center">Q${q.id}</span>
+                            <h4 class="font-medium text-slate-800 pr-4">${q.q}</h4>
+                        </div>
+                        <span class="transform transition-transform text-slate-400 text-xl">▼</span>
+                    </button>
+                    <div class="hidden border-t border-slate-100 bg-slate-50 p-4 animate-fade-in">
+                        <div class="mb-3">
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-1">Correct Answer(s)</p>
+                            <ul class="text-slate-800 font-medium space-y-1">${ansText}</ul>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-1">Explanation</p>
+                            <p class="text-sm text-slate-600 leading-relaxed">${q.exp}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        });
+
+        // --- QUIZ ENGINE ---
+        let currentQIndex = 0;
+        let score = 0;
+        let attempted = 0;
+        let selectedIndices = []; // Holds current selection
+
+        function startQuiz() {
+            currentQIndex = 0;
+            score = 0;
+            attempted = 0;
+            loadQuestion(currentQIndex);
+            updateScoreUI();
+        }
+
+        function loadQuestion(idx) {
+            const q = quizData[idx];
+            selectedIndices = [];
+            
+            // Reset UI
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('btn-check').classList.remove('hidden');
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('btn-prev').disabled = idx === 0;
+
+            // Update Text
+            document.getElementById('q-current').textContent = idx + 1;
+            document.getElementById('q-text').textContent = q.q;
+            document.getElementById('quiz-category-badge').textContent = getCategoryName(q.cat);
+            
+            const typeBadge = document.getElementById('q-type-badge');
+            typeBadge.textContent = q.type === 'MC' ? 'SINGLE CHOICE' : `MULTI SELECT (Pick ${q.ans.length})`;
+            typeBadge.className = q.type === 'MC' 
+                ? "inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded mb-4" 
+                : "inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded mb-4";
+
+            // Render Options
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('div');
+                btn.className = "option-card cursor-pointer p-4 rounded-lg border-2 border-slate-100 bg-white hover:border-blue-200 flex items-center gap-3";
+                
+                // Checkbox/Radio graphic
+                const indicator = document.createElement('div');
+                indicator.className = `flex-none w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center ${q.type === 'MC' ? 'rounded-full' : 'rounded'}`;
+                indicator.innerHTML = `<div class="w-2.5 h-2.5 bg-white rounded-full opacity-0 transition-opacity"></div>`;
+                
+                btn.innerHTML = `<span class="flex-1 font-medium text-slate-700">${opt}</span>`;
+                btn.prepend(indicator);
+
+                btn.onclick = () => selectOption(i, q.type, btn, indicator);
+                container.appendChild(btn);
+            });
+
+            // Update progress bar
+            const pct = ((idx) / quizData.length) * 100;
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+        }
+
+        function selectOption(index, type, btnElement, indicator) {
+            // If already answered, ignore
+            if (!document.getElementById('btn-check').classList.contains('hidden')) {
+                if (type === 'MC') {
+                    // Clear previous
+                    selectedIndices = [index];
+                    document.querySelectorAll('.option-card').forEach(el => {
+                        el.classList.remove('option-selected');
+                        el.querySelector('div div').classList.remove('bg-blue-600', 'opacity-100');
+                    });
+                    // Set new
+                    btnElement.classList.add('option-selected');
+                    indicator.querySelector('div').classList.add('bg-blue-600', 'opacity-100');
+                } else {
+                    // Toggle
+                    if (selectedIndices.includes(index)) {
+                        selectedIndices = selectedIndices.filter(i => i !== index);
+                        btnElement.classList.remove('option-selected');
+                        indicator.querySelector('div').classList.remove('bg-blue-600', 'opacity-100');
+                    } else {
+                        selectedIndices.push(index);
+                        btnElement.classList.add('option-selected');
+                        indicator.querySelector('div').classList.add('bg-blue-600', 'opacity-100');
+                    }
+                }
+            }
+        }
+
+        function checkAnswer() {
+            if (selectedIndices.length === 0) return; // Must select something
+
+            const q = quizData[currentQIndex];
+            const correct = q.ans.sort().toString() === selectedIndices.sort().toString();
+            
+            // Visual feedback on options
+            const options = document.getElementById('options-container').children;
+            
+            // Mark correct/incorrect options
+            Array.from(options).forEach((opt, idx) => {
+                // Remove hover effects
+                opt.classList.remove('hover:border-blue-200', 'cursor-pointer');
+                opt.onclick = null; // Disable clicking
+
+                if (q.ans.includes(idx)) {
+                    opt.classList.add('correct-answer');
+                    // Add checkmark
+                    const badge = document.createElement('span');
+                    badge.innerHTML = '✓';
+                    badge.className = 'ml-2 text-emerald-700 font-bold';
+                    opt.appendChild(badge);
+                } else if (selectedIndices.includes(idx) && !q.ans.includes(idx)) {
+                    opt.classList.add('incorrect-answer');
+                    // Add cross
+                    const badge = document.createElement('span');
+                    badge.innerHTML = '✗';
+                    badge.className = 'ml-2 text-red-700 font-bold';
+                    opt.appendChild(badge);
+                }
+            });
+
+            // Feedback Text
+            const fbArea = document.getElementById('feedback-area');
+            const fbTitle = document.getElementById('feedback-title');
+            const fbText = document.getElementById('feedback-text');
+            const fbIcon = document.getElementById('feedback-icon');
+
+            fbArea.classList.remove('hidden');
+            fbText.textContent = q.exp;
+
+            if (correct) {
+                fbTitle.textContent = "Correct!";
+                fbTitle.className = "font-bold text-emerald-700 text-sm mb-1";
+                fbArea.className = "mt-6 p-4 rounded-lg bg-emerald-50 border border-emerald-200 animate-fade-in";
+                fbIcon.textContent = "✅";
+                score++;
+            } else {
+                fbTitle.textContent = "Incorrect";
+                fbTitle.className = "font-bold text-red-700 text-sm mb-1";
+                fbArea.className = "mt-6 p-4 rounded-lg bg-red-50 border border-red-200 animate-fade-in";
+                fbIcon.textContent = "❌";
+            }
+
+            attempted++;
+            updateScoreUI();
+
+            // Toggle Buttons
+            document.getElementById('btn-check').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            if (currentQIndex < quizData.length - 1) {
+                currentQIndex++;
+                loadQuestion(currentQIndex);
+            } else {
+                alert(`Quiz Complete! Final Score: ${Math.round((score/75)*100)}%`);
+                // Could reset or show summary here
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQIndex > 0) {
+                currentQIndex--;
+                // Note: Logic here doesn't preserve "answered" state for previous Qs in this simple version, 
+                // but re-enables attempting. For a strict quiz, prev might be disabled. 
+                // For a study tool, re-attempting is fine.
+                loadQuestion(currentQIndex);
+            }
+        }
+
+        function updateScoreUI() {
+            const pct = attempted === 0 ? 0 : Math.round((score / attempted) * 100);
+            document.getElementById('score-val').textContent = pct;
+        }
+
+        function getCategoryName(cat) {
+            const map = {
+                'Tech': 'Technical Compliance & Auditing',
+                'Scripting': 'Scripting & Verification',
+                'Risk': 'Third-Party & Cloud Risk',
+                'Incident': 'Incident Response'
+            };
+            return map[cat] || cat;
+        }
+
+        // --- VIEW CONTROLLER ---
+        function switchView(viewName) {
+            // Hide all views
+            ['dashboard', 'quiz', 'study'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                document.getElementById(`nav-${v}`).classList.remove('bg-blue-50', 'text-blue-600');
+                document.getElementById(`nav-${v}`).classList.add('text-slate-600');
+            });
+
+            // Show selected
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`nav-${viewName}`).classList.add('bg-blue-50', 'text-blue-600');
+            document.getElementById(`nav-${viewName}`).classList.remove('text-slate-600');
+
+            if (viewName === 'quiz') {
+                if (attempted === 0) startQuiz();
+            }
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            renderStudyGuide();
+        });
+
+    </script>
+</body>
+</html>
+
+
+
+

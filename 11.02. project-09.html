@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream GRC Mission Control</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chosen Palette: Corporate GRC Blue -->
+    <!-- 
+        Primary Background: Slate-50 (Warm Neutral)
+        Surface: White
+        Primary Action: Blue-600
+        Accent/Highlight: Amber-500 (for alerts/highlights)
+        Text: Slate-800
+    -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate-50 */
+            color: #1e293b; /* Slate-800 */
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Chart Container Styling per Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Max width constraint */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height constraint */
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .active-filter {
+            background-color: #2563eb; /* Blue-600 */
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .highlight-law {
+            border: 2px solid #f59e0b; /* Amber-500 */
+            background-color: #fffbeb; /* Amber-50 */
+            transform: scale(1.02);
+        }
+    </style>
+
+    <!-- Application Structure Plan: 
+         The app is designed as a "Mission Control Dashboard" for the Junior Compliance Officer.
+         1. Header: Sets the persona and mission context immediately.
+         2. Entity Profiler (Left Column): Interactive buttons representing NorthStream's Assets and Locations. This is the "Input" for the user's analysis.
+         3. Legislative Radar (Right Column): The list of laws. These are initially static but react (highlight) when Entity items are clicked. This simulates the "Mapping" mental model required by the lab.
+         4. Data Visualization (Bottom): Charts to visualize the "Why" - volume of PII vs SCADA, etc.
+         5. Deliverable Guide: A dedicated section for the report requirements, ensuring the student knows exactly what to output.
+         This structure moves from "Context" -> "Analysis" -> "Output", mirroring the lab workflow.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Interactive Mapping (JS): Goal -> Connect Operations to Law. Method -> Clickable buttons that toggle CSS classes on Law cards. Justification -> Reinforces the "If X then Y" logic of compliance.
+         2. Donut Chart (Chart.js): Goal -> Inform about Data Assets. Method -> Visual breakdown of PII vs Financial vs SCADA. Justification -> Shows where the risk mass lies.
+         3. Bar Chart (Chart.js): Goal -> Compare Jurisdictional reach. Method -> Simple bar chart of provinces. Justification -> Visualizes the geographical scope.
+         4. Dynamic Glossary (JS): Goal -> Inform/Clarify Terms. Method -> Filterable list. Justification -> Quick reference without leaving the dashboard context.
+         
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navigation / Header -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <span class="text-2xl text-blue-600">🛡️</span>
+                        <span class="font-bold text-xl tracking-tight text-slate-900">NorthStream <span class="text-slate-500 font-normal">GRC Portal</span></span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <button onclick="navTo('dashboard')" class="nav-link border-b-2 border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">Mission Dashboard</button>
+                        <button onclick="navTo('deliverables')" class="nav-link border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">Deliverable Specs</button>
+                        <button onclick="navTo('glossary')" class="nav-link border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">Terminology</button>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        Phase: Task 1 of 12
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" class="space-y-8 animate-fade-in">
+            
+            <!-- Mission Briefing Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">Mission Overview: Building the Legal Requirements Register (LRR)</h1>
+                        <p class="mt-2 text-slate-600 max-w-3xl">
+                            You are a Junior Compliance Officer. Your mission is to map NorthStream's operational footprint to Canadian legislation. 
+                            Use the interactive tools below to explore the relationship between our <strong>Operations</strong>, <strong>Data Assets</strong>, and the <strong>Law</strong>.
+                        </p>
+                    </div>
+                    <div class="text-right hidden md:block">
+                        <div class="text-sm text-slate-500">Estimated Duration</div>
+                        <div class="text-xl font-bold text-slate-800">4 Hours</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Core Interactive Engine -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- Left Column: Context / Inputs (4 cols) -->
+                <div class="lg:col-span-4 space-y-6">
+                    <!-- Intro Paragraph for Input Section -->
+                    <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-md">
+                        <h3 class="font-semibold text-blue-900">Step 1: Analyze Operations</h3>
+                        <p class="text-sm text-blue-800 mt-1">
+                            Review NorthStream's profile below. Click on <strong>Locations</strong> or <strong>Data Types</strong> to simulate the "Mapping Analysis" phase and identify which laws apply.
+                        </p>
+                    </div>
+
+                    <!-- Profile Card -->
+                    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <h2 class="font-bold text-lg text-slate-800">NorthStream Entity Profile</h2>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            
+                            <!-- Locations Selector -->
+                            <div>
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-3">Operational Jurisdictions</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="toggleContext('on')" id="btn-on" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">Ontario (HQ)</button>
+                                    <button onclick="toggleContext('qc')" id="btn-qc" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">Quebec</button>
+                                    <button onclick="toggleContext('ab')" id="btn-ab" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">Alberta</button>
+                                    <button onclick="toggleContext('bc')" id="btn-bc" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">British Columbia</button>
+                                </div>
+                            </div>
+
+                            <!-- Data Assets Selector -->
+                            <div>
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-3">Data Assets Held</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="toggleContext('pii')" id="btn-pii" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">Employee PII (5k)</button>
+                                    <button onclick="toggleContext('fin')" id="btn-fin" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">Financial Records</button>
+                                    <button onclick="toggleContext('scada')" id="btn-scada" class="ctx-btn px-3 py-1.5 rounded-md text-sm border border-slate-300 hover:bg-slate-50 text-slate-600 transition-colors">SCADA Metadata</button>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100">
+                                <button onclick="resetContext()" class="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium">Reset Analysis</button>
+                            </div>
+                        </div>
+                    </div>
+
+                     <!-- Data Visualization Card 1 -->
+                     <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                        <h4 class="font-semibold text-slate-700 mb-4 text-sm">Data Asset Composition</h4>
+                        <div class="chart-container">
+                            <canvas id="assetsChart"></canvas>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 text-center">Visualizing the relative sensitivity of stored data.</p>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Outputs / Laws (8 cols) -->
+                <div class="lg:col-span-8 space-y-6">
+                    <!-- Intro Paragraph for Output Section -->
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-md">
+                        <h3 class="font-semibold text-amber-900">Step 2: Legislative Radar</h3>
+                        <p class="text-sm text-amber-800 mt-1">
+                            Based on your selections on the left, the relevant legislation below will highlight. This helps you populate the "Legal Requirements Register" for your report.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="laws-container">
+                        <!-- Laws will be rendered here by JS -->
+                    </div>
+
+                    <!-- Additional Chart -->
+                    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mt-6">
+                         <div class="flex justify-between items-center mb-4">
+                             <h4 class="font-semibold text-slate-700">Violation Impact Analysis Simulation</h4>
+                             <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Projected Max Penalties</span>
+                         </div>
+                         <p class="text-sm text-slate-500 mb-4">
+                             Part of your report requires a "Violation Impact Analysis". This chart compares the severity of potential fines across the identified legislative frameworks.
+                         </p>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="finesChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- DELIVERABLES VIEW -->
+        <div id="deliverables-view" class="hidden animate-fade-in max-w-4xl mx-auto space-y-8">
+            <div class="text-center pb-8">
+                <h2 class="text-3xl font-bold text-slate-900">Mandatory Student Deliverable</h2>
+                <p class="mt-2 text-lg text-slate-600">Prepare your findings for the Board of Directors.</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-bold text-lg text-slate-800">Report Specifications</h3>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center p-4 bg-slate-50 rounded-lg">
+                        <div class="text-2xl mb-2">📄</div>
+                        <h4 class="font-bold text-slate-900">Format</h4>
+                        <p class="text-sm text-slate-600">Professional Business Report<br>(PDF/Word)</p>
+                    </div>
+                    <div class="text-center p-4 bg-slate-50 rounded-lg">
+                        <div class="text-2xl mb-2">📏</div>
+                        <h4 class="font-bold text-slate-900">Length</h4>
+                        <p class="text-sm text-slate-600">Maximum 3 Pages<br>(A4 Size)</p>
+                    </div>
+                    <div class="text-center p-4 bg-slate-50 rounded-lg">
+                        <div class="text-2xl mb-2">🏁</div>
+                        <h4 class="font-bold text-slate-900">Phase</h4>
+                        <p class="text-sm text-slate-600">Task 1 of 12<br>(Initial Assessment)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900">Required Sections</h3>
+                
+                <!-- Section 1 -->
+                <div class="bg-white p-6 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <h4 class="font-bold text-lg text-blue-900">1. Executive Summary</h4>
+                    <p class="text-slate-600 mt-1">High-level view of NorthStream’s compliance obligations. Aim for brevity and impact.</p>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="bg-white p-6 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <h4 class="font-bold text-lg text-blue-900">2. The Legal Requirements Register (LRR)</h4>
+                    <p class="text-slate-600 mt-1">A structured list/table of applicable laws. You must justify WHY a law applies based on the mapping exercise.</p>
+                    <div class="mt-3 bg-slate-50 p-3 rounded text-sm text-slate-500 italic">
+                        Example: "Because NorthStream operates in Quebec, it must comply with Law 25..."
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="bg-white p-6 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <h4 class="font-bold text-lg text-blue-900">3. Violation Impact Analysis</h4>
+                    <p class="text-slate-600 mt-1">Brief description of potential fines or penalties. Use the "Impact Analysis" chart on the dashboard for reference data.</p>
+                </div>
+            </div>
+
+            <div class="bg-green-50 rounded-xl p-6 border border-green-200">
+                <h3 class="font-bold text-green-900 mb-2">Evaluation Criteria</h3>
+                <ul class="list-disc list-inside space-y-2 text-green-800 text-sm">
+                    <li><strong>Accuracy:</strong> Did you identify the correct Canadian laws?</li>
+                    <li><strong>Specificity:</strong> Did you mention specific sections (e.g., Mandatory Breach Notification)?</li>
+                    <li><strong>Professionalism:</strong> Is the tone appropriate for a Board of Directors?</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- GLOSSARY VIEW -->
+        <div id="glossary-view" class="hidden animate-fade-in">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6">Key Terminology Reference</h2>
+                <p class="text-slate-600 mb-8">Understanding these acronyms is crucial for the "Research & Discovery" phase of your lab.</p>
+                
+                <div class="grid gap-4" id="glossary-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-sm text-slate-500">
+                NorthStream Compliance Lab Simulation | Educational Purpose Only
+            </p>
+            <p class="text-center text-xs text-slate-400 mt-1">
+                Disclaimer: All tools and methodologies are illustrative. Do not perform unauthorized scanning on real systems.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA STORE ---
+
+        // The Laws database (Source: Lab Briefing)
+        const laws = [
+            {
+                id: 'pipeda',
+                code: 'PIPEDA',
+                name: 'Personal Information Protection and Electronic Documents Act',
+                jurisdiction: 'Federal / Commercial',
+                triggers: ['on', 'pii', 'fin', 'ab', 'bc'], // Applies generally to commercial activity, though AB/BC/QC have substantially similar laws, PIPEDA applies to inter-provincial & federal works.
+                desc: 'The federal privacy law for private-sector organizations. Applies to employee data in federal works and commercial data crossing borders.',
+                focus: 'Data Privacy',
+                link: 'https://www.priv.gc.ca/'
+            },
+            {
+                id: 'c26',
+                code: 'Bill C-26 (CCSPA)',
+                name: 'Critical Cyber Systems Protection Act',
+                jurisdiction: 'Federal / Critical Infra',
+                triggers: ['scada'],
+                desc: 'Targets critical infrastructure. Requires reporting of cybersecurity incidents and protection of critical cyber systems.',
+                focus: 'Cyber Security / SCADA',
+                link: 'https://www.cyber.gc.ca/'
+            },
+            {
+                id: 'law25',
+                code: 'Law 25',
+                name: 'Quebec Law 25 (Formerly Bill 64)',
+                jurisdiction: 'Quebec',
+                triggers: ['qc'],
+                desc: 'Modernized privacy legislation in Quebec. Requires a Privacy Officer and has stringent breach notification rules.',
+                focus: 'Privacy / Data Sovereignty',
+                link: 'https://www.legisquebec.gouv.qc.ca/'
+            },
+            {
+                id: 'pipa',
+                code: 'PIPA',
+                name: 'Personal Information Protection Act',
+                jurisdiction: 'Alberta & BC',
+                triggers: ['ab', 'bc'],
+                desc: 'Provincial private sector privacy laws deemed substantially similar to PIPEDA within their provinces.',
+                focus: 'Provincial Privacy',
+                link: '#'
+            }
+        ];
+
+        // Glossary Terms
+        const terms = [
+            { term: 'PII', def: 'Personally Identifiable Information. Any data that can identify an individual (e.g., Name, SIN, Biometrics).' },
+            { term: 'GRC', def: 'Governance, Risk, and Compliance. A strategy for managing an organization\'s overall governance and compliance.' },
+            { term: 'SCADA', def: 'Supervisory Control and Data Acquisition. Control system architecture used for high-level process management in infrastructure.' },
+            { term: 'IRP', def: 'Incident Response Plan. Instructions to help IT staff detect, respond to, and recover from security incidents.' },
+            { term: 'SOC 2', def: 'System and Organization Controls 2. A voluntary compliance standard for service organizations regarding customer data.' }
+        ];
+
+        // Application State
+        let activeFilters = new Set();
+
+        // --- DOM ELEMENTS ---
+        const lawsContainer = document.getElementById('laws-container');
+        const glossaryGrid = document.getElementById('glossary-grid');
+
+        // --- INITIALIZATION ---
+        function init() {
+            renderLaws();
+            renderGlossary();
+            initCharts();
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function navTo(viewId) {
+            // Hide all views
+            ['dashboard-view', 'deliverables-view', 'glossary-view'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            // Show selected
+            document.getElementById(viewId + '-view').classList.remove('hidden');
+            
+            // Update nav active state (simple implementation)
+            const buttons = document.querySelectorAll('.nav-link');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-gray-900');
+                btn.classList.add('border-transparent', 'text-gray-500');
+                if(btn.textContent.toLowerCase().includes(viewId === 'dashboard' ? 'mission' : (viewId === 'glossary' ? 'term' : 'spec'))) {
+                     btn.classList.remove('border-transparent', 'text-gray-500');
+                     btn.classList.add('border-blue-500', 'text-gray-900');
+                }
+            });
+        }
+
+        // --- CORE INTERACTION LOGIC (MAPPING ENGINE) ---
+        
+        function toggleContext(filterId) {
+            const btn = document.getElementById(`btn-${filterId}`);
+            
+            if (activeFilters.has(filterId)) {
+                activeFilters.delete(filterId);
+                btn.classList.remove('active-filter');
+                btn.classList.add('text-slate-600', 'border-slate-300');
+            } else {
+                activeFilters.add(filterId);
+                btn.classList.add('active-filter');
+                btn.classList.remove('text-slate-600', 'border-slate-300');
+            }
+            
+            updateLawHighlights();
+        }
+
+        function resetContext() {
+            activeFilters.clear();
+            document.querySelectorAll('.ctx-btn').forEach(btn => {
+                btn.classList.remove('active-filter');
+                btn.classList.add('text-slate-600', 'border-slate-300');
+            });
+            updateLawHighlights();
+        }
+
+        function updateLawHighlights() {
+            // Check each law card
+            laws.forEach(law => {
+                const card = document.getElementById(`law-card-${law.id}`);
+                const matchFound = law.triggers.some(trigger => activeFilters.has(trigger));
+                
+                if (matchFound) {
+                    card.classList.add('highlight-law');
+                    // Add a subtle "Why?" badge if not present
+                    if(!card.querySelector('.why-badge')) {
+                        const badge = document.createElement('div');
+                        badge.className = 'why-badge mt-2 text-xs font-bold text-amber-600 flex items-center gap-1';
+                        badge.innerHTML = '<span>⚠️ Analysis: Applicable based on selection</span>';
+                        card.querySelector('.card-content').appendChild(badge);
+                    }
+                } else {
+                    card.classList.remove('highlight-law');
+                    const badge = card.querySelector('.why-badge');
+                    if(badge) badge.remove();
+                }
+            });
+        }
+
+        // --- RENDERING FUNCTIONS ---
+
+        function renderLaws() {
+            lawsContainer.innerHTML = laws.map(law => `
+                <div id="law-card-${law.id}" class="card-hover bg-white rounded-lg p-5 shadow-sm border border-slate-200 transition-all duration-300 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                            ${law.jurisdiction}
+                        </span>
+                        <a href="${law.link}" target="_blank" class="text-blue-500 hover:text-blue-700 text-sm">Official Source &nearr;</a>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 mb-1">${law.code}</h4>
+                    <p class="text-xs text-slate-500 mb-3">${law.name}</p>
+                    <div class="card-content flex-grow">
+                        <p class="text-sm text-slate-600 mb-4">${law.desc}</p>
+                        <div class="mt-auto">
+                            <span class="text-xs font-semibold text-slate-400 uppercase">Focus:</span>
+                            <span class="text-xs text-slate-700 ml-1">${law.focus}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGlossary() {
+            glossaryGrid.innerHTML = terms.map(t => `
+                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-lg font-bold text-blue-600">${t.term}</span>
+                    </div>
+                    <p class="text-sm text-slate-600">${t.def}</p>
+                </div>
+            `).join('');
+        }
+
+        // --- CHART JS IMPLEMENTATION ---
+
+        function initCharts() {
+            // Chart 1: Data Asset Breakdown
+            const ctxAssets = document.getElementById('assetsChart').getContext('2d');
+            new Chart(ctxAssets, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Employee PII', 'Financial Records', 'SCADA Metadata'],
+                    datasets: [{
+                        data: [5000, 2500, 1500], // Hypothetical weighting for visual
+                        backgroundColor: ['#3b82f6', '#10b981', '#ef4444'], // Blue, Green, Red (Critical)
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                        title: { display: false }
+                    }
+                }
+            });
+
+            // Chart 2: Violation Impact (Fines Simulation)
+            const ctxFines = document.getElementById('finesChart').getContext('2d');
+            new Chart(ctxFines, {
+                type: 'bar',
+                data: {
+                    labels: ['PIPEDA', 'Law 25 (QC)', 'Bill C-26'],
+                    datasets: [{
+                        label: 'Max Penalty (CAD Millions - Simulated)',
+                        data: [0.1, 25, 15], // Approximate for simulation impact: PIPEDA (current is low, reform is high, sticking to current mental model vs Law 25's massive impact), Law 25 (~25M or 4%), C-26 (~15M)
+                        backgroundColor: ['#94a3b8', '#f59e0b', '#dc2626'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Potential Fine ($M)' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `$${context.raw} Million CAD (Max)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
+
+
+
+
