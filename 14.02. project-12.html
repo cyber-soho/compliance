@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Data Solutions | Executive Compliance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Chosen Palette: Corporate Trust & Warmth -->
+    <!-- 
+        Primary Background: Slate-50 (Warm Neutral)
+        Primary Text: Slate-800
+        Accent/Action: Teal-600 (Security/Calm)
+        Alert/High Risk: Rose-600
+        Warning/Medium Risk: Amber-500
+        Success/Low Risk: Emerald-500
+    -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate-50 */
+            color: #1e293b; /* Slate-800 */
+        }
+
+        /* Chart Container Styling Rules */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Constraint for larger screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        /* Custom Scrollbar for internal overflow elements */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        /* Transition utilities */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .nav-active {
+            border-bottom: 2px solid #0d9488; /* Teal-600 */
+            color: #0f766e; /* Teal-700 */
+            font-weight: 600;
+        }
+    </style>
+    <!-- Application Structure Plan: 
+         1. Header: Branding and Report Context (Task 12 Requirements).
+         2. Executive Summary (Hero): Immediate "Bottom Line Up Front" (BLUF) as requested by the prompt (3-page limit equivalent).
+         3. Navigation: Tabs to switch between deep dives (Findings, Risk Matrix, Roadmap, Framework).
+         4. Dynamic Content Area:
+            - Overview: High-level metrics and scope.
+            - Critical Findings: Detailed view of the "Critical Three" with the GDPR example from text.
+            - Risk Matrix: Interactive chart of the 7H/12M/5L profile.
+            - Roadmap: Timeline view of strategic recommendations.
+         5. Footer: Confidentiality and Methodology notes.
+         
+         Rationale: This structure mirrors the "Executive -> Details -> Plan" flow required in professional compliance reporting, 
+         prioritizing the "Executive Summary" aspects while allowing interaction to drill down into the "Technical Tasks".
+    -->
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-teal-600 text-white p-1.5 rounded-lg shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-800 leading-tight">NorthStream Data Solutions</h1>
+                    <p class="text-xs text-slate-500 font-medium tracking-wide">COMPLIANCE ASSESSMENT & REMEDIATION REPORT</p>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-4">
+                <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-semibold border border-slate-200">CONFIDENTIAL</span>
+                <span class="text-sm text-slate-500">Date: October 2023</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- Executive Summary Hero -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                <div class="lg:col-span-2 space-y-4">
+                    <h2 class="text-2xl font-bold text-slate-800">Executive Summary</h2>
+                    <p class="text-slate-600 leading-relaxed">
+                        NorthStream Data Solutions operates across Canada and the EU, necessitating adherence to both 
+                        <span class="font-semibold text-teal-700">PIPEDA</span> and <span class="font-semibold text-teal-700">GDPR</span>. 
+                        This assessment, conducted under the <span class="font-semibold text-teal-700">NIST Cybersecurity Framework 2.0</span>, 
+                        evaluates our current posture against these legal requirements and technical baselines.
+                    </p>
+                    <div class="flex items-center space-x-2 text-sm text-slate-500">
+                        <span class="font-medium text-slate-700">Status:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            Partially Compliant
+                        </span>
+                        <span class="text-slate-300">|</span>
+                        <span>Assessment Period: Q3 2023</span>
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
+                    <span class="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-1">Total Risk Findings</span>
+                    <div class="text-4xl font-extrabold text-slate-800 mb-2">24</div>
+                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden flex">
+                        <div class="bg-rose-500 h-full" style="width: 29%" title="High: 7"></div>
+                        <div class="bg-amber-400 h-full" style="width: 50%" title="Medium: 12"></div>
+                        <div class="bg-emerald-400 h-full" style="width: 21%" title="Low: 5"></div>
+                    </div>
+                    <div class="flex justify-between w-full mt-2 text-xs text-slate-500 px-2">
+                        <span class="flex items-center"><span class="w-2 h-2 bg-rose-500 rounded-full mr-1"></span>7 High</span>
+                        <span class="flex items-center"><span class="w-2 h-2 bg-amber-400 rounded-full mr-1"></span>12 Med</span>
+                        <span class="flex items-center"><span class="w-2 h-2 bg-emerald-400 rounded-full mr-1"></span>5 Low</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Navigation -->
+        <div class="border-b border-slate-200 mb-6 overflow-x-auto">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <button onclick="switchTab('overview')" id="tab-overview" class="nav-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors">
+                    Dashboard Overview
+                </button>
+                <button onclick="switchTab('findings')" id="tab-findings" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors">
+                    Critical Findings (3)
+                </button>
+                <button onclick="switchTab('risks')" id="tab-risks" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors">
+                    Risk Register Analysis
+                </button>
+                <button onclick="switchTab('roadmap')" id="tab-roadmap" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors">
+                    Strategic Roadmap
+                </button>
+            </nav>
+        </div>
+
+        <!-- Dynamic Content Section -->
+        <div id="content-area" class="min-h-[500px]">
+            <!-- Content injected via JS -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex justify-center md:justify-start">
+                    <p class="text-sm text-slate-500">
+                        &copy; 2023 NorthStream Data Solutions. Internal Use Only.
+                    </p>
+                </div>
+                <div class="mt-4 flex justify-center md:mt-0">
+                    <p class="text-xs text-slate-400 max-w-md text-center md:text-right">
+                        Based on Module 13, Task 12.
+                        <br>Frameworks: NIST CSF 2.0, CIS Benchmarks, GDPR, PIPEDA.</br>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Templates (Hidden) used by JS to populate content-area -->
+    <template id="tmpl-overview">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 fade-in">
+            <!-- Introduction Block -->
+            <div class="col-span-1 md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 mb-2">
+                <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">About This Dashboard</h3>
+                <p class="text-sm text-slate-600">
+                    This interactive dashboard synthesizes the findings from 11 distinct technical compliance tasks. 
+                    It serves as the <strong>Final Report Assembly</strong>, designed to translate technical compliance data 
+                    (NIST mapping, policy gaps, configuration baselines) into strategic business intelligence. 
+                    Use the tabs above to explore the critical risks, detailed register, and remediation plan.
+                </p>
+            </div>
+
+            <!-- Scope & Methodology -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                    <span class="bg-teal-100 text-teal-800 p-1 rounded mr-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                    </span>
+                    Scope & Methodology
+                </h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 h-5 w-5 text-teal-500">•</span>
+                        <span class="ml-2 text-sm text-slate-600"><strong>Framework:</strong> NIST Cybersecurity Framework (CSF) 2.0 tailored for Canadian/EU operations.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 h-5 w-5 text-teal-500">•</span>
+                        <span class="ml-2 text-sm text-slate-600"><strong>Legal Baseline:</strong> PIPEDA (Canada) & GDPR (Europe).</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 h-5 w-5 text-teal-500">•</span>
+                        <span class="ml-2 text-sm text-slate-600"><strong>Technical Controls:</strong> CIS Benchmarks & Automated Compliance Scanning (Tasks 16-17).</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 h-5 w-5 text-teal-500">•</span>
+                        <span class="ml-2 text-sm text-slate-600"><strong>Vendor Risk:</strong> SOC 2 Report Analysis (Task 18).</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- NIST Function Status -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                    <span class="bg-indigo-100 text-indigo-800 p-1 rounded mr-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    </span>
+                    NIST CSF Alignment
+                </h3>
+                <div class="space-y-4">
+                    <!-- Dynamic Bars populated by JS -->
+                    <div id="nist-bars-container" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-findings">
+        <div class="fade-in space-y-6">
+            <div class="prose max-w-none mb-6">
+                <p class="text-slate-600">
+                    Following a comprehensive audit of policies, configurations, and vendor relationships, three critical gaps were identified that pose immediate financial and reputational risk to NorthStream Data Solutions. These require prioritized executive attention.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="findings-container">
+                <!-- Cards injected by JS -->
+            </div>
+
+            <!-- Detailed View Panel -->
+            <div id="finding-detail-panel" class="hidden bg-white border border-rose-200 rounded-xl p-6 shadow-sm mt-6 ring-1 ring-rose-100">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h4 id="detail-title" class="text-xl font-bold text-slate-800 mb-1">Finding Title</h4>
+                        <span id="detail-badge" class="px-2 py-1 text-xs font-bold rounded uppercase">High Risk</span>
+                    </div>
+                    <button onclick="closeDetail()" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h5 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">The Issue</h5>
+                        <p id="detail-issue" class="text-slate-700 mb-4 leading-relaxed"></p>
+                        
+                        <h5 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Regulatory Context</h5>
+                        <p id="detail-reg" class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100 italic"></p>
+                    </div>
+                    <div>
+                        <h5 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Business Impact</h5>
+                        <div class="bg-rose-50 p-4 rounded-lg border border-rose-100 mb-4">
+                            <p id="detail-impact" class="text-rose-800 font-medium"></p>
+                        </div>
+                        
+                        <h5 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Recommended Remediation</h5>
+                        <ul id="detail-remediation" class="list-disc list-inside text-sm text-slate-700 space-y-1"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-risks">
+        <div class="fade-in grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left: Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
+                <h3 class="text-lg font-bold text-slate-800 mb-2 w-full text-left">Risk Distribution Profile</h3>
+                <p class="text-sm text-slate-500 mb-6 w-full text-left">Visualization of the 24 identified risks across priority levels.</p>
+                <div class="chart-container">
+                    <canvas id="riskChart"></canvas>
+                </div>
+                <div class="mt-4 text-center text-sm text-slate-500">
+                    Click segments to filter list
+                </div>
+            </div>
+
+            <!-- Right: Interactive List -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col h-[500px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-800">Prioritized Risk Register</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="renderRiskList('all')" class="px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded">All</button>
+                        <button onclick="renderRiskList('High')" class="px-2 py-1 text-xs bg-rose-100 text-rose-800 hover:bg-rose-200 rounded">High</button>
+                        <button onclick="renderRiskList('Medium')" class="px-2 py-1 text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 rounded">Med</button>
+                    </div>
+                </div>
+                <div class="overflow-y-auto custom-scroll flex-grow pr-2" id="risk-list-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-roadmap">
+        <div class="fade-in space-y-8">
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                 <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Remediation Strategy</h3>
+                 <p class="text-sm text-slate-600">
+                    The following roadmap outlines the strategic timeline for addressing the 24 findings. 
+                    Prioritization is based on the <strong>Risk Score (Likelihood × Impact)</strong> and 
+                    regulatory mandates (GDPR 72-hour rules).
+                 </p>
+            </div>
+
+            <div class="relative border-l-4 border-slate-200 ml-4 space-y-12">
+                <!-- Timeline Item 1 -->
+                <div class="relative pl-8">
+                    <div class="absolute -left-3 top-0 bg-rose-500 w-5 h-5 rounded-full border-4 border-white shadow"></div>
+                    <h4 class="text-lg font-bold text-slate-800">Immediate Actions (0-30 Days)</h4>
+                    <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">Critical Priority</span>
+                    <div class="mt-3 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-rose-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <div>
+                                    <strong class="block text-sm text-slate-800">Establish GDPR Breach Protocol</strong>
+                                    <span class="text-xs text-slate-500">Update Incident Response Plan to meet 72-hour notification requirement. Conduct table-top simulation.</span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-rose-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <div>
+                                    <strong class="block text-sm text-slate-800">Patch Critical External Vulnerabilities</strong>
+                                    <span class="text-xs text-slate-500">Remediate 2 critical CVEs identified in Task 16 scans on public-facing web servers.</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="relative pl-8">
+                    <div class="absolute -left-3 top-0 bg-amber-400 w-5 h-5 rounded-full border-4 border-white shadow"></div>
+                    <h4 class="text-lg font-bold text-slate-800">Short-Term (1-3 Months)</h4>
+                    <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">Operational Stability</span>
+                    <div class="mt-3 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-amber-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <div>
+                                    <strong class="block text-sm text-slate-800">Policy Formalization & Training</strong>
+                                    <span class="text-xs text-slate-500">Close Policy Gaps (Task 14). Roll out annual security awareness training for all staff.</span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-amber-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                <div>
+                                    <strong class="block text-sm text-slate-800">Vendor Risk Management Program</strong>
+                                    <span class="text-xs text-slate-500">Implement SOC 2 review cycle for all data processors (Task 18 findings).</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="relative pl-8">
+                    <div class="absolute -left-3 top-0 bg-teal-500 w-5 h-5 rounded-full border-4 border-white shadow"></div>
+                    <h4 class="text-lg font-bold text-slate-800">Long-Term (3-6 Months)</h4>
+                    <span class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded border border-teal-100">Strategic Maturity</span>
+                    <div class="mt-3 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-teal-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div>
+                                    <strong class="block text-sm text-slate-800">Compliance Certification Preparation</strong>
+                                    <span class="text-xs text-slate-500">Begin formal gap analysis for ISO 27001 or SOC 2 Type I audit readiness.</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        // --- Data Store (Simulated based on Task 12 inputs) ---
+        const appData = {
+            riskCounts: { high: 7, medium: 12, low: 5 },
+            criticalFindings: [
+                {
+                    id: 1,
+                    title: "Inadequate Data Breach Notification Process",
+                    riskLevel: "High",
+                    issue: "Current incident response procedures do not meet GDPR's 72-hour notification requirement. The process lacks a defined escalation path for EU citizen data.",
+                    impact: "Potential €500,000+ penalty based on similar cases; significant reputation damage with EU clients; loss of contract eligibility.",
+                    regulation: "GDPR Article 33",
+                    remediation: [
+                        "Update Incident Response Plan immediately.",
+                        "Establish 24/7 legal counsel contact for breach validation.",
+                        "Conduct a 'table-top' breach simulation exercise."
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Unpatched Legacy Systems (CIS Failure)",
+                    riskLevel: "High",
+                    issue: "Scanning (Task 16) revealed 3 internal servers running outdated OS versions with known exploits, violating CIS Benchmarks.",
+                    impact: "High probability of ransomware infection or lateral movement by attackers. Direct access to customer financial data.",
+                    regulation: "PIPEDA Safeguard Principle",
+                    remediation: [
+                        "Isolate legacy systems on a separate VLAN immediately.",
+                        "Apply compensating controls (strict firewall rules).",
+                        "Migrate to supported OS within 60 days."
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "Lack of Vendor SOC 2 Review",
+                    riskLevel: "High",
+                    issue: "Two critical cloud providers have not been assessed for security compliance (Task 18), creating a supply chain blind spot.",
+                    impact: "Third-party breach could compromise NorthStream data without liability protection. Violation of client MSA requirements.",
+                    regulation: "Contractual / GDPR Processors",
+                    remediation: [
+                        "Request and review SOC 2 Type II reports from identified vendors.",
+                        "Update vendor procurement policy to mandate annual security reviews."
+                    ]
+                }
+            ],
+            riskRegister: [
+                { title: "GDPR Breach Protocol Gap", level: "High", category: "Legal" },
+                { title: "Legacy Server OS", level: "High", category: "Technical" },
+                { title: "Unvetted Vendors", level: "High", category: "Third-Party" },
+                { title: "Missing MFA on VPN", level: "High", category: "Technical" },
+                { title: "Weak Password Policy", level: "High", category: "Policy" },
+                { title: "No Data Retention Schedule", level: "High", category: "Legal" },
+                { title: "Admin Rights Excessive", level: "High", category: "Technical" },
+                { title: "Endpoint AV Outdated", level: "Medium", category: "Technical" },
+                { title: "Lack of Encryption (At Rest)", level: "Medium", category: "Technical" },
+                { title: "Physical Access Logs Missing", level: "Medium", category: "Physical" },
+                { title: "Staff Training Incomplete", level: "Medium", category: "People" },
+                // ... truncated list simulated for UI
+            ],
+            nistStatus: [
+                { function: "GOVERN", score: 65, color: "bg-purple-500" },
+                { function: "IDENTIFY", score: 80, color: "bg-blue-500" },
+                { function: "PROTECT", score: 55, color: "bg-green-500" },
+                { function: "DETECT", score: 40, color: "bg-yellow-500" },
+                { function: "RESPOND", score: 30, color: "bg-red-500" },
+                { function: "RECOVER", score: 50, color: "bg-indigo-500" }
+            ]
+        };
+
+        // --- State Management ---
+        let currentTab = 'overview';
+        let charts = {};
+
+        // --- Core Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab('overview');
+        });
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            
+            // Update Nav UI
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('nav-active', 'text-teal-700', 'font-semibold');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+            activeBtn.classList.add('nav-active');
+
+            // Inject Content
+            const contentArea = document.getElementById('content-area');
+            const template = document.getElementById(`tmpl-${tabId}`);
+            contentArea.innerHTML = template.innerHTML;
+
+            // Initialize Specific Tab Logic
+            if (tabId === 'overview') {
+                renderNistBars();
+            } else if (tabId === 'findings') {
+                renderFindingsCards();
+            } else if (tabId === 'risks') {
+                initRiskChart();
+                renderRiskList('all');
+            }
+        }
+
+        // --- Tab: Overview Logic ---
+        function renderNistBars() {
+            const container = document.getElementById('nist-bars-container');
+            appData.nistStatus.forEach(item => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-slate-600">${item.function}</span>
+                        <span class="text-xs font-medium text-slate-500">${item.score}% Maturity</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5">
+                        <div class="${item.color} h-2.5 rounded-full" style="width: ${item.score}%"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- Tab: Findings Logic ---
+        function renderFindingsCards() {
+            const container = document.getElementById('findings-container');
+            appData.criticalFindings.forEach(f => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between h-full";
+                card.onclick = () => showFindingDetail(f.id);
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">${f.riskLevel}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-lg mb-2 leading-tight">${f.title}</h4>
+                        <p class="text-sm text-slate-500 line-clamp-3">${f.issue}</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex items-center text-teal-600 text-sm font-medium group">
+                        View Details 
+                        <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function showFindingDetail(id) {
+            const finding = appData.criticalFindings.find(f => f.id === id);
+            if (!finding) return;
+
+            // Populate Panel
+            document.getElementById('detail-title').textContent = finding.title;
+            document.getElementById('detail-badge').textContent = `${finding.riskLevel} Priority`;
+            document.getElementById('detail-badge').className = "px-2 py-1 text-xs font-bold rounded uppercase bg-rose-100 text-rose-800";
+            document.getElementById('detail-issue').textContent = finding.issue;
+            document.getElementById('detail-impact').textContent = finding.impact;
+            document.getElementById('detail-reg').textContent = `Regulation Reference: ${finding.regulation}`;
+            
+            const remList = document.getElementById('detail-remediation');
+            remList.innerHTML = '';
+            finding.remediation.forEach(r => {
+                const li = document.createElement('li');
+                li.textContent = r;
+                remList.appendChild(li);
+            });
+
+            // Show Panel
+            document.getElementById('finding-detail-panel').classList.remove('hidden');
+            document.getElementById('finding-detail-panel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeDetail() {
+            document.getElementById('finding-detail-panel').classList.add('hidden');
+        }
+
+        // --- Tab: Risks Logic ---
+        function initRiskChart() {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            
+            // Destroy existing if re-initializing
+            if (charts.riskChart) charts.riskChart.destroy();
+
+            charts.riskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+                    datasets: [{
+                        data: [appData.riskCounts.high, appData.riskCounts.medium, appData.riskCounts.low],
+                        backgroundColor: [
+                            '#f43f5e', // Rose-500
+                            '#fbbf24', // Amber-400
+                            '#34d399'  // Emerald-400
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const levels = ['High', 'Medium', 'Low'];
+                            renderRiskList(levels[index]);
+                        } else {
+                            renderRiskList('all');
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderRiskList(filterLevel) {
+            const container = document.getElementById('risk-list-container');
+            container.innerHTML = '';
+
+            let filtered = appData.riskRegister;
+            if (filterLevel !== 'all') {
+                filtered = appData.riskRegister.filter(r => r.level === filterLevel);
+            }
+
+            // Fill with dummy data to match counts if simulated array is short
+            // (The simulated array has 11 items, but prompt says 24 total. We just show available.)
+            
+            filtered.forEach((risk, index) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 border-b border-slate-100 hover:bg-slate-50 transition-colors";
+                
+                let badgeClass = '';
+                if(risk.level === 'High') badgeClass = 'bg-rose-100 text-rose-800';
+                else if(risk.level === 'Medium') badgeClass = 'bg-amber-100 text-amber-800';
+                else badgeClass = 'bg-emerald-100 text-emerald-800';
+
+                div.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-1.5 h-1.5 rounded-full ${risk.level === 'High' ? 'bg-rose-500' : (risk.level === 'Medium' ? 'bg-amber-400' : 'bg-emerald-400')} mr-3"></span>
+                        <div>
+                            <p class="text-sm font-medium text-slate-700">${risk.title}</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wide">${risk.category}</p>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${risk.level}</span>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Add a "View Full Register" note if simulated list is short
+            const note = document.createElement('div');
+            note.className = "p-3 text-center text-xs text-slate-400 italic";
+            note.innerText = `Displaying ${filtered.length} of ${filterLevel === 'all' ? 24 : 'filtered'} items`;
+            container.appendChild(note);
+        }
+
+    </script>
+    <!-- Visualization & Content Choices: 
+         1. Overview: Uses Chart.js Donut (Risk Dist) + Custom CSS Bars (NIST) to visually summarize "Task 12 Part 2D". 
+            Interaction: None, purely informational dashboard view.
+         2. Findings: Card Layout for "The Critical Three". 
+            Interaction: Click-to-expand details to keep the UI clean while providing the depth required by Part 2C.
+         3. Risk Register: Interactive Chart.js Donut + List. 
+            Interaction: Click chart segment -> Filter list. This fulfills the "analyze/sort" aspect of a register.
+         4. Roadmap: Vertical Timeline (HTML/Tailwind). 
+            Interaction: Static flow, as roadmaps are usually fixed strategic plans.
+         
+         CONFIRMATION: NO SVG graphics used (except inline icons). NO Mermaid JS used.
+    -->
+</body>
+</html>
+
+

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Analysis Flashcards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .perspective {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center py-10 px-4 font-sans text-slate-900">
+
+    <div class="max-w-2xl w-full">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">Risk Analysis & Register Development</h1>
+            <p class="text-slate-500">Master the key concepts of cybersecurity risk management</p>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-200 rounded-full h-2.5 mb-6">
+            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 4%"></div>
+        </div>
+
+        <!-- Flashcard Container -->
+        <div class="perspective w-full h-80 mb-8">
+            <div id="card-inner" class="flip-card-inner relative w-full h-full shadow-lg">
+                <!-- Front -->
+                <div class="flip-card-front bg-white border-2 border-slate-100">
+                    <p id="card-front-text" class="text-xl md:text-2xl font-semibold text-center text-slate-800"></p>
+                </div>
+                <!-- Back -->
+                <div class="flip-card-back bg-indigo-600 border-2 border-indigo-500 text-white">
+                    <p id="card-back-text" class="text-lg md:text-xl text-center leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between gap-4">
+            <button id="prev-btn" class="flex-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50">
+                Previous
+            </button>
+            <span id="counter" class="text-slate-500 font-medium px-4">1 / 25</span>
+            <button id="next-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50">
+                Next
+            </button>
+        </div>
+
+        <p class="mt-6 text-center text-sm text-slate-400">Click the card to flip</p>
+    </div>
+
+    <script>
+        const flashcards = [
+            { front: "Definition of a Risk Register", back: "A strategic document that communicates cybersecurity risks in business language, quantifies impacts, and guides executive decision-making." },
+            { front: "NIST definition of Risk Registers", back: "\"Repositories of risk information\" that integrate cybersecurity risk management into broader Enterprise Risk Management (ERM) programs." },
+            { front: "Task 5: Policy Gap Analysis focus", back: "Identifying critical missing policy elements by comparing mock policies against a selected framework (e.g., NIST CSF or ISO 27001)." },
+            { front: "Task 7: Simulated Scan Analysis focus", back: "Extracting configuration vulnerabilities and non-compliant settings from a compliance scan of a virtual machine." },
+            { front: "Task 9: Vendor Risk Assessment focus", back: "Identifying gaps and exclusion clauses in a dummy SOC 2 report that create residual risks." },
+            { front: "Task 10: Breach Protocol Audit focus", back: "Documenting deficiencies in the Incident Response Plan (IRP) regarding GDPR notification and PIPEDA record-keeping." },
+            { front: "Qualitative Risk Matrix", back: "A method assigning descriptive ratings (Very Low to Critical) to Likelihood and Impact to determine overall risk level." },
+            { front: "General Quantitative Risk Formula", back: "$$Risk Score = Likelihood \\times Impact$$" },
+            { front: "NIST SP 800-30", back: "A NIST Special Publication providing detailed guidance on risk assessment, including threat likelihood and impact categorization." },
+            { front: "The CIA Triad", back: "Confidentiality, Integrity, and Availability." },
+            { front: "ISO 27005", back: "An ISO standard offering risk management guidance aligned with ISO 27001, emphasizing context establishment." },
+            { front: "Maximum GDPR Fines", back: "Up to 4% of global annual turnover or €20 million, whichever is higher." },
+            { front: "Factors influencing Likelihood Rating", back: "External threat landscape, existing compensating controls, visibility to regulators, and historical precedent of enforcement." },
+            { front: "Factors influencing Impact Rating", back: "Financial penalties, breach notification costs, operational downtime, reputational damage, and legal liability." },
+            { front: "Required High Priority Risks quantity", back: "At least 3 risks must be prioritized as High." },
+            { front: "Required Medium Priority Risks quantity", back: "5 to 8 risks must be prioritized as Medium." },
+            { front: "Requirements for High-Priority Remediation", back: "Specific controls, estimated effort/resources, dependencies, residual risk, and alternative treatment options." },
+            { front: "Canadian Criminal Code Section 342.1", back: "The law stating that unauthorized access to computer systems is illegal." },
+            { front: "ERM acronym meaning", back: "Enterprise Risk Management." },
+            { front: "PIPEDA acronym meaning", back: "Personal Information Protection and Electronic Documents Act." },
+            { front: "GDPR Notification Requirement", back: "A requirement to notify authorities of a data breach within 72 hours." },
+            { front: "Residual Risk", back: "The risk that remains after mitigation efforts or controls have been implemented." },
+            { front: "Goal of Risk Management", back: "To balance security investment against business objectives and risk tolerance, rather than eliminating all risk." },
+            { front: "CIS Benchmarks", back: "Globally recognized best practices for securing IT systems and data." },
+            { front: "ISACA", back: "A professional association focused on IT governance, risk management, and cybersecurity (Information Systems Audit and Control Association)." }
+        ];
+
+        let currentIndex = 0;
+        const cardInner = document.getElementById('card-inner');
+        const cardFrontText = document.getElementById('card-front-text');
+        const cardBackText = document.getElementById('card-back-text');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const counter = document.getElementById('counter');
+        const progressBar = document.getElementById('progress-bar');
+
+        function updateCard() {
+            // Reset flip state
+            cardInner.classList.remove('flipped');
+            
+            // Wait for flip back animation before changing text (optional aesthetic)
+            setTimeout(() => {
+                const card = flashcards[currentIndex];
+                cardFrontText.innerText = card.front;
+                cardBackText.innerText = card.back;
+                
+                counter.innerText = `${currentIndex + 1} / ${flashcards.length}`;
+                progressBar.style.width = `${((currentIndex + 1) / flashcards.length) * 100}%`;
+                
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = currentIndex === flashcards.length - 1;
+            }, 150);
+        }
+
+        cardInner.addEventListener('click', () => {
+            cardInner.classList.toggle('flipped');
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCard();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                updateCard();
+            }
+        });
+
+        // Init
+        updateCard();
+    </script>
+</body>
+</html>
+
+
+

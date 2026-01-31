@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberComm: Executive Communication Masterclass</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome (for icons, replacing SVG) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neutral-bg': '#F9FAFB',
+                        'slate-dark': '#1E293B',
+                        'accent-blue': '#3B82F6',
+                        'risk-high': '#EF4444',
+                        'risk-med': '#F59E0B',
+                        'success': '#10B981',
+                        'sand': '#F5F5F0'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F5F5F0; /* Warm neutral background */
+            color: #1E293B;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-item.active {
+            border-bottom: 3px solid #3B82F6;
+            color: #3B82F6;
+            font-weight: 700;
+        }
+        .interactive-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased font-sans">
+
+    <!-- Chosen Palette: Warm Neutral Background (#F5F5F0) with Slate Dark text (#1E293B) and Blue Accents (#3B82F6). Minimalist and professional to reflect a corporate audit environment. -->
+
+    <!-- Application Structure Plan: 
+         1. Header/Nav: Persistent navigation to jump between key learning modules.
+         2. Hero Section: "The Mission" - Contextualizes the role of the translator.
+         3. Module 1: The Dual-Lens Report: Interactive toggle comparing Tech Annex vs. Exec Summary logic.
+         4. Module 2: The Language Lab: An interactive "Fix the Text" game where users convert accusatory findings to neutral ones, visualized by a "Professionalism Score" gauge.
+         5. Module 3: Boardroom Simulator: A calculator dashboard implementing the ALE (Annual Loss Expectancy) formula and ROI logic from the report, visualized with a financial impact chart.
+         6. Module 4: Framework Reference: A grid of key standards.
+         
+         WHY: This structure breaks the dense lecture into active tasks (Comparing, Fixing, Calculating) rather than passive reading, mirroring the actual workflow of a CISO.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Dual-Lens Report: Split cards. Goal: Compare. Method: DOM manipulation to swap content. Justification: Instantly shows the "Translation" effect described in the report.
+         2. Language Lab: Text Diff & Doughnut Chart. Goal: Change/Improve. Method: Chart.js for score, JS for text replacement. Justification: Gamifies the "Neutral Language" lesson.
+         3. Boardroom Simulator: Bar Chart (Financial Impact) & Inputs. Goal: Inform/Persuade. Method: Chart.js Bar chart (grouped). Justification: Visualizes the ALE formula making abstract math concrete.
+         4. NO SVG/Mermaid confirmed. Using FontAwesome for UI icons.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Header & Navigation -->
+        <header class="bg-white shadow-sm rounded-xl p-4 mb-8 flex flex-col md:flex-row justify-between items-center sticky top-2 z-50 opacity-95">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <i class="fa-solid fa-shield-halved text-accent-blue text-2xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-dark">CyberComm <span class="text-gray-400 font-light">| Executive Translator</span></h1>
+                    <p class="text-xs text-gray-500">Based on Module 13: Reporting & Communication</p>
+                </div>
+            </div>
+            <nav class="flex space-x-6 text-sm font-medium text-gray-600">
+                <button onclick="navTo('section-mission')" class="nav-item hover:text-accent-blue transition-colors pb-1" id="nav-mission">Mission</button>
+                <button onclick="navTo('section-dual')" class="nav-item hover:text-accent-blue transition-colors pb-1" id="nav-dual">Reports</button>
+                <button onclick="navTo('section-language')" class="nav-item hover:text-accent-blue transition-colors pb-1" id="nav-language">Language Lab</button>
+                <button onclick="navTo('section-board')" class="nav-item hover:text-accent-blue transition-colors pb-1" id="nav-board">Risk Simulator</button>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="space-y-12">
+
+            <!-- SECTION 1: THE MISSION (Intro) -->
+            <section id="section-mission" class="bg-white rounded-2xl shadow-sm p-8 border-l-4 border-accent-blue">
+                <div class="grid md:grid-cols-3 gap-8 items-center">
+                    <div class="md:col-span-2">
+                        <h2 class="text-3xl font-bold text-slate-dark mb-4">Why This Matters</h2>
+                        <p class="text-lg text-gray-600 mb-6 leading-relaxed">
+                            You can find the most critical vulnerability in the world, but <strong>if you can't communicate it properly, it's worthless.</strong> 
+                        </p>
+                        <p class="text-gray-600 mb-6">
+                            Think of yourself as a bilingual tour guide. You must speak "Technical" to your IT teams (CVEs, Logs, Patches) and "Business" to the Board (Revenue, Reputation, ROI). This application is your training ground to master the art of <strong>Executive Communication</strong>.
+                        </p>
+                        <div class="flex space-x-4">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fa-solid fa-user-tie mr-2 text-slate-dark"></i> Audience: C-Suite
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fa-solid fa-terminal mr-2 text-slate-dark"></i> Audience: Tech Teams
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6 text-center border border-gray-100">
+                        <i class="fa-solid fa-language text-5xl text-accent-blue mb-4"></i>
+                        <h3 class="font-bold text-lg mb-2">The Goal</h3>
+                        <p class="text-sm text-gray-600">Transform from a technical detective into a strategic business partner.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: DUAL-LENS REPORTING -->
+            <section id="section-dual" class="scroll-mt-24">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-dark flex items-center">
+                        <i class="fa-solid fa-file-contract mr-3 text-accent-blue"></i> The Two-Document Strategy
+                    </h2>
+                    <p class="text-gray-600 mt-2 max-w-4xl">
+                        A single report cannot serve two masters. Executive Summaries focus on <strong>business impact</strong> and <strong>strategy</strong>, while Technical Annexes focus on <strong>evidence</strong> and <strong>remediation</strong>. Use the toggle below to see how the <em>same finding</em> (Log4j Vulnerability) changes based on the audience.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-12 gap-6">
+                    <!-- Control Panel -->
+                    <div class="md:col-span-4 bg-white p-6 rounded-xl shadow-sm h-fit">
+                        <h3 class="font-bold text-lg mb-4">Select Audience View</h3>
+                        <div class="space-y-3">
+                            <button onclick="setReportView('exec')" id="btn-exec" class="w-full text-left p-4 rounded-lg border-2 transition-all flex items-center justify-between bg-blue-50 border-accent-blue">
+                                <div>
+                                    <span class="block font-bold text-slate-dark">Executive Summary</span>
+                                    <span class="text-xs text-gray-500">CEO, CFO, Board</span>
+                                </div>
+                                <i class="fa-solid fa-briefcase text-accent-blue"></i>
+                            </button>
+                            <button onclick="setReportView('tech')" id="btn-tech" class="w-full text-left p-4 rounded-lg border-2 border-transparent hover:bg-gray-50 transition-all flex items-center justify-between">
+                                <div>
+                                    <span class="block font-bold text-slate-dark">Technical Annex</span>
+                                    <span class="text-xs text-gray-500">IT, Security Ops, DevOps</span>
+                                </div>
+                                <i class="fa-solid fa-code text-gray-400"></i>
+                            </button>
+                        </div>
+
+                        <div class="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+                            <h4 class="font-bold text-sm text-yellow-800 mb-2"><i class="fa-solid fa-lightbulb mr-2"></i>Key Difference</h4>
+                            <p id="audience-hint" class="text-sm text-yellow-800">
+                                Executives care about <strong>Cost & Risk</strong>. They need to know "How much?" and "So what?"
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Display Panel -->
+                    <div class="md:col-span-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100 min-h-[400px] flex flex-col justify-center">
+                        <div id="report-content" class="animate-fade-in">
+                            <!-- Content injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: LANGUAGE LAB (Neutral vs Accusatory) -->
+            <section id="section-language" class="scroll-mt-24">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-dark flex items-center">
+                        <i class="fa-solid fa-spell-check mr-3 text-accent-blue"></i> The Language Lab
+                    </h2>
+                    <p class="text-gray-600 mt-2 max-w-4xl">
+                        Audit reports should describe observations, not assign blame. Accusatory language triggers defensiveness. In this lab, analyze a finding derived from the "Healthcare Shared Credentials" scenario. See how professional phrasing changes the tone and reception.
+                    </p>
+                </div>
+
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Interactive Text Area -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-700">Audit Finding Draft</h3>
+                            <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">ID: 2024-HC-07</span>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 font-mono text-sm leading-relaxed" id="finding-text">
+                            "The nursing staff is <span class="bg-red-100 text-red-800 px-1 rounded">carelessly</span> sharing passwords in direct violation of HIPAA. Management has <span class="bg-red-100 text-red-800 px-1 rounded">failed</span> to enforce protocols, and this <span class="bg-red-100 text-red-800 px-1 rounded">negligent</span> behavior puts patient data at risk."
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button onclick="analyzeLanguage('bad')" class="flex-1 py-2 px-4 rounded-lg bg-red-100 text-red-700 font-medium hover:bg-red-200 transition-colors">
+                                <i class="fa-solid fa-triangle-exclamation mr-2"></i> Current (Bad)
+                            </button>
+                            <button onclick="analyzeLanguage('good')" class="flex-1 py-2 px-4 rounded-lg bg-green-100 text-green-700 font-medium hover:bg-green-200 transition-colors shadow-sm ring-1 ring-green-200">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Refine to Professional
+                            </button>
+                        </div>
+                        
+                        <div id="text-analysis" class="mt-6 text-sm text-gray-600 hidden">
+                            <!-- Analysis injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Visualization -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col items-center justify-center">
+                        <h3 class="font-bold text-gray-700 mb-2">Tone Analysis Score</h3>
+                        <div class="chart-container">
+                            <canvas id="toneChart"></canvas>
+                        </div>
+                        <p class="text-center text-sm text-gray-500 mt-4" id="tone-caption">
+                            Current tone is emotionally charged and accusatory.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: BOARDROOM SIMULATOR (Risk Calc) -->
+            <section id="section-board" class="scroll-mt-24 mb-12">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-dark flex items-center">
+                        <i class="fa-solid fa-chart-line mr-3 text-accent-blue"></i> Boardroom Simulator: Risk Quantification
+                    </h2>
+                    <p class="text-gray-600 mt-2 max-w-4xl">
+                        Boards don't speak "Vulnerability," they speak "Risk." Use the <strong>Annual Loss Expectancy (ALE)</strong> calculator to translate a technical threat (Ransomware) into a business case for a $500k security investment. 
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1 italic">Formula: ALE = Single Loss Expectancy (SLE) × Annual Rate of Occurrence (ARO)</p>
+                </div>
+
+                <div class="grid lg:grid-cols-12 gap-8">
+                    <!-- Calculator Inputs -->
+                    <div class="lg:col-span-4 bg-white p-6 rounded-xl shadow-sm border-t-4 border-slate-dark">
+                        <h3 class="font-bold text-lg mb-6">Scenario Parameters</h3>
+                        
+                        <!-- Input Group 1 -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Avg. Daily Revenue ($)</label>
+                            <input type="range" id="revenue" min="10000" max="100000" step="5000" value="50000" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent-blue">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>$10k</span>
+                                <span id="val-revenue" class="font-bold text-accent-blue">$50,000</span>
+                                <span>$100k</span>
+                            </div>
+                        </div>
+
+                        <!-- Input Group 2 -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Downtime (Days)</label>
+                            <input type="range" id="downtime" min="1" max="30" step="1" value="14" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent-blue">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>1 Day</span>
+                                <span id="val-downtime" class="font-bold text-accent-blue">14 Days</span>
+                                <span>30 Days</span>
+                            </div>
+                        </div>
+
+                        <!-- Input Group 3 -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Attack Probability (Annual %)</label>
+                            <input type="range" id="prob" min="10" max="100" step="5" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent-blue">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>10%</span>
+                                <span id="val-prob" class="font-bold text-accent-blue">30%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t border-gray-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-600">Investment Cost:</span>
+                                <span class="font-mono font-bold">$500,000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Risk Reduction:</span>
+                                <span class="font-mono font-bold text-green-600">87%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Area -->
+                    <div class="lg:col-span-8 bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-end mb-4">
+                            <h3 class="font-bold text-gray-700">Financial Impact Analysis</h3>
+                            <div id="roi-badge" class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                                ROI: Calculating...
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 mt-6 text-center">
+                            <div class="p-3 bg-red-50 rounded-lg border border-red-100">
+                                <div class="text-xs text-gray-500 uppercase tracking-wide">Current Risk (ALE)</div>
+                                <div id="stat-ale" class="text-lg font-bold text-red-700">$0</div>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-lg border border-green-100">
+                                <div class="text-xs text-gray-500 uppercase tracking-wide">Net Benefit</div>
+                                <div id="stat-benefit" class="text-lg font-bold text-green-700">$0</div>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                <div class="text-xs text-gray-500 uppercase tracking-wide">Recommendation</div>
+                                <div id="stat-rec" class="text-sm font-bold text-blue-700">Invest</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- SECTION 5: REFERENCE (Frameworks) -->
+             <section id="section-frameworks" class="bg-slate-dark text-white rounded-2xl shadow-lg p-8 mb-12">
+                <h2 class="text-2xl font-bold mb-6 text-center">Core Compliance Frameworks</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 hover:border-accent-blue transition-colors">
+                        <div class="text-accent-blue font-bold mb-2">NIST SP 800-53</div>
+                        <p class="text-xs text-gray-300">Detailed security controls for federal systems. Massive catalog of 1000+ controls.</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 hover:border-accent-blue transition-colors">
+                        <div class="text-accent-blue font-bold mb-2">ISO 27001</div>
+                        <p class="text-xs text-gray-300">International standard for Information Security Management Systems (ISMS). Risk-based.</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 hover:border-accent-blue transition-colors">
+                        <div class="text-accent-blue font-bold mb-2">SOC 2</div>
+                        <p class="text-xs text-gray-300">For Service Orgs (SaaS). Focuses on 5 Trust Principles: Security, Availability, etc.</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 hover:border-accent-blue transition-colors">
+                        <div class="text-accent-blue font-bold mb-2">PCI-DSS</div>
+                        <p class="text-xs text-gray-300">Strict requirements for anyone handling credit card data. 12 prescriptive requirements.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center text-gray-400 text-sm py-8 border-t border-gray-200">
+            <p>© 2026 Cyber.SoHo Educational Module</p>
+            <p class="mt-1">Module 13: Reporting & Executive Communication</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            currentView: 'mission',
+            reportView: 'exec',
+            toneState: 'bad',
+            riskParams: {
+                revenue: 50000,
+                downtime: 14,
+                prob: 30,
+                baseCost: 2000000, // $2M Base ransomware cost
+                pciFine: 250000,
+                investment: 500000,
+                riskReductionPct: 0.87
+            }
+        };
+
+        // --- Data: Report Content ---
+        const reportContent = {
+            exec: {
+                title: "Executive Summary",
+                subtitle: "Strategic Overview for C-Suite",
+                color: "border-accent-blue",
+                bg: "bg-blue-50",
+                icon: "fa-briefcase",
+                body: `
+                    <div class="space-y-4">
+                        <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                            <h4 class="font-bold text-red-800">CRITICAL RISK IDENTIFIED</h4>
+                            <p class="text-sm text-red-700 mt-1">Potential Ransomware Exposure affecting 50,000 customers.</p>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span><i class="fa-solid fa-money-bill-wave text-gray-400 mr-2"></i><strong>Financial Impact:</strong></span>
+                                <span class="font-mono text-red-600 font-bold">$4.35 Million (Est.)</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span><i class="fa-solid fa-clock text-gray-400 mr-2"></i><strong>Operational Impact:</strong></span>
+                                <span>23 Days Downtime</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span><i class="fa-solid fa-gavel text-gray-400 mr-2"></i><strong>Compliance Risk:</strong></span>
+                                <span>SOC 2 Failure</span>
+                            </li>
+                        </ul>
+                        <div class="bg-white p-4 rounded border border-gray-200 mt-4">
+                            <h5 class="font-bold text-gray-800 text-sm mb-2">Recommendation</h5>
+                            <p class="text-sm text-gray-600 mb-2">Immediate patching of servers and endpoint protection update.</p>
+                            <div class="flex justify-between items-center text-xs font-bold text-slate-dark bg-gray-50 p-2 rounded">
+                                <span>Resource Ask: $15,000</span>
+                                <span>Timeline: 2 Weeks</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            tech: {
+                title: "Technical Annex",
+                subtitle: "Detailed Findings for IT Operations",
+                color: "border-gray-400",
+                bg: "bg-gray-50",
+                icon: "fa-code",
+                body: `
+                    <div class="space-y-4 font-mono text-xs md:text-sm">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="bg-black text-white px-2 py-1 rounded">CVE-2024-1234</span>
+                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded border border-red-200">CVSS 9.8 (Critical)</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-3 border border-gray-200 rounded bg-white">
+                                <strong class="block text-gray-500 mb-1">Affected Systems</strong>
+                                <ul class="list-disc list-inside text-gray-700">
+                                    <li>12 Linux Servers</li>
+                                    <li>IP Range: 10.0.1.10 - .22</li>
+                                    <li>Apache Log4j < 2.17.1</li>
+                                </ul>
+                            </div>
+                            <div class="p-3 border border-gray-200 rounded bg-white">
+                                <strong class="block text-gray-500 mb-1">Evidence</strong>
+                                <p class="text-gray-700">Nessus Scan #4092 confirmed remote code execution vector.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800 text-green-400 p-4 rounded mt-4 overflow-x-auto">
+                            <strong class="block text-gray-400 mb-2 border-b border-gray-700 pb-1">Remediation Steps</strong>
+                            <p>1. Update Log4j to v2.17.1+</p>
+                            <p>2. Apply WAF Rule ID: 944130</p>
+                            <p>3. Verify: <span class="text-yellow-300">java -jar log4j-detector.jar</span></p>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // --- Data: Language Lab ---
+        const languageData = {
+            bad: {
+                text: `"The nursing staff is <span class="bg-red-100 text-red-800 px-1 rounded font-bold">carelessly</span> sharing passwords in direct violation of HIPAA. Management has <span class="bg-red-100 text-red-800 px-1 rounded font-bold">failed</span> to enforce protocols, and this <span class="bg-red-100 text-red-800 px-1 rounded font-bold">negligent</span> behavior puts patient data at risk."`,
+                analysis: `<ul class="list-disc list-inside space-y-1"><li class="text-red-600"><strong>Subjective/Emotional:</strong> "Carelessly", "Negligent"</li><li class="text-red-600"><strong>Blame-focused:</strong> "Management has failed"</li><li><strong>Result:</strong> Creates defensiveness, not action.</li></ul>`,
+                score: [30, 70], // 30% Professional, 70% Emotional
+                caption: "⚠️ ALERT: Accusatory language detected. High risk of audit friction.",
+                color: ['#EF4444', '#E5E7EB'] // Red
+            },
+            good: {
+                text: `<div class="space-y-2"><p><strong>Observation:</strong> During shift changes, 5/12 nurses were observed sharing credentials.</p><p><strong>Requirement:</strong> HIPAA Security Rule 45 CFR 164.312(a)(2)(i) requires unique user identification.</p><p><strong>Risk:</strong> Shared credentials prevent accurate audit logging and attribution.</p></div>`,
+                analysis: `<ul class="list-disc list-inside space-y-1"><li class="text-green-600"><strong>Fact-Based:</strong> Specific numbers (5/12) and Observation.</li><li class="text-green-600"><strong>Standard-Referenced:</strong> Cites specific HIPAA code.</li><li><strong>Result:</strong> Neutral, actionable, and professional.</li></ul>`,
+                score: [100, 0], // 100% Professional
+                caption: "✓ PASS: Finding structure is complete (Observation + Requirement + Risk).",
+                color: ['#10B981', '#E5E7EB'] // Green
+            }
+        };
+
+        // --- Charts Initialization ---
+        let toneChartInstance = null;
+        let riskChartInstance = null;
+
+        function initCharts() {
+            // Tone Chart (Doughnut)
+            const toneCtx = document.getElementById('toneChart').getContext('2d');
+            toneChartInstance = new Chart(toneCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Professionalism', 'Emotional Content'],
+                    datasets: [{
+                        data: [30, 70],
+                        backgroundColor: ['#EF4444', '#E5E7EB'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // Risk Chart (Bar)
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            riskChartInstance = new Chart(riskCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Risk w/o Investment', 'Risk w/ Investment', 'Investment Cost'],
+                    datasets: [{
+                        label: 'Financial Impact ($)',
+                        data: [0, 0, 500000],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)', // Red (Risk)
+                            'rgba(245, 158, 11, 0.8)', // Orange (Residual)
+                            'rgba(59, 130, 246, 0.8)'  // Blue (Cost)
+                        ],
+                        borderColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(59, 130, 246)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.raw.toLocaleString();
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- Logic: Navigation ---
+        function navTo(sectionId) {
+            // Scroll
+            const element = document.getElementById(sectionId);
+            element.scrollIntoView({ behavior: 'smooth' });
+
+            // Update Active State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeNavId = 'nav-' + sectionId.replace('section-', '');
+            document.getElementById(activeNavId)?.classList.add('active');
+        }
+
+        // --- Logic: Dual Report View ---
+        function setReportView(viewType) {
+            state.reportView = viewType;
+            const content = reportContent[viewType];
+            const container = document.getElementById('report-content');
+            
+            // Button Styles
+            const btnExec = document.getElementById('btn-exec');
+            const btnTech = document.getElementById('btn-tech');
+
+            if (viewType === 'exec') {
+                btnExec.className = "w-full text-left p-4 rounded-lg border-2 transition-all flex items-center justify-between bg-blue-50 border-accent-blue";
+                btnTech.className = "w-full text-left p-4 rounded-lg border-2 border-transparent hover:bg-gray-50 transition-all flex items-center justify-between";
+                document.getElementById('audience-hint').innerHTML = "Executives care about <strong>Cost & Risk</strong>. They need to know 'How much?' and 'So what?'";
+            } else {
+                btnExec.className = "w-full text-left p-4 rounded-lg border-2 border-transparent hover:bg-gray-50 transition-all flex items-center justify-between";
+                btnTech.className = "w-full text-left p-4 rounded-lg border-2 transition-all flex items-center justify-between bg-gray-100 border-gray-400";
+                document.getElementById('audience-hint').innerHTML = "Tech teams care about <strong>Evidence & Fixes</strong>. They need to know 'Where is it?' and 'How do I patch it?'";
+            }
+
+            // Inject Content with Fade Effect
+            container.style.opacity = 0;
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="border-b-2 ${content.color} pb-3 mb-4 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-dark">${content.title}</h3>
+                            <p class="text-sm text-gray-500">${content.subtitle}</p>
+                        </div>
+                        <i class="fa-solid ${content.icon} text-2xl text-gray-300"></i>
+                    </div>
+                    ${content.body}
+                `;
+                container.style.opacity = 1;
+            }, 150);
+        }
+
+        // --- Logic: Language Lab ---
+        function analyzeLanguage(type) {
+            const data = languageData[type];
+            const textField = document.getElementById('finding-text');
+            const analysisField = document.getElementById('text-analysis');
+            const caption = document.getElementById('tone-caption');
+
+            // Update Text
+            textField.innerHTML = data.text;
+            
+            // Update Analysis
+            analysisField.innerHTML = data.analysis;
+            analysisField.classList.remove('hidden');
+
+            // Update Chart
+            toneChartInstance.data.datasets[0].data = data.score;
+            toneChartInstance.data.datasets[0].backgroundColor = data.color;
+            toneChartInstance.update();
+
+            // Update Caption
+            caption.innerText = data.caption;
+            caption.className = type === 'good' ? "text-center text-sm text-green-600 font-bold mt-4" : "text-center text-sm text-red-600 font-bold mt-4";
+        }
+
+        // --- Logic: Risk Calculator (ALE) ---
+        function calculateRisk() {
+            // Get Inputs
+            const revenue = parseInt(document.getElementById('revenue').value);
+            const downtime = parseInt(document.getElementById('downtime').value);
+            const prob = parseInt(document.getElementById('prob').value) / 100;
+
+            // Update Display Values
+            document.getElementById('val-revenue').innerText = '$' + revenue.toLocaleString();
+            document.getElementById('val-downtime').innerText = downtime + ' Days';
+            document.getElementById('val-prob').innerText = (prob * 100).toFixed(0) + '%';
+
+            // Calculations
+            // SLE = Base Cost + (Daily Rev * Downtime Days) + Fines + Reputation (Simplified as 10% of rev * 365 * 0.25 for demo, or fixed)
+            // Using Report Logic: SLE = Base ($2M) + Downtime Cost + PCI Fines + Reputation
+            // Downtime Cost
+            const downtimeCost = revenue * downtime;
+            // Reputation: Assume Annual Customer Value is roughly 100x daily revenue for this model, and 25% loss
+            const estAnnualRevenue = revenue * 365;
+            const reputationDmg = estAnnualRevenue * 0.25; 
+            
+            // Total SLE
+            const totalSLE = state.riskParams.baseCost + downtimeCost + state.riskParams.pciFine + reputationDmg;
+
+            // ALE = SLE * ARO (Probability)
+            const ale = totalSLE * prob;
+
+            // With Investment (87% reduction)
+            const aleResidual = ale * (1 - state.riskParams.riskReductionPct);
+            
+            // Net Benefit (Risk Reduced - Cost)
+            const riskReduced = ale - aleResidual;
+            const netBenefit = riskReduced - state.riskParams.investment;
+
+            // ROI
+            const roi = (netBenefit / state.riskParams.investment) * 100;
+
+            // Update UI Stats
+            document.getElementById('stat-ale').innerText = '$' + Math.round(ale).toLocaleString();
+            document.getElementById('stat-benefit').innerText = '$' + Math.round(netBenefit).toLocaleString();
+            document.getElementById('roi-badge').innerText = `ROI: ${roi.toFixed(0)}%`;
+            document.getElementById('roi-badge').className = roi > 0 
+                ? "px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold"
+                : "px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-bold";
+            
+            const recEl = document.getElementById('stat-rec');
+            if(roi > 0) {
+                recEl.innerText = "Financially Justified";
+                recEl.className = "text-sm font-bold text-green-700";
+            } else {
+                recEl.innerText = "Re-evaluate Strategy";
+                recEl.className = "text-sm font-bold text-red-700";
+            }
+
+            // Update Chart
+            riskChartInstance.data.datasets[0].data = [ale, aleResidual, state.riskParams.investment];
+            riskChartInstance.update();
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            setReportView('exec'); // Default view
+            
+            // Attach Listeners to Range Inputs
+            ['revenue', 'downtime', 'prob'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateRisk);
+            });
+
+            // Initial Calc
+            calculateRisk();
+        });
+
+    </script>
+</body>
+</html>
+
+
+

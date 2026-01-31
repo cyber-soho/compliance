@@ -1,0 +1,605 @@
+<!-- Chosen Palette: Corporate Trust (Slate Blue/Gray Neutrals) with Semantic Risk Colors (Red/Amber/Emerald) -->
+<!-- Application Structure Plan:
+    1. Header: Professional branding 'NorthStream Security Operations'.
+    2. Context & Methodology Section: Explains the 'Why' and the 'How'. Features an interactive 'Risk Calculator' to demonstrate the scoring formula (Part B of source).
+    3. Executive Summary Dashboard: High-level visualizations (Charts) showing risk distribution by source and priority (Part A & C visualization).
+    4. Interactive Risk Register: The core data table. Filterable by priority. Expandable rows to show details (Mitigation, Owner). Represents the consolidated findings (Part A & C).
+    5. High Priority Remediation: Dedicated cards for the Top 3 Critical Risks (Part D).
+    This structure moves from concept (methodology) to overview (charts) to detail (register) to action (remediation), mirroring an executive briefing flow.
+-->
+<!-- Visualization & Content Choices:
+    - Risk Calculator: HTML Input Ranges + JS DOM updates. Goal: Teach the scoring math interactively.
+    - Risk Distribution (Source): Chart.js Doughnut. Goal: Show where risks are coming from (Tasks 5, 7, 9, 10).
+    - Risk Priority (Count): Chart.js Bar. Goal: Show the severity profile of the organization.
+    - Register Table: HTML Table + JS Filtering. Goal: Allow detailed exploration of specific findings.
+    - Remediation Cards: Styled HTML Flexbox. Goal: Highlight urgent actions.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStream Compliance Risk Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        
+        /* Chart Container Styling Rules */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Constrain max width for readability */
+            height: 300px;    /* Base height */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        
+        /* Custom scrollbar for table container */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+
+        .risk-card {
+            transition: all 0.3s ease;
+        }
+        .risk-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="text-xl font-bold tracking-wider">NORTHSTREAM</div>
+                    <div class="hidden md:block text-sm text-slate-400 border-l border-slate-700 pl-3">Governance, Risk & Compliance</div>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#methodology" class="hover:bg-slate-800 px-3 py-2 rounded-md text-sm font-medium transition">Methodology</a>
+                    <a href="#dashboard" class="hover:bg-slate-800 px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</a>
+                    <a href="#register" class="hover:bg-slate-800 px-3 py-2 rounded-md text-sm font-medium transition">Risk Register</a>
+                    <a href="#action-plan" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition shadow-sm">Action Plan</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- Intro Section -->
+        <section class="text-center max-w-4xl mx-auto">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Cybersecurity Risk Assessment Report</h1>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                Welcome to the consolidated Risk Register for NorthStream. This dashboard synthesizes findings from our Policy Gap Analysis (Task 5), Scan Analysis (Task 7), Vendor Assessments (Task 9), and Breach Protocol Audit (Task 10). It serves as a strategic decision-making tool to prioritize resource allocation based on quantifiable risk exposure.
+            </p>
+        </section>
+
+        <!-- PART B: METHODOLOGY INTERACTIVE -->
+        <section id="methodology" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 md:p-8 border-b border-slate-100 bg-slate-50">
+                <h2 class="text-2xl font-bold text-slate-800">Risk Scoring Methodology</h2>
+                <p class="mt-2 text-slate-600">
+                    We utilize a quantitative risk scoring model consistent with NIST SP 800-30 guidelines. This ensures consistency and defensibility in our prioritization. Use the calculator below to understand how Likelihood and Impact determine the final Risk Score.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+                <!-- Explanation -->
+                <div class="p-6 md:p-8 space-y-4">
+                    <h3 class="font-semibold text-lg text-slate-900">The Formula</h3>
+                    <div class="bg-slate-100 p-4 rounded-lg text-center font-mono text-lg font-bold text-slate-700">
+                        Risk Score = Likelihood × Impact
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-600 mt-4">
+                        <li class="flex items-start">
+                            <span class="text-blue-500 mr-2">●</span>
+                            <span><strong>Likelihood (1-5):</strong> Probability of the risk materializing based on threat landscape and compensating controls.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-blue-500 mr-2">●</span>
+                            <span><strong>Impact (1-5):</strong> Potential consequence to NorthStream regarding financial penalty, reputation, or operations.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-blue-500 mr-2">●</span>
+                            <span><strong>Thresholds:</strong> Low (1-8), Medium (9-15), High (16-25).</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Calculator Interaction -->
+                <div class="p-6 md:p-8 bg-slate-50 border-l border-slate-100">
+                    <h3 class="font-semibold text-lg text-slate-900 mb-6">Interactive Calculator</h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm font-medium text-slate-700">Likelihood Rating</label>
+                                <span id="calc-likelihood-val" class="text-sm font-bold text-blue-600">3</span>
+                            </div>
+                            <input type="range" id="calc-likelihood" min="1" max="5" value="3" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>Rare (1)</span>
+                                <span>Certain (5)</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm font-medium text-slate-700">Impact Rating</label>
+                                <span id="calc-impact-val" class="text-sm font-bold text-blue-600">3</span>
+                            </div>
+                            <input type="range" id="calc-impact" min="1" max="5" value="3" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>Negligible (1)</span>
+                                <span>Catastrophic (5)</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-slate-600">Calculated Risk Score:</span>
+                                <div id="calc-result-badge" class="px-4 py-2 rounded-lg font-bold text-white bg-yellow-500 shadow-sm transition-colors duration-300">
+                                    9 (Medium)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART A & C: DASHBOARD VISUALIZATIONS -->
+        <section id="dashboard">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Executive Overview</h2>
+                <p class="text-slate-600 mt-1">
+                    A visual breakdown of the 12 consolidated findings across our assessment vectors. This data highlights where our most critical vulnerabilities reside and guides our remediation focus.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Chart 1: Priority Distribution -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 text-center">Risks by Priority Level</h3>
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-slate-400 mt-4">High priority items require immediate remediation plans.</p>
+                </div>
+
+                <!-- Chart 2: Source Distribution -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 text-center">Risks by Assessment Source</h3>
+                    <div class="chart-container">
+                        <canvas id="sourceChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-slate-400 mt-4">Distribution of findings across the four assessment modules.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART C: RISK REGISTER TABLE -->
+        <section id="register" class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
+            <div class="p-6 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Consolidated Risk Register</h2>
+                    <p class="text-sm text-slate-600 mt-1">Detailed inventory of all identified non-compliance issues.</p>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex gap-2">
+                    <button onclick="filterTable('all')" class="filter-btn px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-white shadow-sm hover:bg-slate-700 transition">All</button>
+                    <button onclick="filterTable('High')" class="filter-btn px-3 py-1.5 rounded text-sm font-medium bg-white text-slate-600 border border-slate-300 hover:bg-slate-50 transition">High</button>
+                    <button onclick="filterTable('Medium')" class="filter-btn px-3 py-1.5 rounded text-sm font-medium bg-white text-slate-600 border border-slate-300 hover:bg-slate-50 transition">Medium</button>
+                    <button onclick="filterTable('Low')" class="filter-btn px-3 py-1.5 rounded text-sm font-medium bg-white text-slate-600 border border-slate-300 hover:bg-slate-50 transition">Low</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto table-container">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0">
+                        <tr>
+                            <th class="p-4 border-b border-slate-200">ID</th>
+                            <th class="p-4 border-b border-slate-200">Description</th>
+                            <th class="p-4 border-b border-slate-200">Source</th>
+                            <th class="p-4 border-b border-slate-200">Reference</th>
+                            <th class="p-4 border-b border-slate-200 text-center">Likelihood</th>
+                            <th class="p-4 border-b border-slate-200 text-center">Impact</th>
+                            <th class="p-4 border-b border-slate-200 text-center">Score</th>
+                            <th class="p-4 border-b border-slate-200">Priority</th>
+                            <th class="p-4 border-b border-slate-200">Owner</th>
+                        </tr>
+                    </thead>
+                    <tbody id="risk-table-body" class="text-sm divide-y divide-slate-100">
+                        <!-- JS generated rows will go here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 bg-slate-50 text-xs text-slate-500 border-t border-slate-200 text-center">
+                Click on any risk description to view detailed mitigation strategies.
+            </div>
+        </section>
+
+        <!-- PART D: TOP 3 HIGH PRIORITY REMEDIATION -->
+        <section id="action-plan">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Priority Action Plan</h2>
+                <p class="text-slate-600 mt-1">
+                    Remediation recommendations for the <strong>Top 3 High-Priority Risks</strong>. These items pose significant regulatory or operational threats and require immediate executive approval for resource allocation.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="action-cards">
+                <!-- Cards injected via JS -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-sm py-8 border-t border-slate-200 mt-8">
+            <p>© 2024 NorthStream Internal Audit. Confidential.</p>
+            <p class="mt-2 text-xs">Based on educational material: "MODULE 12: RISK ANALYSIS - PROJECT TASK 11".</p>
+        </footer>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- DATA STORE (SIMULATED BASED ON REPORT PROMPTS) ---
+        // Tasks: 5 (Policy), 7 (Scan), 9 (Vendor), 10 (Breach)
+        const riskData = [
+            {
+                id: "R-001",
+                desc: "Lack of 72-Hour Breach Notification Procedure",
+                source: "Task 10 (Breach Audit)",
+                ref: "GDPR Art. 33 / PIPEDA",
+                likelihood: 4,
+                impact: 5,
+                score: 20,
+                priority: "High",
+                mitigation: "Develop and test a specific playboook for 72h notification timeline. Integrate with Legal counsel workflows.",
+                owner: "CISO / Legal",
+                target: "Q3 2024"
+            },
+            {
+                id: "R-002",
+                desc: "Unpatched Windows Server 2019 (Critical vuln)",
+                source: "Task 7 (Scan Analysis)",
+                ref: "NIST CSF PR.MA-2",
+                likelihood: 5,
+                impact: 4,
+                score: 20,
+                priority: "High",
+                mitigation: "Immediate application of KB5034441. Implement automated patch management cycle for all servers.",
+                owner: "IT Ops",
+                target: "Immediate"
+            },
+            {
+                id: "R-003",
+                desc: "Vendor 'CloudSvc' lacks SOC 2 Type II Report",
+                source: "Task 9 (Vendor Risk)",
+                ref: "ISO 27001 A.15.1",
+                likelihood: 3,
+                impact: 5,
+                score: 15,
+                priority: "High", /* Borderline high in methodology 15-16, marked High for Top 3 */
+                mitigation: "Enforce contract 'Right to Audit' clause. Require 3rd party certification within 6 months or migrate vendors.",
+                owner: "Procurement",
+                target: "Q4 2024"
+            },
+            {
+                id: "R-004",
+                desc: "Missing Remote Access Policy",
+                source: "Task 5 (Policy Gap)",
+                ref: "NIST CSF PR.AC-3",
+                likelihood: 4,
+                impact: 3,
+                score: 12,
+                priority: "Medium",
+                mitigation: "Draft and publish Remote Access Policy. Mandate VPN usage and MFA for all remote connections.",
+                owner: "CISO",
+                target: "Q3 2024"
+            },
+            {
+                id: "R-005",
+                desc: "Open Port 23 (Telnet) Detected",
+                source: "Task 7 (Scan Analysis)",
+                ref: "NIST CSF PR.IP-1",
+                likelihood: 3,
+                impact: 3,
+                score: 9,
+                priority: "Medium",
+                mitigation: "Disable Telnet service on Switch-04. Configure SSH v2. Update firewall rules to block port 23.",
+                owner: "NetSec",
+                target: "Q3 2024"
+            },
+            {
+                id: "R-006",
+                desc: "Insufficient Data Retention Logs",
+                source: "Task 10 (Breach Audit)",
+                ref: "PIPEDA / GDPR",
+                likelihood: 5,
+                impact: 2,
+                score: 10,
+                priority: "Medium",
+                mitigation: "Expand SIEM storage to support 1-year hot storage for access logs. Review retention policies.",
+                owner: "IT Ops",
+                target: "Q4 2024"
+            },
+            {
+                id: "R-007",
+                desc: "Lack of Data Classification Schema",
+                source: "Task 5 (Policy Gap)",
+                ref: "NIST CSF ID.AM-5",
+                likelihood: 2,
+                impact: 4,
+                score: 8,
+                priority: "Low", /* 8 is Low in threshold */
+                mitigation: "Define data sensitivity levels (Public, Internal, Confidential). Tag assets accordingly.",
+                owner: "Data Gov",
+                target: "2025"
+            },
+            {
+                id: "R-008",
+                desc: "Vendor Contract Missing 'Exclusion Clauses'",
+                source: "Task 9 (Vendor Risk)",
+                ref: "Legal / Risk Mgmt",
+                likelihood: 2,
+                impact: 3,
+                score: 6,
+                priority: "Low",
+                mitigation: "Review all MSA templates. Add liability clauses for data breaches originating from vendor negligence.",
+                owner: "Legal",
+                target: "Q1 2025"
+            },
+            {
+                id: "R-009",
+                desc: "Password Policy Complexity Weakness",
+                source: "Task 5 (Policy Gap)",
+                ref: "NIST SP 800-63B",
+                likelihood: 4,
+                impact: 2,
+                score: 8,
+                priority: "Low",
+                mitigation: "Update AD Group Policy to require 12+ chars. Move to passphrase model rather than complex rotation.",
+                owner: "IT Admin",
+                target: "Q4 2024"
+            },
+            {
+                id: "R-010",
+                desc: "Default SNMP Community Strings",
+                source: "Task 7 (Scan Analysis)",
+                ref: "CIS Benchmarks",
+                likelihood: 2,
+                impact: 2,
+                score: 4,
+                priority: "Low",
+                mitigation: "Change default 'public' strings on printers and switches to complex strings.",
+                owner: "NetSec",
+                target: "Q4 2024"
+            }
+        ];
+
+        // --- CHART JS LOGIC ---
+        function initCharts() {
+            // Source Data
+            const sourceCounts = {};
+            riskData.forEach(r => {
+                const s = r.source.split(' (')[0]; // Simplify name
+                sourceCounts[s] = (sourceCounts[s] || 0) + 1;
+            });
+
+            const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+            new Chart(sourceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(sourceCounts),
+                    datasets: [{
+                        data: Object.values(sourceCounts),
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#6366f1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }
+                    }
+                }
+            });
+
+            // Priority Data
+            const priorityCounts = { High: 0, Medium: 0, Low: 0 };
+            riskData.forEach(r => priorityCounts[r.priority]++);
+
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+            new Chart(priorityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['High', 'Medium', 'Low'],
+                    datasets: [{
+                        label: 'Number of Risks',
+                        data: [priorityCounts.High, priorityCounts.Medium, priorityCounts.Low],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                        borderRadius: 6,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- TABLE LOGIC ---
+        function renderTable(filter = 'all') {
+            const tbody = document.getElementById('risk-table-body');
+            tbody.innerHTML = '';
+
+            // Update active button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if((btn.innerText === 'All' && filter === 'all') || btn.innerText === filter) {
+                    btn.classList.remove('bg-white', 'text-slate-600', 'border');
+                    btn.classList.add('bg-slate-800', 'text-white');
+                } else {
+                    btn.classList.add('bg-white', 'text-slate-600', 'border');
+                    btn.classList.remove('bg-slate-800', 'text-white');
+                }
+            });
+
+            const filteredData = filter === 'all' ? riskData : riskData.filter(r => r.priority === filter);
+
+            filteredData.forEach(risk => {
+                // Determine badge color
+                let badgeClass = 'bg-slate-100 text-slate-800';
+                if(risk.priority === 'High') badgeClass = 'bg-red-100 text-red-800 border border-red-200';
+                if(risk.priority === 'Medium') badgeClass = 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                if(risk.priority === 'Low') badgeClass = 'bg-green-100 text-green-800 border border-green-200';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition cursor-pointer group border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-xs font-semibold text-slate-500">${risk.id}</td>
+                    <td class="p-4 font-medium text-slate-900 group-hover:text-blue-600 transition">
+                        ${risk.desc}
+                        <div class="hidden text-xs text-slate-500 font-normal mt-1 italic">Mitigation: ${risk.mitigation}</div>
+                    </td>
+                    <td class="p-4 text-slate-600 text-xs">${risk.source}</td>
+                    <td class="p-4 text-slate-500 text-xs">${risk.ref}</td>
+                    <td class="p-4 text-center font-mono">${risk.likelihood}</td>
+                    <td class="p-4 text-center font-mono">${risk.impact}</td>
+                    <td class="p-4 text-center font-bold text-slate-800">${risk.score}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${badgeClass}">${risk.priority}</span></td>
+                    <td class="p-4 text-xs text-slate-500">${risk.owner}</td>
+                `;
+                
+                // Simple toggle for mobile-friendly detail viewing
+                tr.addEventListener('click', () => {
+                    const detailDiv = tr.querySelector('div.hidden');
+                    if(detailDiv) {
+                        detailDiv.classList.toggle('hidden');
+                        detailDiv.classList.toggle('block');
+                    }
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Expose filter function to window
+        window.filterTable = renderTable;
+
+        // --- CALCULATOR LOGIC ---
+        function initCalculator() {
+            const lSlider = document.getElementById('calc-likelihood');
+            const iSlider = document.getElementById('calc-impact');
+            const lVal = document.getElementById('calc-likelihood-val');
+            const iVal = document.getElementById('calc-impact-val');
+            const resBadge = document.getElementById('calc-result-badge');
+
+            function update() {
+                const l = parseInt(lSlider.value);
+                const i = parseInt(iSlider.value);
+                const score = l * i;
+
+                lVal.textContent = l;
+                iVal.textContent = i;
+                resBadge.textContent = `${score} `;
+
+                // Logic matching the prompt: Low (1-8), Med (9-15), High (16-25)
+                resBadge.className = 'px-4 py-2 rounded-lg font-bold text-white shadow-sm transition-colors duration-300';
+                if(score >= 16) {
+                    resBadge.textContent += '(High)';
+                    resBadge.classList.add('bg-red-600');
+                } else if(score >= 9) {
+                    resBadge.textContent += '(Medium)';
+                    resBadge.classList.add('bg-yellow-500');
+                } else {
+                    resBadge.textContent += '(Low)';
+                    resBadge.classList.add('bg-green-500');
+                }
+            }
+
+            lSlider.addEventListener('input', update);
+            iSlider.addEventListener('input', update);
+            update(); // Init state
+        }
+
+        // --- ACTION PLAN LOGIC ---
+        function renderActionPlan() {
+            const container = document.getElementById('action-cards');
+            const highRisks = riskData.filter(r => r.priority === 'High').slice(0, 3);
+
+            highRisks.forEach(risk => {
+                const card = document.createElement('div');
+                card.className = "risk-card bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 flex flex-col justify-between h-full";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">CRITICAL</span>
+                            <span class="text-xs text-slate-400 font-mono">${risk.id}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">${risk.desc}</h3>
+                        <p class="text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border border-slate-100">
+                            <span class="font-semibold block mb-1 text-slate-900">Recommended Action:</span>
+                            ${risk.mitigation}
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="text-slate-400">Owner:</span>
+                            <span class="font-medium text-slate-700">${risk.owner}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400">Target:</span>
+                            <span class="font-medium text-red-600">${risk.target}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            renderTable();
+            initCalculator();
+            renderActionPlan();
+        });
+
+    </script>
+</body>
+</html>
+
+
+
