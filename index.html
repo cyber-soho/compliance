@@ -84,6 +84,26 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
+    <!-- PASSWORD PROTECTION OVERLAY -->
+    <div id="auth-overlay" class="fixed inset-0 bg-slate-100 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full text-center border border-slate-200">
+            <div class="text-5xl mb-6">🔒</div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Restricted Access</h2>
+            <p class="text-slate-500 mb-6">Enter password to view course content.</p>
+            
+            <div class="relative">
+                <input type="password" id="pass-input" 
+                    class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="Password">
+                <button onclick="verifyAccess()" 
+                    class="absolute right-2 top-2 bottom-2 bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md font-medium transition-colors">
+                    Go
+                </button>
+            </div>
+            <p id="error-msg" class="text-red-500 text-sm mt-3 hidden font-medium">Access Denied</p>
+        </div>
+    </div>
+
     <!-- Navbar -->
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -268,6 +288,31 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // --- PASSWORD PROTECTION ---
+        function verifyAccess() {
+            const input = document.getElementById('pass-input').value;
+            // Target:
+            const hash = "Y29tcC1hc3Nlc3NfMjZeJio="; 
+            
+            if (btoa(input) === hash) {
+                const overlay = document.getElementById('auth-overlay');
+                overlay.style.transition = "opacity 0.5s ease";
+                overlay.style.opacity = "0";
+                setTimeout(() => overlay.remove(), 500);
+            } else {
+                const err = document.getElementById('error-msg');
+                err.classList.remove('hidden');
+                err.classList.add('animate-bounce');
+                setTimeout(() => err.classList.remove('animate-bounce'), 1000);
+            }
+        }
+
+        // Enter key support
+        document.getElementById('pass-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyAccess();
+        });
+
+
         // --- DATA STORAGE ---
         const courseData = [
             { 
